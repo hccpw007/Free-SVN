@@ -10,9 +10,6 @@
     "skill-creator@claude-plugins-official": true,
     "planning-with-files@planning-with-files": true
   },
-  "env": {
-    "ECC_DISABLED_HOOKS": "pre:edit-write:gateguard-fact-force,pre:bash:gateguard-fact-force"
-  },
   "includeCoAuthoredBy": false,
   "model": "sonnet",
   "statusLine": {
