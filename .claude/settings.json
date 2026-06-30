@@ -1,0 +1,30 @@
+{
+  "allowDangerouslySkipPermissions": true,
+  "enabledPlugins": {
+    "andrej-karpathy-skills@karpathy-skills": true,
+    "ui-ux-pro-max@ui-ux-pro-max-skill": true,
+    "ecc@ecc": true,
+    "superpowers@superpowers-marketplace": true,
+    "claude-mem@thedotmack": true,
+    "code-simplifier@claude-plugins-official": true,
+    "skill-creator@claude-plugins-official": true,
+    "planning-with-files@planning-with-files": true
+  },
+  "env": {
+    "ECC_DISABLED_HOOKS": "pre:edit-write:gateguard-fact-force,pre:bash:gateguard-fact-force"
+  },
+  "includeCoAuthoredBy": false,
+  "model": "sonnet",
+  "statusLine": {
+    "type": "command",
+    "command": "bash ~/.claude/hooks/status-line.sh",
+    "refreshInterval": 30
+  },
+  "theme": "dark",
+  "codemossProviderId": "3a9c6bd7-944d-423d-87c7-b6fde337b29b",
+  "skipDangerousModePermissionPrompt": true,
+  "permissions": {
+    "defaultMode": "bypassPermissions",
+    "mode": "bypassPermissions"
+  }
+}
