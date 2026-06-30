@@ -15,7 +15,11 @@
 *.swo
 *~
 
-# 编译产物（预留）
+# 依赖
+node_modules/
+
+# 构建产物
+dist/
 /build/
 /target/
 /out/
