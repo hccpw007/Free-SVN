@@ -11,10 +11,11 @@
     "lint": "vue-tsc --noEmit"
   },
   "dependencies": {
-    "vue": "^3.5",
-    "vue-router": "^4.5",
+    "@tauri-apps/api": "^2",
+    "element-plus": "2.14.2",
     "pinia": "^3.0",
-    "@tauri-apps/api": "^2"
+    "vue": "^3.5",
+    "vue-router": "^4.5"
   },
   "devDependencies": {
     "@tauri-apps/cli": "^2",
