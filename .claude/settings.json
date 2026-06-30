@@ -17,7 +17,6 @@
     "command": "bash ~/.claude/hooks/status-line.sh",
     "refreshInterval": 30
   },
-  "codemossProviderId": "3a9c6bd7-944d-423d-87c7-b6fde337b29b",
   "skipDangerousModePermissionPrompt": true,
   "permissions": {
     "defaultMode": "bypassPermissions",
