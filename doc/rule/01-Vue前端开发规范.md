@@ -38,15 +38,13 @@ src/
 
 ## 分层职责
 
-```
-pages/          → 路由入口，组合组件，零业务逻辑
-components/     → UI 单元，接收 props、抛出 emit
-stores/         → 跨组件共享状态 + 状态变更逻辑
-services/       → 无状态的纯业务逻辑，与 Tauri 后端通信
-utils/          → 纯函数，无副作用
-```
+- `pages/` → 组合组件，禁止写业务逻辑
+- `components/` → UI 单元，接收 props、抛出 emit
+- `stores/` → 跨组件共享状态
+- `services/` → 无状态业务逻辑，封装 Tauri invoke
+- `utils/` → 纯函数
 
-禁止跨层调用：`services/` 不能 import `components/`，`pages/` 不能直接调用 Tauri invoke 等。
+禁止：`services/` import `components/`；`pages/` 直接调用 Tauri invoke。
 
 ---
 
@@ -82,30 +80,26 @@ const emit = defineEmits<{
 
 ## 组件粒度原则
 
-- **一个文件只导出一个组件**（默认导出）
-- 单个 `.vue` 文件不超过 400 行，超出则拆分子组件
-- 纯展示组件放在 `components/common/`，与业务无关
-- SVN 业务组件放在 `components/svn/`，可跨页面复用
+- **一个文件只导出一个组件**
+- `.vue` 文件超过 400 行则拆子组件
+- 纯展示组件放 `components/common/`，SVN 业务组件放 `components/svn/`
 
 ## Props / Emit 规范
 
 - Props 必须定义类型和默认值，使用 `withDefaults`
-- Emit 必须使用基于类型的声明（如上例）
-- 禁止使用 `defineExpose` —— 用 props + emit 替代
-- 禁止跨多级透传 props —— 使用 store 或 provide/inject
+- Emit 必须使用基于类型的声明
+- 禁止 `defineExpose` — 用 props + emit 替代
+- 禁止跨多级透传 props — 用 store 或 provide/inject
 
 ## 模板规范
 
 ```vue
-<!-- v-for 必须绑定 key -->
 <div v-for="item in list" :key="item.id">
 
-<!-- v-if / v-else-if / v-else 必须连续，中间不插空行 -->
 <div v-if="loading">加载中</div>
 <div v-else-if="error">加载失败</div>
 <div v-else>内容</div>
 
-<!-- 事件处理使用函数名，不写内联表达式 -->
 <button @click="handleSubmit">提交</button>
 ```
 
@@ -145,26 +139,11 @@ export enum RepoStatus {
 2. **不创建任何 `.css` 文件**（除了 `src/style.css` 的 Tailwind 入口）
 3. 所有样式只用 Tailwind 原子类完成
 
-## 常用样式对照
-
-| 场景 | Tailwind 类 |
-|------|------------|
-| 弹性布局 | `flex items-center justify-between` |
-| 网格 | `grid grid-cols-3 gap-4` |
-| 内边距 | `p-4` `px-6` `py-2` |
-| 外边距 | `m-4` `mt-2` `mb-4` |
-| 字体 | `text-sm` `text-lg` `font-bold` `font-mono` |
-| 颜色 | `text-gray-600` `bg-white` `border-gray-200` |
-| 圆角 | `rounded` `rounded-lg` `rounded-full` |
-| 阴影 | `shadow` `shadow-md` `shadow-lg` |
-| 悬停 | `hover:bg-gray-100` `hover:text-blue-600` |
-| 过渡 | `transition-colors` `duration-200` |
-
 ## Element Plus 与 Tailwind 协作
 
-- Element Plus 组件通过全局 class 覆盖调整样式（不修改组件内部）
-- 高优先级覆盖：`class="!p-0"`（Tailwind 的 `!` 前缀生成 `!important`）
-- 布局容器使用 Tailwind，具体表单/表格/对话框使用 Element Plus 组件
+- 布局容器用 Tailwind，表单/表格/对话框用 Element Plus 组件
+- Element Plus 组件通过全局 class 覆盖调整样式
+- 高优先级覆盖：`class="!p-0"`（Tailwind `!` 前缀生成 `!important`）
 
 ---
 
@@ -253,106 +232,56 @@ const routes: RouteRecordRaw[] = [
 
 ## 拆分信号
 
-不只看行数，出现以下情况也应立即拆分：
+出现以下情况立即拆分：
 
-1. **职责混杂** — 一个文件同时处理 SVN 状态获取、提交记录解析、文件过滤 → 拆
-2. **多处 import 同一文件的特定函数** — 说明这些函数属于独立模块
-3. **多人同时编辑同一文件的不同功能** — 说明文件太大，应该按功能拆分
-4. **修改一个功能需要滚动 3 屏以上** — 说明文件可读性已下降，需提取方法或模块
+1. **一文件处理多个职责**（如同时做 status/commit/log）
+2. **多处 import 同一文件的特定函数** — 属于独立模块
+3. **修改一个功能需滚动 3 屏以上**
 
 ## 拆分方式
 
 ```
 # 拆分前
-services/svn-service.ts        ← 300 行，包含 status/commit/log/diff
+services/svn-service.ts
 
 # 拆分后
 services/svn/
-├── index.ts                   # 统一导出
-├── status.ts                  # svn status 相关
-├── commit.ts                  # svn commit 相关
-└── log.ts                     # svn log 相关
+├── index.ts
+├── status.ts
+├── commit.ts
+└── log.ts
 ```
 
-原则：**拆出目录而不是拆出平铺文件**。功能单元超过 3 个文件时建目录，用 `index.ts` 统一导出。
+原则：功能单元超过 3 个文件时建目录 + `index.ts` 统一导出。
 
 ---
 
 # 08-死代码预防（AI 自动化）
 
-> 本项目为 AI 编程模式，死代码清理由 AI 自动执行，无需人工检查。
+> AI 自动执行，无需人工检查。
 
-## 检测工具链
+## 检测命令
 
-| 检测项 | 工具 | 命令 |
-|--------|------|------|
-| 未使用的 export/文件/组件 | `knip` | `cnpm run knip` |
-| 未使用的 import / 类型错误 | vue-tsc | `cnpm run lint` |
-| 未使用的 Tauri Command | 自定义脚本 knip.json | 内置在 knip 配置中 |
+| 检测项 | 命令 |
+|--------|------|
+| 未使用的 export/文件/组件 | `cnpm run knip` |
+| 未使用的 import / 类型错误 | `cnpm run lint` |
 
-## AI 自动清理流程
+## AI 清理流程（删除功能时）
 
-删除一个功能时，AI 必须按以下顺序执行，不可跳过任何一步：
+1. 收到"删除 XXX"指令后，先删除入口文件（页面目录 / 路由配置）
+2. 运行 `cnpm run lint && cnpm run knip`
+3. 根据报告删除未引用的文件/导出
+4. 重复步骤 2-3 直到零报告
+5. 运行 `cnpm run build` 验证
+6. 检查 `src-tauri/src/lib.rs` 中 `generate_handler!` 的残余命令
 
-### 步骤一：上游入口删除（由开发者指令触发）
+## 编码阶段规则
 
-```bash
-# AI 收到"删除 XXX 功能"指令后，先删除入口点
-rm -rf src/pages/xxx/          # 页面目录
-src/router/index.ts            # 删除对应路由配置
-```
-
-### 步骤二：自动递归清理
-
-删除入口后立即运行检测工具，让工具报告哪些代码不再被引用：
-
-```bash
-cnpm run lint                    # 类型检查 → 识别未使用的 import
-cnpm run knip                    # 识别未使用的 export / 文件 / 组件
-```
-
-根据 knip/vue-tsc 输出**自动删除**未被引用的文件：
-
-```bash
-# knip 输出例如: "src/services/xxx.ts" → 未使用
-# AI 自动执行:
-rm src/services/xxx.ts
-# 继续运行 knip，直到零报告
-```
-
-### 步骤三：迭代清除 — 循环直到清白
-
-```bash
-while knip 报告还有未使用代码; do
-  1. 读取 knip 报告，定位未使用的文件/导出
-  2. 删除对应文件或 export
-  3. 重新运行 `cnpm run knip`
-done
-```
-
-### 步骤四：全量验证
-
-```bash
-cnpm run lint       # 零错误 → 通过
-cnpm run build      # 构建通过
-```
-
-### 步骤五：同步后端
-
-前端清理完成后，自动检查 Rust 端残余：
-
-1. 检索 `src-tauri/src/lib.rs` 中 `generate_handler!` 列表
-2. 检查 `commands/` 目录中每个命令是否被前端（`services/`）通过 `invoke` 调用
-3. 发现孤立命令 → 通知开发者后端侧也需清理，或由 Rust 规范中的死代码流程自动处理
-
-## 死代码预防（编码阶段）
-
-AI 在编码过程中遵循以下规则避免产生死代码：
-
-1. **不注释代码块** — 不需要的代码直接删除，git 历史可找回
-2. **重命名/重构时即时清理旧文件** — 重命名组件后立即删除旧的 `.vue` 文件
-3. **测试文件同步** — 删除源文件后检查同名 `*.spec.ts` / `*.test.ts` 是否也需要删除
-4. **功能分支合并前** — 在 PR 分支上运行 `cnpm run knip`，确保没有引入死代码
+1. **不注释代码** — 不需要的直接删除，git 可找回
+2. **重命名时即时删除旧文件**
+3. **删除源文件后删除同名 `*.spec.ts` / `*.test.ts`**
+4. **功能合并前运行 `cnpm run knip`**
 
 ---
 
@@ -369,30 +298,16 @@ AI 在编码过程中遵循以下规则避免产生死代码：
 
 # 10-测试策略
 
-## 单元测试
+- 使用 Vitest + Vue Test Utils
+- 测试文件与被测文件同级，命名 `*.test.ts`
+- Store 测试：直接调用 action，验证 state
+- Service 测试：测试纯逻辑函数（不涉及 Tauri invoke 的部分）
 
-- 使用 Vitest + Vue Test Utils 编写测试
-- **测试文件与被测文件保持同级**，以 `.test.ts` 后缀命名
-- 组件测试：验证 props 渲染、emit 是否触发、插槽内容
-  ```ts
-  // components/RepoTree.test.ts
-  import { mount } from '@vue/test-utils'
-  import { describe, it, expect } from 'vitest'
-  import RepoTree from './RepoTree.vue'
-
-  it('renders repo path', () => {
-    const wrapper = mount(RepoTree, { props: { path: '/test' } })
-    expect(wrapper.text()).toContain('/test')
-  })
-  ```
-- Store 测试：直接调用 store action，验证 state 变化
-- Service 测试：测试纯业务逻辑函数（不涉及 Tauri invoke 的部分）
-
-## 测试覆盖率目标
+覆盖率目标：
 
 | 类型 | 目标 |
 |------|------|
-| 工具函数（`utils/`） | ≥ 90% |
-| Service 逻辑（`services/`） | ≥ 70% |
-| 组件渲染 | 核心组件覆盖 |
-| 路由/页面级 | E2E
+| `utils/` | ≥ 90% |
+| `services/` | ≥ 70% |
+| 核心组件 | 覆盖 |
+| 路由/页面 | E2E |
