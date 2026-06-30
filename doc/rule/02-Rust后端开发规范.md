@@ -243,9 +243,54 @@ fn validate_path(path: &str) -> Result<&str, AppError> {
 | 错误处理 | 使用 `Result<T, E>`，禁止 `unwrap()` 和 `expect()`（仅测试可用） |
 | 可见性 | 优先 `pub(crate)`，不暴露不必要的外部 API |
 
-## 文件级规范
+## 文件拆分时机
 
-- 每个 `.rs` 文件不超过 300 行
+### 按文件类型约定
+
+| 类型 | 行数警戒线 | 达到后如何拆分 |
+|------|-----------|---------------|
+| `commands/*.rs` | 150 行 | 按业务领域拆文件（如 `commands/repo.rs`、`commands/status.rs`） |
+| `services/*.rs` | 300 行 | 按功能拆分为多个 service 文件（如 `services/svn.rs` → `services/svn/mod.rs` + `services/svn/status.rs`） |
+| `models/*.rs` | 150 行 | 按实体拆分（如 `models/repo.rs`、`models/file.rs`） |
+| `lib.rs` | 60 行 | 将 command 注册、plugin 注册、setup 各提取到独立子模块 |
+| `mod.rs` | 30 行 | 只做声明和重导出，不做任何业务逻辑 |
+
+### 拆分信号
+
+1. **一个文件包含多个 `pub fn` 且前缀重复** — 如 `svn_status()`、`svn_commit()`、`svn_log()` → 说明前缀"svn"暗示了子模块
+2. **`use` 导入过多** — 超过 15 个 `use` 语句说明文件依赖过重，需拆分
+3. **`#[cfg(test)]` 测试块超过 100 行** — 说明业务逻辑本身已够复杂，应当拆分
+4. **单个文件内出现连续 3 个以上空行** — 常用空行分段，说明一个文件里塞了多个功能
+
+### 拆分方式
+
+```
+# 拆分前
+services/svn.rs                              ← 280 行，包含 run_svn + status + log + commit + diff + blame
+
+# 拆分后
+services/svn/
+├── mod.rs                                   # 公共 run_svn 函数 + pub use 重导出
+├── status.rs                                # svn status 相关
+├── commit.rs                                # svn commit 相关
+├── log.rs                                   # svn log 相关
+└── diff.rs                                  # svn diff 相关
+```
+
+`mod.rs` 模式：
+```rust
+// services/svn/mod.rs
+mod status;
+mod commit;
+mod log;
+
+// 只重导出外部需要调用的函数
+pub use status::get_status;
+pub use commit::create_commit;
+pub use log::get_log;
+```
+
+## 文件级规范
 - `mod.rs` 只做模块声明和 `pub use` 重导出，不写业务代码
 - 单元测试写在模块末尾 `#[cfg(test)] mod tests { ... }` 块中
 - 对外接口添加 `#[tauri::command]` 注解
@@ -255,3 +300,41 @@ fn validate_path(path: &str) -> Result<&str, AppError> {
 - 所有 Command 使用 `async fn`
 - 阻塞操作（如 SVN 子进程）使用 `tokio::task::spawn_blocking` 包裹
 - 避免在异步上下文中调用 `std::thread::sleep`，使用 `tokio::time::sleep`
+
+---
+
+# 07-死代码预防
+
+## Rust 编译器的检测能力
+
+| 代码类型 | 编译器行为 | 说明 |
+|----------|-----------|------|
+| 未使用的 `pub` 函数 | **不报错** | Rust 假设 `pub` 可能被外部 crate 调用 |
+| 未使用的私有函数/变量 | `warning: unused` | 默认产生警告 |
+| 未使用的 `use` 导入 | `warning: unused import` | 默认产生警告 |
+| 未使用的 `struct` 字段 | `warning: field is never read` | 默认产生警告 |
+| 未使用的 Tauri Command | **不报错** | Command 通过 `generate_handler!` 宏注册，编译器认为它被 "调用了" |
+
+## 必须人工检查的场景（编译器抓不到）
+
+1. **`generate_handler!` 中的命令列表** — 前端不再调用了，但 Rust 编译器认为它还在用
+2. **`pub` 函数** — 即使没有被任何地方调用，编译器也不会报 `dead_code`
+3. **Tauri Plugin 注册** — 不再需要的 plugin 忘记移除
+
+## 删除功能的 Checklist
+
+```
+1. lib.rs → 从 generate_handler! 中移除对应命令
+2. lib.rs → 移除不再需要的 plugin 注册
+3. commands/ → 删除对应的 .rs 文件，清理 mod.rs
+4. services/ → 删除对应的 .rs 文件，清理 mod.rs
+5. models/ → 删除对应的 .rs 文件，清理 mod.rs
+6. Cargo.toml → 检查是否有不再使用的依赖
+7. cargo build → 确认编译通过无警告
+```
+
+检查命令：
+```bash
+cargo build 2>&1 | grep -E "warning: unused|warning: field"  # 列出所有未使用警告
+cargo +nightly udeps                                            # 检测未使用的 Cargo 依赖（需 nightly）
+```

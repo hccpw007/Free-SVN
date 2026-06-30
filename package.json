@@ -8,7 +8,8 @@
     "build": "vue-tsc --noEmit && vite build",
     "preview": "vite preview",
     "tauri": "tauri",
-    "lint": "vue-tsc --noEmit"
+    "lint": "vue-tsc --noEmit",
+    "knip": "knip"
   },
   "dependencies": {
     "@tauri-apps/api": "^2",
@@ -19,12 +20,13 @@
     "vue-router": "^4.5"
   },
   "devDependencies": {
+    "@tailwindcss/vite": "^4",
     "@tauri-apps/cli": "^2",
     "@vitejs/plugin-vue": "^5",
-    "typescript": "~5.7",
-    "vue-tsc": "^2",
-    "vite": "^6",
+    "knip": "6.23.0",
     "tailwindcss": "^4",
-    "@tailwindcss/vite": "^4"
+    "typescript": "~5.7",
+    "vite": "^6",
+    "vue-tsc": "^2"
   }
 }

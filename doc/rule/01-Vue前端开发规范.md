@@ -83,7 +83,7 @@ const emit = defineEmits<{
 ## 组件粒度原则
 
 - **一个文件只导出一个组件**（默认导出）
-- 单个 `.vue` 文件不超过 200 行，超出则拆分子组件
+- 单个 `.vue` 文件不超过 400 行，超出则拆分子组件
 - 纯展示组件放在 `components/common/`，与业务无关
 - SVN 业务组件放在 `components/svn/`，可跨页面复用
 
@@ -238,7 +238,86 @@ const routes: RouteRecordRaw[] = [
 
 ---
 
-# 07-文件级编码约定
+# 07-文件拆分时机
+
+## 按文件类型约定
+
+| 类型 | 行数警戒线 | 达到后如何拆分 |
+|------|-----------|---------------|
+| `.vue` 组件 | 400 行 | 提取子组件到 `components/`，提取逻辑到 `stores/` 或 `services/` |
+| `stores/*.ts` | 150 行 | 按业务领域拆分为多个 store（如 `repoStore`、`commitStore`） |
+| `services/*.ts` | 200 行 | 按功能拆分为多个 service 文件（如 `svn-status.ts`、`svn-commit.ts`） |
+| `types/*.ts` | 100 行 | 按模块拆分（如 `types/repo.ts`、`types/commit.ts`） |
+| `utils/*.ts` | 100 行 | 按功能拆分（如 `utils/format.ts`、`utils/path.ts`） |
+| `router/index.ts` | 80 行 | 提取路由模块到 `router/modules/` 目录 |
+
+## 拆分信号
+
+不只看行数，出现以下情况也应立即拆分：
+
+1. **职责混杂** — 一个文件同时处理 SVN 状态获取、提交记录解析、文件过滤 → 拆
+2. **多处 import 同一文件的特定函数** — 说明这些函数属于独立模块
+3. **多人同时编辑同一文件的不同功能** — 说明文件太大，应该按功能拆分
+4. **修改一个功能需要滚动 3 屏以上** — 说明文件可读性已下降，需提取方法或模块
+
+## 拆分方式
+
+```
+# 拆分前
+services/svn-service.ts        ← 300 行，包含 status/commit/log/diff
+
+# 拆分后
+services/svn/
+├── index.ts                   # 统一导出
+├── status.ts                  # svn status 相关
+├── commit.ts                  # svn commit 相关
+└── log.ts                     # svn log 相关
+```
+
+原则：**拆出目录而不是拆出平铺文件**。功能单元超过 3 个文件时建目录，用 `index.ts` 统一导出。
+
+---
+
+# 08-死代码预防
+
+## 检测手段
+
+| 类型 | 检测工具 | 触发时机 |
+|------|----------|----------|
+| 未使用的 export | `knip` | 手动运行 `cnpm run knip` |
+| 未使用的 import | vue-tsc / TypeScript | `cnpm run lint` 时自动检查 |
+| 未引用的组件文件 | `knip` | 手动运行 |
+| 无用的 Pinia store / service | 人工 + `knip` | 删除功能时 trace 调用链 |
+| 未被前端调用的 Tauri Command | 人工 | 删除功能时同步检查 `lib.rs` 注册列表 |
+
+## 流程规则
+
+**删除一个功能时，必须做以下检查：**
+
+1. **入口追踪** — 找到功能入口（路由页面或菜单项），确认要删除的起点
+2. **自上而下清理**：
+   ```
+   pages/       → 删除整个页面目录
+   router/      → 删除对应路由配置
+   stores/      → 删除对应 store（如不再被其他组件引用）
+   services/    → 删除对应 service 文件
+   components/  → 删除该页面独有的组件（`components/svn/` 中的通用组件确认无其他引用再删）
+   types/       → 删除该功能专用的类型定义
+   ```
+3. **按文件系统删除** — 删除文件比注释代码更安全，git 可找回
+4. **运行验证**：
+   ```bash
+   cnpm run lint          # TypeScript 类型检查 + 未使用 import 检查
+   cnpm run knip          # 检测未使用的 exports
+   ```
+
+## Tauri Command 同步
+
+前端删除功能后，同步检查 `src-tauri/src/lib.rs` 中 `generate_handler!` 宏里的对应命令是否也需要移除，同时删除对应的 `commands/*.rs` 文件。
+
+---
+
+# 09-文件级编码约定
 
 - 文件编码：UTF-8（无 BOM）
 - 缩进：2 空格
