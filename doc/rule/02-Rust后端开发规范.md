@@ -10,6 +10,7 @@
 | 日志 | tauri-plugin-log + log crate |
 | 持久化 | tauri-plugin-store |
 | 序列化 | serde + serde_json |
+| 错误处理 | thiserror |
 | 异步 | tokio（Tauri 内置） |
 
 ## 项目结构
@@ -61,6 +62,7 @@ lib.rs      → 应用入口：注册 plugin 和 command
 ```rust
 // commands/repo.rs
 use serde::Deserialize;
+use crate::models::error::AppError;
 use crate::services::svn;
 
 #[derive(Deserialize)]
@@ -69,9 +71,9 @@ pub struct OpenRepoParams {
 }
 
 #[tauri::command]
-pub async fn open_repo(params: OpenRepoParams) -> Result<String, String> {
+pub async fn open_repo(params: OpenRepoParams) -> Result<String, AppError> {
     if params.path.is_empty() {
-        return Err("仓库路径不能为空".into());
+        return Err(AppError::InvalidInput("仓库路径不能为空".into()));
     }
     svn::info(&params.path).await
 }
@@ -81,7 +83,7 @@ pub async fn open_repo(params: OpenRepoParams) -> Result<String, String> {
 
 - **Command 函数必须是异步的**（`async fn`）
 - 参数较多时（≥2 个）使用 `#[derive(Deserialize)]` 结构体，避免逐个参数传递
-- 返回值统一使用 `Result<T, String>`，错误信息用中文返回以便前端直接展示
+- 返回值统一使用 `Result<T, AppError>`，错误信息通过 `AppError` 的 `Display` 实现返回给前端
 - 一个 Command 只做一件事，不做"万能接口"
 - Command 内部只做参数校验 + 调用 service，不做业务处理
 
@@ -105,51 +107,48 @@ pub fn run() {
 
 # 03-错误处理规范
 
-## 错误类型
+## 错误类型（使用 thiserror）
+
+使用 `thiserror` crate 定义错误类型，返回给前端的错误信息通过 `Display` 实现自动转换。
 
 ```rust
-// models/error.rs
-use std::fmt;
+// Cargo.toml 依赖
+// thiserror = "2"
 
-#[derive(Debug)]
+// models/error.rs
+use thiserror::Error;
+
+#[derive(Error, Debug)]
 pub enum AppError {
     /// SVN 命令执行失败
+    #[error("SVN 执行失败: {0}")]
     SvnCommand(String),
+
     /// 参数校验失败
+    #[error("参数错误: {0}")]
     InvalidInput(String),
+
     /// 文件系统错误
-    Io(std::io::Error),
+    #[error("文件系统错误: {0}")]
+    Io(#[from] std::io::Error),
+
     /// 仓库操作异常
+    #[error("仓库异常: {0}")]
     Repo(String),
-}
 
-impl fmt::Display for AppError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            AppError::SvnCommand(msg) => write!(f, "SVN 执行失败: {}", msg),
-            AppError::InvalidInput(msg) => write!(f, "参数错误: {}", msg),
-            AppError::Io(e) => write!(f, "文件系统错误: {}", e),
-            AppError::Repo(msg) => write!(f, "仓库异常: {}", msg),
-        }
-    }
-}
-```
-
-## 错误转换为前端错误
-
-```rust
-impl From<AppError> for String {
-    fn from(e: AppError) -> Self {
-        e.to_string()
-    }
+    /// 超时
+    #[error("操作超时: {0}")]
+    Timeout(String),
 }
 ```
 
 ## 规范
 
 - 自定义 `AppError` 枚举，覆盖所有业务错误场景
-- 使用 `thiserror` crate 简化错误定义（推荐）
+- 使用 `thiserror` crate 定义错误，通过 `#[error("...")]` 指定显示格式
+- Command 返回 `Result<T, AppError>`，Tauri 自动通过 `Display` 将错误信息发送给前端
 - 关键路径必须记录日志：`log::error!("...")` / `log::info!("...")`
+- 不需要为 AppError 额外实现 `From` 或 `Into` trait，`thiserror` 自动处理
 
 ---
 
@@ -163,10 +162,12 @@ SVN 命令应在 `services/svn.rs` 中统一封装，上层不直接执行子进
 // services/svn.rs
 use std::process::Command;
 use log;
+use tokio::time::{timeout, Duration};
+use tokio::task::spawn_blocking;
 use crate::models::error::AppError;
 
-/// 执行 SVN 命令并返回 stdout
-fn run_svn(args: &[&str]) -> Result<String, AppError> {
+/// 同步执行 SVN 命令（在 spawn_blocking 中运行）
+fn run_svn_sync(args: &[&str]) -> Result<String, AppError> {
     log::info!("execute: svn {}", args.join(" "));
 
     let output = Command::new("svn")
@@ -182,14 +183,26 @@ fn run_svn(args: &[&str]) -> Result<String, AppError> {
     }
 }
 
+/// 异步执行 SVN 命令（带超时控制）
+async fn run_svn(args: &[&str]) -> Result<String, AppError> {
+    let args: Vec<String> = args.iter().map(|s| s.to_string()).collect();
+
+    timeout(Duration::from_secs(60), spawn_blocking(move || {
+        run_svn_sync(&args.iter().map(|s| s.as_str()).collect::<Vec<&str>>())
+    }))
+    .await
+    .map_err(|_| AppError::Timeout("SVN 命令执行超时（60秒）".into()))?
+    .map_err(|e| e)?  // 展开 spawn_blocking 的 JoinError
+}
+
 /// 获取仓库信息
-pub fn info(path: &str) -> Result<String, AppError> {
-    run_svn(&["info", "--xml", path])
+pub async fn info(path: &str) -> Result<String, AppError> {
+    run_svn(&["info", "--xml", path]).await
 }
 
 /// 获取文件状态
-pub fn status(path: &str) -> Result<String, AppError> {
-    run_svn(&["status", "--xml", path])
+pub async fn status(path: &str) -> Result<String, AppError> {
+    run_svn(&["status", "--xml", path]).await
 }
 ```
 
@@ -303,38 +316,112 @@ pub use log::get_log;
 
 ---
 
-# 07-死代码预防
+# 07-死代码预防（AI 自动化）
 
-## Rust 编译器的检测能力
+> 本项目为 AI 编程模式，死代码清理由 AI 自动执行，无需人工检查。
 
-| 代码类型 | 编译器行为 | 说明 |
-|----------|-----------|------|
-| 未使用的 `pub` 函数 | **不报错** | Rust 假设 `pub` 可能被外部 crate 调用 |
-| 未使用的私有函数/变量 | `warning: unused` | 默认产生警告 |
-| 未使用的 `use` 导入 | `warning: unused import` | 默认产生警告 |
-| 未使用的 `struct` 字段 | `warning: field is never read` | 默认产生警告 |
-| 未使用的 Tauri Command | **不报错** | Command 通过 `generate_handler!` 宏注册，编译器认为它被 "调用了" |
+## 编译器可以自动检测的
 
-## 必须人工检查的场景（编译器抓不到）
+| 代码类型 | 编译器行为 | AI 策略 |
+|----------|-----------|---------|
+| 未使用的私有函数/变量 | `warning: unused` | AI 收到警告即删除 |
+| 未使用的 `use` 导入 | `warning: unused import` | AI 收到警告即删除 |
+| 未使用的 `struct` 字段 | `warning: field is never read` | AI 收到警告即删除 |
 
-1. **`generate_handler!` 中的命令列表** — 前端不再调用了，但 Rust 编译器认为它还在用
-2. **`pub` 函数** — 即使没有被任何地方调用，编译器也不会报 `dead_code`
-3. **Tauri Plugin 注册** — 不再需要的 plugin 忘记移除
+编译器产生警告的，AI 在 `cargo build` 后读到输出即清理，**不留警告过夜**。
 
-## 删除功能的 Checklist
+## 编译器检测不到的（AI 需主动检查的）
 
-```
-1. lib.rs → 从 generate_handler! 中移除对应命令
-2. lib.rs → 移除不再需要的 plugin 注册
-3. commands/ → 删除对应的 .rs 文件，清理 mod.rs
-4. services/ → 删除对应的 .rs 文件，清理 mod.rs
-5. models/ → 删除对应的 .rs 文件，清理 mod.rs
-6. Cargo.toml → 检查是否有不再使用的依赖
-7. cargo build → 确认编译通过无警告
-```
+| 代码类型 | 原因 | AI 检查方式 |
+|----------|------|-------------|
+| `pub` 函数 | 编译器假设被外部 crate 调用 | 删除功能时回溯调用链 |
+| 已注册的 Tauri Command | `generate_handler!` 让编译器认为被调用 | 检索前端 `invoke('xxx')` 字符串是否存在 |
+| 已注册的 Tauri Plugin | 注册即被认为"在用" | 检索前端是否使用了对应 API |
 
-检查命令：
+## AI 自动清理流程（删除一个功能时）
+
+### 步骤一：删除入口 + 启动检测工具链
+
 ```bash
-cargo build 2>&1 | grep -E "warning: unused|warning: field"  # 列出所有未使用警告
-cargo +nightly udeps                                            # 检测未使用的 Cargo 依赖（需 nightly）
+# AI 收到指令后，先删除入口文件/命令
+# 然后立即运行检测
+cargo build 2>&1 | grep -E "warning: unused|warning: field"
+```
+
+### 步骤二：逐层递归清理
+
+删除入口后，对编译器警告逐条处理：
+
+```bash
+# 1. 删除未使用的 use 导入和私有成员
+# 2. 重新 cargo build
+# 3. 重复直到零警告
+```
+
+### 步骤三：AI 主动清理 pub 函数和 Tauri Command
+
+对于编译器无法检测的部分，AI 执行以下检查：
+
+```
+1. 检索 src-tauri/src/lib.rs 中 generate_handler! 列表
+2. 对每个命令，在 src/services/ 和 src/ 下搜索 invoke("命令名")
+3. 未找到前端的 invoke → 删除该 command 文件
+4. 检查 lib.rs 中的 plugin 注册 → 前端是否还在使用？
+5. 删除功能后检查 Cargo.toml → 是否有 crate 只剩这一个使用者？
+```
+
+### 步骤四：全量验证
+
+```bash
+cargo build                    # 零警告 → 通过
+cargo test                     # 测试通过
+```
+
+## 编码阶段预防规则
+
+AI 在编码过程中自动遵守：
+
+1. **不注释代码块** — 不需要的代码直接 `rm`，git 可找回
+2. **重构时即时清理旧路径** — 重命名函数后删除旧的 `pub fn` 定义
+3. **`pub` 可见性只给真正需要的** — 能用 `pub(crate)` 就不用 `pub`，减少编译器盲区
+4. **功能分支合并前** — 在分支上运行 `cargo build` 检查零警告
+
+## 注意事项（仅 AI 可做，人类不需要关心）
+
+`generate_handler!` 中的命令列表是 AI 的死角——AI 注册命令时可能忘记添加，删除时可能忘记移除。AI 应建立习惯：
+
+- 注册新命令时，**同时**更新 `lib.rs` 的 `generate_handler!`
+- 删除命令文件时，**同时**从 `generate_handler!` 中移除对应条目
+
+---
+
+# 08-测试策略
+
+## 单元测试
+
+- 单元测试写在模块末尾 `#[cfg(test)] mod tests { ... }` 块中
+- 纯逻辑函数（工具函数、数据解析）必须有单元测试
+- Service 层涉及 SVN 调用的，使用 mock 替代真实命令
+
+## SVN 集成测试
+
+使用 `svnadmin create` 创建临时测试仓库进行集成测试：
+
+```rust
+#[cfg(test)]
+mod integration_tests {
+    use std::process::Command;
+    use tempfile::TempDir;  // 需在 Cargo.toml 添加 dev-dependency
+
+    fn setup_test_repo() -> TempDir {
+        let dir = TempDir::new().unwrap();
+        Command::new("svnadmin")
+            .args(["create", dir.path().to_str().unwrap()])
+            .output()
+            .unwrap();
+        dir
+    }
+
+    // 测试命令集成
+}
 ```

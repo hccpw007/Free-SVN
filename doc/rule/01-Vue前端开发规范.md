@@ -115,13 +115,13 @@ const emit = defineEmits<{
 
 - 启用 `strict: true`
 - **禁止使用 `any`**。不确定的类型用 `unknown` 并做类型收窄
-- 接口命名以 `I` 开头：`interface IRepoInfo { ... }`
+- 接口命名使用 PascalCase：`interface RepoInfo { ... }`
 - 枚举命名使用 PascalCase：`enum RepoStatus { ... }`
 - 类型定义集中在 `types/` 目录，按模块拆分文件
 
 ```ts
 // types/repo.ts
-export interface IRepoInfo {
+export interface RepoInfo {
   path: string
   url: string
   status: RepoStatus
@@ -179,7 +179,7 @@ import { ref } from 'vue'
 
 export const useRepoStore = defineStore('repo', () => {
   const currentPath = ref('')
-  const fileList = ref<IFileItem[]>([])
+  const fileList = ref<FileItem[]>([])
 
   async function loadFiles(path: string) {
     // 调用 services/ 中的业务函数
@@ -231,7 +231,7 @@ const routes: RouteRecordRaw[] = [
 | 目录名 | kebab-case | `svn-tree/` `commit-dialog/` |
 | TS 文件 | kebab-case | `repo-store.ts` `svn-service.ts` |
 | 变量/函数 | camelCase | `currentPath` `loadFiles()` |
-| 接口 | PascalCase + I 前缀 | `IRepoInfo` `ICommitLog` |
+| 接口 | PascalCase | `RepoInfo` `CommitLog` |
 | 枚举 | PascalCase | `RepoStatus` `FileState` |
 | 常量 | UPPER_SNAKE_CASE | `MAX_HISTORY_COUNT` |
 | Pinia Store | useXxxStore | `useRepoStore` |
@@ -278,42 +278,81 @@ services/svn/
 
 ---
 
-# 08-死代码预防
+# 08-死代码预防（AI 自动化）
 
-## 检测手段
+> 本项目为 AI 编程模式，死代码清理由 AI 自动执行，无需人工检查。
 
-| 类型 | 检测工具 | 触发时机 |
-|------|----------|----------|
-| 未使用的 export | `knip` | 手动运行 `cnpm run knip` |
-| 未使用的 import | vue-tsc / TypeScript | `cnpm run lint` 时自动检查 |
-| 未引用的组件文件 | `knip` | 手动运行 |
-| 无用的 Pinia store / service | 人工 + `knip` | 删除功能时 trace 调用链 |
-| 未被前端调用的 Tauri Command | 人工 | 删除功能时同步检查 `lib.rs` 注册列表 |
+## 检测工具链
 
-## 流程规则
+| 检测项 | 工具 | 命令 |
+|--------|------|------|
+| 未使用的 export/文件/组件 | `knip` | `cnpm run knip` |
+| 未使用的 import / 类型错误 | vue-tsc | `cnpm run lint` |
+| 未使用的 Tauri Command | 自定义脚本 knip.json | 内置在 knip 配置中 |
 
-**删除一个功能时，必须做以下检查：**
+## AI 自动清理流程
 
-1. **入口追踪** — 找到功能入口（路由页面或菜单项），确认要删除的起点
-2. **自上而下清理**：
-   ```
-   pages/       → 删除整个页面目录
-   router/      → 删除对应路由配置
-   stores/      → 删除对应 store（如不再被其他组件引用）
-   services/    → 删除对应 service 文件
-   components/  → 删除该页面独有的组件（`components/svn/` 中的通用组件确认无其他引用再删）
-   types/       → 删除该功能专用的类型定义
-   ```
-3. **按文件系统删除** — 删除文件比注释代码更安全，git 可找回
-4. **运行验证**：
-   ```bash
-   cnpm run lint          # TypeScript 类型检查 + 未使用 import 检查
-   cnpm run knip          # 检测未使用的 exports
-   ```
+删除一个功能时，AI 必须按以下顺序执行，不可跳过任何一步：
 
-## Tauri Command 同步
+### 步骤一：上游入口删除（由开发者指令触发）
 
-前端删除功能后，同步检查 `src-tauri/src/lib.rs` 中 `generate_handler!` 宏里的对应命令是否也需要移除，同时删除对应的 `commands/*.rs` 文件。
+```bash
+# AI 收到"删除 XXX 功能"指令后，先删除入口点
+rm -rf src/pages/xxx/          # 页面目录
+src/router/index.ts            # 删除对应路由配置
+```
+
+### 步骤二：自动递归清理
+
+删除入口后立即运行检测工具，让工具报告哪些代码不再被引用：
+
+```bash
+cnpm run lint                    # 类型检查 → 识别未使用的 import
+cnpm run knip                    # 识别未使用的 export / 文件 / 组件
+```
+
+根据 knip/vue-tsc 输出**自动删除**未被引用的文件：
+
+```bash
+# knip 输出例如: "src/services/xxx.ts" → 未使用
+# AI 自动执行:
+rm src/services/xxx.ts
+# 继续运行 knip，直到零报告
+```
+
+### 步骤三：迭代清除 — 循环直到清白
+
+```bash
+while knip 报告还有未使用代码; do
+  1. 读取 knip 报告，定位未使用的文件/导出
+  2. 删除对应文件或 export
+  3. 重新运行 `cnpm run knip`
+done
+```
+
+### 步骤四：全量验证
+
+```bash
+cnpm run lint       # 零错误 → 通过
+cnpm run build      # 构建通过
+```
+
+### 步骤五：同步后端
+
+前端清理完成后，自动检查 Rust 端残余：
+
+1. 检索 `src-tauri/src/lib.rs` 中 `generate_handler!` 列表
+2. 检查 `commands/` 目录中每个命令是否被前端（`services/`）通过 `invoke` 调用
+3. 发现孤立命令 → 通知开发者后端侧也需清理，或由 Rust 规范中的死代码流程自动处理
+
+## 死代码预防（编码阶段）
+
+AI 在编码过程中遵循以下规则避免产生死代码：
+
+1. **不注释代码块** — 不需要的代码直接删除，git 历史可找回
+2. **重命名/重构时即时清理旧文件** — 重命名组件后立即删除旧的 `.vue` 文件
+3. **测试文件同步** — 删除源文件后检查同名 `*.spec.ts` / `*.test.ts` 是否也需要删除
+4. **功能分支合并前** — 在 PR 分支上运行 `cnpm run knip`，确保没有引入死代码
 
 ---
 
@@ -325,3 +364,35 @@ services/svn/
 - 每行最长 100 字符
 - 文件末尾保留一个空行
 - import 顺序：Vue → 第三方库 → 内部模块，每组空行分隔
+
+---
+
+# 10-测试策略
+
+## 单元测试
+
+- 使用 Vitest + Vue Test Utils 编写测试
+- **测试文件与被测文件保持同级**，以 `.test.ts` 后缀命名
+- 组件测试：验证 props 渲染、emit 是否触发、插槽内容
+  ```ts
+  // components/RepoTree.test.ts
+  import { mount } from '@vue/test-utils'
+  import { describe, it, expect } from 'vitest'
+  import RepoTree from './RepoTree.vue'
+
+  it('renders repo path', () => {
+    const wrapper = mount(RepoTree, { props: { path: '/test' } })
+    expect(wrapper.text()).toContain('/test')
+  })
+  ```
+- Store 测试：直接调用 store action，验证 state 变化
+- Service 测试：测试纯业务逻辑函数（不涉及 Tauri invoke 的部分）
+
+## 测试覆盖率目标
+
+| 类型 | 目标 |
+|------|------|
+| 工具函数（`utils/`） | ≥ 90% |
+| Service 逻辑（`services/`） | ≥ 70% |
+| 组件渲染 | 核心组件覆盖 |
+| 路由/页面级 | E2E
