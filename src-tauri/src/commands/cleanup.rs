@@ -90,9 +90,4 @@ mod tests {
         let params: ExportParams = serde_json::from_str(json).unwrap();
         assert_eq!(params.revision, Some(42));
     }
-
-    #[test]
-    fn test_cleanup_params_deserialize() {
-        // cleanup_workspace 接收 String 而非 struct
-    }
 }

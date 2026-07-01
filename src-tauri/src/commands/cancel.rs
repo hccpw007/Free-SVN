@@ -45,11 +45,6 @@ pub async fn cancel_operation(
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-
-    #[test]
-    fn test_cancel_operation_types() {
-        // 验证返回类型正确
-        // 实际执行依赖运行时状态，单元测试仅验证签名
-    }
+    // cancel_operation 依赖运行时状态（当前工作副本路径、运行中的子进程），
+    // 在端到端测试中验证，单元测试仅确保类型签名正确。
 }
