@@ -18,23 +18,24 @@
 
 ```
 src/
-├── assets/              # 静态资源（图片、字体、图标等）
-├── components/          # 通用可复用组件
-│   ├── common/          #   跨业务通用组件
-│   └── svn/             #   SVN 业务专用组件
-├── dialogs/             # 模态对话框组件（检出/切换/合并向导等）
-├── layouts/             # 布局组件
-├── pages/               # 页面级组件
-├── stores/              # Pinia 状态仓库
-├── services/            # 业务逻辑层（封装 Tauri invoke）
-├── types/               # TypeScript 类型定义
-├── utils/               # 纯工具函数
-├── locales/             # i18n 语言包
-├── router/              # 路由配置
-├── fonts/               # JetBrains Mono 字体文件（打包到 Tauri resources）
-├── App.vue              # 根组件（仅 <RouterView />）
-├── main.ts              # 应用入口
-└── style.css            # Tailwind 入口 + @theme Token + @font-face
+├── assets/               # 静态资源（图片、字体、图标等）
+├── components/           # 通用可复用组件 + 对话框组件
+│   ├── common/           #   跨业务通用组件
+│   ├── svn/              #   SVN 业务专用组件
+│   └── dialogs/          #   模态对话框组件
+├── composables/          # 组合式函数（带状态的复用逻辑）
+├── layouts/              # 布局组件
+├── pages/                # 页面级组件
+├── stores/               # Pinia 状态仓库
+├── services/             # 业务逻辑层（封装 Tauri invoke）
+├── types/                # TypeScript 类型定义
+├── utils/                # 纯工具函数
+├── locales/              # i18n 语言包
+├── router/               # 路由配置
+├── fonts/                # JetBrains Mono 字体文件（打包到 Tauri resources）
+├── App.vue               # 根组件（仅 <RouterView />）
+├── main.ts               # 应用入口
+└── style.css             # Tailwind 入口 + @theme Token + @font-face
 ```
 
 **组件目录树**（与交互设计文档一致）：
@@ -64,7 +65,7 @@ components/svn/
 ├── LogDetail.vue                 # 单条日志详情
 ├── ProgressOverlay.vue           # 操作进度遮罩（含 [取消] 按钮）
 
-dialogs/
+components/dialogs/
 ├── CheckoutDialog.vue            # 检出对话框
 ├── SwitchDialog.vue              # 切换分支对话框
 ├── BranchTagDialog.vue           # 分支/标签创建对话框
@@ -96,7 +97,8 @@ dialogs/
 
 - `pages/` → 组合组件，禁止写业务逻辑
 - `components/` → UI 单元，接收 props、抛出 emit
-- `dialogs/` → 模态对话框，使用 `<el-dialog>` 实现
+- `components/dialogs/` → 模态对话框，使用 `<el-dialog>` 实现
+- `composables/` → 组合式函数，封装带状态的复用逻辑
 - `stores/` → 跨组件共享状态
 - `services/` → 无状态业务逻辑，封装 Tauri invoke
 - `utils/` → 纯函数
@@ -207,7 +209,7 @@ dialogs/
 
 | 组件 | 场景 | 定制 |
 |------|------|------|
-| `<el-table>` | 文件列表、日志表 | `size="small"` 紧凑模式，行高 40px |
+| `<el-table>` | 文件列表、日志表 | `size="small"` 紧凑模式，行高 40px；10000+ 行时使用 `<el-table-v2>` 虚拟滚动表格 |
 | `<el-dialog>` | 所有对话框 | 默认支持遮罩点击关闭；**操作进行中的对话框禁止遮罩关闭** |
 | `<el-input>` | 输入框 | `size="default"` |
 | `<el-select>` | 下拉选择 | 全局使用 |
@@ -484,6 +486,12 @@ ProgressOverlay 展示期间：
 
 **Diff 面板键盘导航：** `Ctrl+Down` / `Ctrl+Up` 导航差异块；`Ctrl+W`/`Esc` 关闭面板。
 
+**快捷键优先级规则（从高到低）：**
+1. 对话框内部（`Enter` 确认、`Esc` 关闭）
+2. 面板内部（`Ctrl+F` diff 搜索、`Ctrl+Down/Up` 导航）
+3. 全局（`Ctrl+D` 打开差异、`Ctrl+R` 刷新）
+4. ProgressOverlay 展示期间：除 `Esc` 外所有快捷键不生效
+
 ---
 
 # 04.5-对话框规范
@@ -499,6 +507,12 @@ ProgressOverlay 展示期间：
 **必填标记：** 必填输入项右侧显示 `*`。
 
 **确认对话框：** 所有破坏性操作（还原/删除/切换分支等）必须使用确认对话框。确认按钮使用 `type="danger"` 样式。
+
+**对话框互斥规则：**
+- ProgressOverlay 展示期间，禁止打开任何对话框
+- 同一时间只允许一个模态对话框打开（`el-dialog` 默认行为）
+- 检出/切换/合并向导/更新到版本 互斥（均涉及写操作）
+- 通用确认对话框（ConfirmDialog）不与操作对话框互斥，可在操作对话框之上叠加
 
 ---
 
@@ -541,6 +555,108 @@ export const useRepoStore = defineStore('repo', () => {
 - 一个 store 文件只包含一个 `defineStore`
 - Store 只放**跨组件共享**的状态，组件私有状态就地管理
 
+### Store 状态接口定义
+
+每个 Store 必须定义明确的状态接口。四个 Store 的最小状态结构：
+
+```ts
+// stores/workspace.ts — 工作副本状态
+export const useWorkspaceStore = defineStore('workspace', () => {
+  const currentPath = ref<string>('')           // 当前工作副本路径
+  const recentWorkspaces = ref<string[]>([])     // 最近打开列表（最多 20 条）
+  const branchName = ref<string>('')             // 当前分支名
+  const currentRevision = ref<number>(0)          // 当前版本号
+  const lastCommitTime = ref<string>('')          // 最新提交时间
+  const svnVersion = ref<string>('')              // 内置 svn 版本
+  const isOffline = ref<boolean>(false)           // 网络状态（影响服务端操作按钮）
+  const isLoading = ref<boolean>(false)           // 工作副本加载中
+
+  // 切换工作副本时重置（保留 recentWorkspaces）
+  function reset() { currentPath = ''; branchName = ''; currentRevision = 0; /* ... */ }
+
+  async function refresh() { /* 保持选中状态，不重置表单 */ }
+  async function switchWorkspace(path: string) { reset(); /* 切换到新路径 */ }
+})
+```
+
+```ts
+// stores/fileList.ts — 文件列表状态
+export const useFileListStore = defineStore('fileList', () => {
+  const files = ref<FileItem[]>([])               // 文件列表
+  const selectedPaths = ref<Set<string>>(new Set()) // 选中文件路径集合
+  const searchQuery = ref<string>('')               // 搜索关键字
+  const filterStatus = ref<string>('all')            // 筛选：全部/已修改/新增/冲突
+  const sortField = ref<string>('status')            // 排序字段
+  const sortOrder = ref<'asc'|'desc'>('asc')         // 排序方向
+  const isOperationRunning = ref<boolean>(false)     // 全局操作进行中（ProgressOverlay 期间禁用工具栏和快捷键）
+
+  // 自动刷新策略：refresh() 时保留 selectedPaths、searchQuery、filterStatus
+  // 不清除用户已勾选的文件和已输入的搜索条件
+  async function refresh() { /* 刷新列表，保留 UI 状态 */ }
+  function reset() { files = []; selectedPaths = new Set(); /* 切换工作副本时调用 */ }
+})
+```
+
+```ts
+// stores/settings.ts — 设置状态
+export const useSettingsStore = defineStore('settings', () => {
+  const defaultCheckoutDir = ref<string>('')
+  const globalIgnorePattern = ref<string>('')
+  const diffTool = ref<string>('builtin')
+  const mergeTool = ref<string>('builtin')
+  const showUnversioned = ref<boolean>(true)
+  const language = ref<string>('system')
+  const autoStart = ref<boolean>(false)
+
+  // settings 在切换工作副本时不重置（全局设置）
+  // 仅在应用退出时持久化到 tauri-plugin-store
+})
+```
+
+```ts
+// stores/svn.ts — SVN 操作封装
+export const useSvnStore = defineStore('svn', () => {
+  // 封装所有 Tauri invoke 调用，统一 try-catch 和错误码翻译
+  async function checkStatus(path: string): Promise<FileItem[]> { /* ... */ }
+  async function commit(paths: string[], message: string): Promise<number> { /* ... */ }
+  // 每个方法返回 Promise，错误统一转换为友好消息
+})
+```
+
+### 选择状态传递规则
+
+提交面板的选择状态遵循以下规则（交互设计 §3.4）：
+
+1. 进入提交面板时**继承**主视图的 `fileListStore.selectedPaths`
+2. 提交面板内修改选择**不影响**主视图的选中状态
+3. 提交完成后**清除**两个视图的选中状态
+
+### 自动刷新策略
+
+自动刷新由以下时机触发：
+
+| 时机 | 刷新内容 | 行为 |
+|------|---------|------|
+| 窗口获得焦点（focus 事件） | 文件列表 | 保留 selectedPaths、searchQuery、filterStatus |
+| 提交完成后 | 文件列表 | 清除选中状态 |
+| 更新/还原/切换分支后 | 文件列表 | 保留搜索/筛选但不保留选中 |
+| 切换工作副本后 | 全部状态 | workspace + fileList 调用 reset() |
+
+刷新期间不重置用户正在进行的操作（如编辑提交日志）。
+
+### Store 重置约定
+
+切换工作副本时各 Store 行为：
+
+| Store | 切换工作副本时 | 应用退出时 |
+|-------|--------------|-----------|
+| `workspace` | 重置（保留 recentWorkspaces） | 持久化：path、recentWorkspaces |
+| `fileList` | 重置 | 不持久化 |
+| `settings` | 保留（全局设置） | 持久化 |
+| `svn` | 保留（无状态封装） | 不持久化 |
+
+每个 Store 实现 `reset()` 方法，切换时统一调用。
+
 ## 路由规范
 
 ```ts
@@ -576,8 +692,9 @@ const routes: RouteRecordRaw[] = [
 |------|------|------|
 | 组件文件 | PascalCase | `RepoTree.vue` `CommitDialog.vue` |
 | 页面文件 | PascalCase + 后缀 Page | `HomePage.vue` `LogPage.vue` |
-| 目录名 | kebab-case | `svn-tree/` `commit-dialog/` |
-| TS 文件 | kebab-case | `repo-store.ts` `svn-service.ts` |
+| 目录名 | kebab-case | `svn-tree/` `commit-dialog/` `dialogs/` |
+| TS 文件 | kebab-case | `repo-store.ts` `svn-service.ts` `use-auto-refresh.ts` |
+| 组合式函数 | useXxx | `useKeyboardShortcuts` `useFileSelection` |
 | 变量/函数 | camelCase | `currentPath` `loadFiles()` |
 | 接口 | PascalCase | `RepoInfo` `CommitLog` |
 | 枚举 | PascalCase | `RepoStatus` `FileState` |
@@ -592,12 +709,31 @@ const routes: RouteRecordRaw[] = [
 
 | 类型 | 行数警戒线 | 达到后如何拆分 |
 |------|-----------|---------------|
-| `.vue` 组件 | 400 行 | 提取子组件到 `components/`，提取逻辑到 `stores/` 或 `services/` |
-| `stores/*.ts` | 150 行 | 按业务领域拆分为多个 store（如 `repoStore`、`commitStore`） |
+| `.vue` 组件 | 400 行 | 提取子组件到 `components/`，提取逻辑到 `stores/`、`services/` 或 `composables/` |
+| `stores/*.ts` | 150 行 | 按业务领域拆分为多个 store（如 `workspace.ts`、`fileList.ts`） |
 | `services/*.ts` | 200 行 | 按功能拆分为多个 service 文件（如 `svn-status.ts`、`svn-commit.ts`） |
-| `types/*.ts` | 100 行 | 按模块拆分（如 `types/repo.ts`、`types/commit.ts`） |
+| `composables/*.ts` | 100 行 | 按场景拆分（如 `useKeyboardShortcuts.ts`、`useFileSelection.ts`） |
+| `types/*.ts` | 100 行 | 按模块拆分（如 `types/svn.ts`、`types/settings.ts`） |
 | `utils/*.ts` | 100 行 | 按功能拆分（如 `utils/format.ts`、`utils/path.ts`） |
 | `router/index.ts` | 80 行 | 提取路由模块到 `router/modules/` 目录 |
+
+## Composables 目录
+
+`composables/` 目录用于封装带状态的复用逻辑（Vue 3 Composition API 的核心模式），区别于 `utils/`（纯函数）和 `stores/`（全局共享状态）。本项目中需要以下 composables：
+
+| 文件 | 场景 | 说明 |
+|------|------|------|
+| `useKeyboardShortcuts.ts` | 全局快捷键注册 | 支持作用域管理（对话框 > 面板 > 全局），`Esc` 关闭顶层元素 |
+| `useFileSelection.ts` | Shift+Click / Ctrl+Click 多选 | 封装选择逻辑，供 FileListTable 和提交面板共用 |
+| `useAutoRefresh.ts` | window focus 自动刷新 | 封装 Tauri window focus 事件监听 + 防抖 |
+| `useOperationGuard.ts` | 操作进行中全局禁用 | 读取 `fileListStore.isOperationRunning`，控制工具栏/快捷键/操作按钮 |
+| `useNetworkStatus.ts` | 网络可达性检测 | 每个 Command 调用前后端网络检测，更新 `workspaceStore.isOffline` |
+
+**判断是否放入 composables 的标准：**
+- 有状态但非全局 → `composables/`
+- 跨多个组件复用的纯逻辑 → `composables/`
+- 无状态的纯函数 → `utils/`
+- 全局共享状态 → `stores/`
 
 ## 拆分信号
 

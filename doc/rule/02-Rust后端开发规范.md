@@ -53,6 +53,12 @@ src-tauri/src/
 ├── services/                      # 业务逻辑层（目前为空，SVN 逻辑在 svn/ 模块中）
 │   └── mod.rs
 │
+├── tools/                          # 外部工具调用（差异工具/合并工具/工具路径检测）
+│   ├── mod.rs
+│   ├── differ.rs                   #   外部差异工具
+│   ├── merger.rs                   #   外部合并工具
+│   └── resolver.rs                 #   工具路径检测与回退
+│
 ├── shell_integration/             # 右键菜单管理
 │   ├── mod.rs
 │   ├── macos.rs                   #   macOS Finder 扩展
@@ -169,6 +175,54 @@ pub async fn get_status(params: StatusParams) -> Result<SvnStatusOutput, AppErro
 | cancel_operation | 无（取消当前操作） | `commands/cancel.rs` |
 | get_logs | 无 | `commands/logs.rs` |
 | export_logs | target_path | `commands/logs.rs` |
+
+## Tauri Event 协议
+
+长操作（checkout/update/export/merge）通过 Tauri event 向前端推送进度。以下是完整事件协议：
+
+| 事件名 | 方向 | Payload | 触发时机 |
+|--------|------|---------|---------|
+| `operation:started` | 后端 → 前端 | `{ operation: "checkout" }` | 长操作开始时 |
+| `operation:progress` | 后端 → 前端 | `{ percent: 0-100, stage: "检出中...", fileCount: 42 }` | 每处理 N 个文件或阶段变更时 |
+| `operation:completed` | 后端 → 前端 | `{ result: "success"|"cancelled"|"error", detail: "..." }` | 操作正常完成/取消/失败 |
+| `operation:error` | 后端 → 前端 | `{ errorCode: "SVN_TIMEOUT", message: "..." }` | 操作过程中发生错误 |
+
+**Payload 类型定义（前后端同步）：**
+
+```ts
+// 前端: types/svn.ts
+interface OperationProgress {
+  operation: string    // checkout | update | export | merge
+  percent: number      // 0-100
+  stage: string        // 当前阶段描述
+  fileCount: number    // 已处理文件数
+}
+
+interface OperationResult {
+  result: 'success' | 'cancelled' | 'error'
+  detail?: string
+}
+```
+
+```rust
+// 后端: svn/types.rs
+#[derive(Serialize)]
+pub struct OperationProgress {
+    pub operation: String,
+    pub percent: u8,
+    pub stage: String,
+    pub file_count: u32,
+}
+```
+
+**前端监听：**
+```ts
+// services/svn.ts
+import { listen } from '@tauri-apps/api/event'
+
+listen<OperationProgress>('operation:progress', (event) => {
+  // 更新 ProgressOverlay
+})
 
 ## Command 规范
 
@@ -289,7 +343,7 @@ pub enum AppError {
     NotWorkingCopy,
 
     /// 有写操作正在进行中
-    #[error("SVN_OP_IN_PROGRESS")]
+    #[error("SVN_OPERATION_IN_PROGRESS")]
     OperationInProgress,
 
     /// 操作被用户取消
@@ -302,13 +356,46 @@ pub enum AppError {
 }
 ```
 
-## 规范
+## 统一错误码目录
 
-- 自定义 `AppError` 枚举，覆盖所有业务错误场景
-- 使用 `thiserror` crate 定义错误，通过 `#[error("ERROR_CODE: {0}")]` 指定错误码 key
-- Command 返回 `Result<T, AppError>`，Tauri 自动通过 `Display` 将错误码发送给前端
-- 关键路径必须记录日志：`log::error!("...")` / `log::info!("...")`
-- 不需要为 AppError 额外实现 `From` 或 `Into` trait，`thiserror` 自动处理
+以下为完整错误码表，后端 Rust 枚举和前端 `types/error-codes.ts` 同步维护：
+
+| 错误码 | Rust 枚举变体 | 含义 | 前端行为 |
+|--------|-------------|------|---------|
+| `SVN_EXEC_FAILED` | `SvnCommand` | SVN CLI 执行返回非零退出码 | 显示错误信息 + 日志详情 |
+| `SVN_PARSE_FAILED` | `ParseFailed` | SVN XML 输出解析失败 | 显示"解析错误" |
+| `INVALID_INPUT` | `InvalidInput` | 参数校验不通过 | 显示具体校验提示 |
+| `IO_ERROR` | `Io` | 文件系统错误 | 显示"文件系统错误" |
+| `REPO_ERROR` | `Repo` | 仓库操作异常 | 显示"仓库异常" |
+| `SVN_TIMEOUT` | `Timeout` | SVN 命令超时（默认 60s） | 显示"操作超时，请重试" |
+| `SVN_NOT_FOUND` | `SvnNotFound` | 内置 svn 未找到/不可执行 | 显示"svn 未找到，请重新安装 Free-SVN" |
+| `SVN_NOT_WORKING_COPY` | `NotWorkingCopy` | 路径不是 SVN 工作副本 | 显示"不是 SVN 工作副本" |
+| `SVN_OPERATION_IN_PROGRESS` | `OperationInProgress` | 写操作进行中，冲突 | 显示"操作进行中" |
+| `SVN_CANCELLED` | `Cancelled` | 用户取消操作 | 显示"操作已取消" |
+| `NETWORK_UNREACHABLE` | `NetworkUnreachable` | 网络不可达 | 禁用服务端按钮 + 显示"网络不可用" |
+
+**规则：** 前端 `types/error-codes.ts` 中定义与后端完全相同的错误码常量集合，每个错误码对应一条 i18n 翻译 key。
+
+### IPC 参数类型同步守则
+
+所有 Tauri Command 的**参数结构体和返回类型**必须在 Rust 侧和 TypeScript 侧同步定义：
+
+```rust
+// Rust: commands/status.rs
+#[derive(Deserialize)]
+pub struct StatusParams {
+    pub path: String,
+}
+```
+
+```ts
+// TypeScript: types/svn.ts
+export interface StatusParams {
+  path: string
+}
+```
+
+**规则：** 修改任何 Command 的签名（参数/返回值）时，必须同步更新另一侧的类型定义。若类型定义不一致导致运行时错误，视为 bug。
 
 ---
 
@@ -493,6 +580,72 @@ pub async fn check_network(server_url: &str) -> Result<(), AppError> {
 - 长操作循环中检测 `svn::executor::is_cancelled()`
 - 服务端操作前调用网络检测；status（纯本地）跳过检测
 - 使用内置 svn 可执行文件路径（通过 Tauri `resource_dir()` 获取），不依赖系统 svn
+
+---
+
+## 外部工具执行规范
+
+差异/合并工具（VS Code、Beyond Compare、Kaleidoscope 等）的调用封装在 `tools/` 模块中，与 SVN 命令独立：
+
+```
+tools/
+├── mod.rs               # 工具模块入口
+├── differ.rs            # 外部差异工具调用
+├── merger.rs            # 外部合并工具调用
+└── resolver.rs          # 工具路径检测与回退
+```
+
+```rust
+// tools/differ.rs
+pub fn open_external_diff(tool: &str, params: ExternalDiffParams) -> Result<(), AppError> {
+    // 与 svn::executor::run_svn 不同：
+    // 1. 不设置超时（用户可能长时间编辑）
+    // 2. stdout/stderr 不捕获（输出到工具窗口）
+    // 3. 返回工具进程的退出码
+    // 4. 执行前检测工具是否已安装
+}
+```
+
+**外部工具调用与 SVN 调用的区别：**
+
+| 特性 | SVN 执行 | 外部工具执行 |
+|------|---------|-------------|
+| 超时 | 60 秒默认 | 不设置超时 |
+| 输出捕获 | 捕获 stdout/stderr | 不捕获（窗口工具）|
+| 取消支持 | 可取消 | 不取消 |
+| 进程等待 | 等待完成 | 不等待（分离进程）|
+| 执行检查 | 内置 svn 路径 | 检测工具是否已安装 |
+
+**工具回退策略：** 当用户配置的外部工具未安装或执行失败时，自动回退到内置 diff2html，通过 toast 提示"已回退到内置差异工具"。
+
+---
+
+## 内置二进制工具管理
+
+bundled svn 二进制统一通过 `tools/` 模块管理。当前仅有 svn，后续可能增加其他工具。
+
+```rust
+// tools/mod.rs — 所有捆绑二进制文件的统一管理入口
+pub fn get_svn_path() -> PathBuf {
+    // 通过 Tauri resource_dir() 获取内置 svn 路径
+    // macOS: resources/svn/macos/svn
+    // Windows: resources/svn/win/svn.exe
+    // Linux: resources/svn/linux/svn
+}
+
+pub fn get_svn_version() -> Result<String, AppError> {
+    // 执行 svn --version --quiet 获取版本号
+}
+
+pub fn validate_svn() -> Result<(), AppError> {
+    // 启动时检测 svn 是否可执行
+    // 不可执行时返回 SvnNotFound
+}
+```
+
+**SVN 版本信息：** 底部状态栏和设置页关于区显示内置 svn 版本号（通过 `svn --version --quiet` 获取）。
+
+**许可证声明：** 应用关于页面和发行说明中声明 Apache 2.0 许可证和 Subversion 版权归属。
 
 ---
 
@@ -684,6 +837,7 @@ SVN 导出...              → 选择目录后导出
 |------|-----------|---------------|
 | `commands/*.rs` | 150 行 | 按业务领域拆文件（如 `commands/repo.rs`、`commands/status.rs`） |
 | `svn/*.rs` | 300 行 | 按功能拆分子模块（已按 executor/parser/queue/types 拆分） |
+| `tools/*.rs` | 100 行 | 每个外部工具类型一个文件（differ/merger/resolver） |
 | `models/*.rs` | 150 行 | 按实体拆分（如 `models/repo.rs`、`models/file.rs`） |
 | `logging/*.rs` | 100 行 | 日志写入和轮转分离 |
 | `config/*.rs` | 100 行 | 配置加载和存储操作分离 |
@@ -778,8 +932,53 @@ pub use executor::{status, info, commit, log, diff};
 
 # 08-测试策略
 
+## 单元测试
+
 - 单元测试写在模块末尾 `#[cfg(test)] mod tests { ... }` 中
-- 纯逻辑函数必须有单元测试
-- Service 层涉及 SVN 调用的用 mock
-- 集成测试用 `svnadmin create` 临时仓库 + `tempfile::TempDir`
+- 纯逻辑函数（解析器、参数校验、格式化）必须有单元测试
 - 测试文件中使用 `unwrap()` 和 `expect()` 是被允许的
+
+## 集成测试
+
+SVN 集成测试使用临时仓库：
+
+```rust
+#[cfg(test)]
+mod tests {
+    use tempfile::TempDir;
+    use std::process::Command;
+
+    fn setup_test_repo() -> TempDir {
+        let dir = TempDir::new().unwrap();
+        // svnadmin create 创建临时仓库
+        Command::new("svnadmin")
+            .args(["create", dir.path().to_str().unwrap()])
+            .output().unwrap();
+        dir
+    }
+
+    #[test]
+    fn test_svn_info() {
+        let repo = setup_test_repo();
+        // 执行 svn info 测试
+        let output = Command::new("svn")
+            .args(["info", repo.path().to_str().unwrap()])
+            .output().unwrap();
+        assert!(output.status.success());
+    }
+}
+```
+
+## Mock 策略
+
+- Service 层涉及 SVN 调用的函数，使用 trait 抽象后可 mock
+- Tauri Command 测试不依赖实际 SVN（通过注入 mock service）
+
+## 测试覆盖范围
+
+| 优先级 | 测试内容 | 方法 |
+|--------|---------|------|
+| P0 | 核心逻辑：XML 解析、参数校验 | 单元测试 |
+| P1 | SVN 交互：status/commit/log | 集成测试（临时仓库）|
+| P2 | 完整流程：checkout → edit → commit → log | 集成测试 |
+| P3 | 错误场景：网络超时、svn 不可用 | mock 注入 |
