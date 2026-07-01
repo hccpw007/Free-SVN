@@ -5,7 +5,7 @@ import { listen } from '@tauri-apps/api/event'
 import { getErrorMessage } from '@/types/error-codes'
 import type {
   FileItem, RepoInfo, DiffResult, OperationProgress,
-  OperationResult, BlameLine, LogEntry,
+  OperationResult, BlameLine, LogEntry, SvnCredentials,
 } from '@/types/svn'
 import type { AppSettings } from '@/types/settings'
 import { useFileListStore } from './fileList'
@@ -126,9 +126,9 @@ export const useSvnStore = defineStore('svn', () => {
   async function checkoutRepo(params: { url: string; targetPath: string; depth?: string; ignoreExternals?: boolean; credentials?: { username: string; password: string; saveToCache: boolean } }) {
     return call<string>('checkout_repo', {
       url: params.url,
-      target_path: params.targetPath,
+      targetPath: params.targetPath,
       depth: params.depth,
-      ignore_externals: params.ignoreExternals,
+      ignoreExternals: params.ignoreExternals,
       credentials: params.credentials,
     })
   }
@@ -137,7 +137,7 @@ export const useSvnStore = defineStore('svn', () => {
       path: params.path,
       revision: params.revision,
       depth: params.depth,
-      ignore_externals: params.ignoreExternals,
+      ignoreExternals: params.ignoreExternals,
     })
   }
   async function commit(params: { paths: string[]; message: string; keepLocks?: boolean }) { return call<OperationResult>('create_commit', params) }
@@ -145,62 +145,62 @@ export const useSvnStore = defineStore('svn', () => {
   async function deleteFiles(params: { paths: string[]; keepLocal?: boolean }) {
     return call<string>('delete_files', {
       paths: params.paths,
-      keep_local: params.keepLocal,
+      keepLocal: params.keepLocal,
     })
   }
   async function revertFiles(paths: string[]) { return call<string>('revert_files', { paths }) }
   async function resolveConflict(params: { path: string; resolution: string }) { return call<string>('resolve_conflict', params) }
   async function setIgnore(params: { path: string; pattern: string }) { return call<string>('set_ignore', params) }
-  async function switchBranch(params: { path: string; targetUrl: string; ignoreAncestry?: boolean }) {
+  async function switchBranch(params: { path: string; targetUrl: string; ignoreAncestry?: boolean; credentials?: SvnCredentials }) {
     return call<OperationResult>('switch_branch', {
       path: params.path,
-      target_url: params.targetUrl,
-      ignore_ancestry: params.ignoreAncestry,
-      credentials: (params as any).credentials,
+      targetUrl: params.targetUrl,
+      ignoreAncestry: params.ignoreAncestry,
+      credentials: params.credentials,
     })
   }
-  async function copyBranchTag(params: { srcUrl: string; dstUrl: string; message: string; revision?: number }) {
+  async function copyBranchTag(params: { srcUrl: string; dstUrl: string; message: string; revision?: number; credentials?: SvnCredentials }) {
     return call<OperationResult>('copy_branch_tag', {
-      src_url: params.srcUrl,
-      dst_url: params.dstUrl,
+      srcUrl: params.srcUrl,
+      dstUrl: params.dstUrl,
       message: params.message,
       revision: params.revision,
-      credentials: (params as any).credentials,
+      credentials: params.credentials,
     })
   }
-  async function mergeBranch(params: { srcUrl: string; revStart?: number; revEnd?: number; targetPath?: string }) {
+  async function mergeBranch(params: { srcUrl: string; revStart?: number; revEnd?: number; targetPath?: string; credentials?: SvnCredentials }) {
     return call<OperationResult>('merge_branch', {
-      src_url: params.srcUrl,
-      rev_start: params.revStart,
-      rev_end: params.revEnd,
-      target_path: params.targetPath,
-      credentials: (params as any).credentials,
+      srcUrl: params.srcUrl,
+      revStart: params.revStart,
+      revEnd: params.revEnd,
+      targetPath: params.targetPath,
+      credentials: params.credentials,
     })
   }
   async function cleanup(path: string) { return call<string>('cleanup_workspace', { path }) }
-  async function exportWorkspace(params: { path: string; targetDir: string; revision?: number; ignoreExternals?: boolean }) {
+  async function exportWorkspace(params: { path: string; targetDir: string; revision?: number; ignoreExternals?: boolean; credentials?: SvnCredentials }) {
     return call<string>('export_workspace', {
       path: params.path,
-      target_dir: params.targetDir,
+      targetDir: params.targetDir,
       revision: params.revision,
-      ignore_externals: params.ignoreExternals,
-      credentials: (params as any).credentials,
+      ignoreExternals: params.ignoreExternals,
+      credentials: params.credentials,
     })
   }
   async function lockFiles(params: { paths: string[]; message?: string }) { return call<string>('lock_files', params) }
   async function unlockFiles(paths: string[]) { return call<string>('unlock_files', { paths }) }
-  async function relocate(params: { path: string; fromUrl: string; toUrl: string }) {
+  async function relocate(params: { path: string; fromUrl: string; toUrl: string; credentials?: SvnCredentials }) {
     return call<string>('relocate_repo', {
       path: params.path,
-      from_url: params.fromUrl,
-      to_url: params.toUrl,
-      credentials: (params as any).credentials,
+      fromUrl: params.fromUrl,
+      toUrl: params.toUrl,
+      credentials: params.credentials,
     })
   }
   async function propertyOps(params: { path: string; propName?: string; action?: string; propValue?: string }) { return call<string>('property_ops', params) }
   async function cancelOperation() { return call<string>('cancel_operation') }
   async function getLogs() { return call<string>('get_logs') }
-  async function exportLogs(targetPath: string) { return call<void>('export_logs', { target_path: targetPath }) }
+  async function exportLogs(targetPath: string) { return call<void>('export_logs', { targetPath }) }
   async function loadSettings() { return call<AppSettings>('load_settings') }
   async function saveSettings(settings: AppSettings) { return call<void>('save_settings', { settings }) }
   async function testConnection(params: { url: string; username: string; password: string }) {

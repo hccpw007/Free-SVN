@@ -14,6 +14,14 @@ import ko from './locales/ko.json'
 
 type MessageSchema = typeof zhCN
 
+/** 语言代码映射表，供设置页语言选择器使用 */
+export const LANG_MAP: Record<string, string> = {
+  'zh-CN': '简体中文',
+  'en': 'English',
+  'ja': '日本語',
+  'ko': '한국어',
+}
+
 const i18n = createI18n<[MessageSchema], 'zh-CN' | 'en' | 'ja' | 'ko'>({
   locale: 'zh-CN',
   fallbackLocale: 'en',
