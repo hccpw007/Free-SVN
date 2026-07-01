@@ -1,5 +1,6 @@
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
+/// 工作副本信息（对应 `svn info --xml` 输出结构）
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RepoInfo {
     pub path: String,
@@ -16,13 +17,19 @@ pub struct RepoInfo {
     pub depth: Option<String>,
     pub checksum: Option<String>,
     pub lock: Option<LockInfo>,
+
+    /// 当前工作副本所在分支名（从 URL 中提取，parser 层填充）
+    #[serde(skip)]
+    pub branch_name: Option<String>,
 }
 
+/// 文件锁定信息
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LockInfo {
     pub token: String,
     pub owner: String,
     pub comment: Option<String>,
     pub created: String,
+    #[serde(default)]
     pub expires: Option<String>,
 }

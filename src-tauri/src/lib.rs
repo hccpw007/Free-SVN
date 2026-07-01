@@ -25,6 +25,7 @@ pub fn run() {
                 )?;
             }
             logging::logger::init(app.handle())?;
+            logging::logger::set_app_handle(app.handle().clone());
             config::store::init(app.handle())?;
             Ok(())
         })
