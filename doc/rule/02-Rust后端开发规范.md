@@ -16,40 +16,98 @@
 ## 项目结构
 
 ```
-src-tauri/
-├── src/
-│   ├── main.rs             # 二进制入口，仅调用 lib::run()
-│   ├── lib.rs              # Tauri 应用入口，注册插件和命令
-│   ├── commands/           # Tauri Command 定义（前端可调用的接口）
-│   │   ├── mod.rs
-│   │   ├── repo.rs         #   仓库管理命令
-│   │   ├── status.rs       #   文件状态命令
-│   │   └── commit.rs       #   提交相关命令
-│   ├── models/             # 数据模型（结构体、枚举）
-│   │   ├── mod.rs
-│   │   ├── repo.rs         #   仓库模型
-│   │   └── file.rs         #   文件/变更模型
-│   └── services/           # 业务逻辑层（SVN 命令执行、数据处理）
-│       ├── mod.rs
-│       └── svn.rs          #   SVN 命令行封装
+src-tauri/src/
+├── main.rs                        # 二进制入口，仅调用 lib::run()
+├── lib.rs                         # Tauri 应用入口，注册插件和命令
+│
+├── commands/                      # Tauri Command 定义（前端可调用的接口）
+│   ├── mod.rs                     #   command 模块导出
+│   ├── status.rs                  #   status / info
+│   ├── commit.rs                  #   commit
+│   ├── update.rs                  #   update
+│   ├── checkout.rs                #   checkout
+│   ├── log.rs                     #   log / blame
+│   ├── diff.rs                    #   diff
+│   ├── file_ops.rs                #   add / delete / revert / resolve
+│   ├── branch_ops.rs              #   copy(分支/标签) / switch / merge
+│   ├── ignore.rs                  #   ignore (propget/propset svn:ignore)
+│   ├── cleanup.rs                 #   cleanup / export
+│   ├── relocate.rs                #   relocate
+│   ├── lock.rs                    #   lock / unlock
+│   ├── cancel.rs                  #   cancel_operation（取消当前操作）
+│   └── logs.rs                    #   get_logs / export_logs
+│
+├── svn/                           # SVN CLI 执行核心
+│   ├── mod.rs                     #   SVN CLI 执行核心模块入口
+│   ├── executor.rs                #   CLI 调用 + 超时 + 错误处理 + 取消检测
+│   ├── parser.rs                  #   XML 输出解析
+│   ├── queue.rs                   #   操作队列与并发控制（Mutex 封装）
+│   └── types.rs                   #   共享数据类型
+│
+├── models/                        # 数据模型（结构体、枚举）
+│   ├── mod.rs
+│   ├── error.rs                   #   AppError 定义
+│   ├── repo.rs                    #   仓库模型
+│   └── file.rs                    #   文件/变更模型
+│
+├── services/                      # 业务逻辑层（目前为空，SVN 逻辑在 svn/ 模块中）
+│   └── mod.rs
+│
+├── shell_integration/             # 右键菜单管理
+│   ├── mod.rs
+│   ├── macos.rs                   #   macOS Finder 扩展
+│   ├── windows.rs                 #   Windows Shell 扩展
+│   └── linux.rs                   #   Linux 文件管理器脚本
+│
+├── logging/                       # 日志模块
+│   ├── mod.rs
+│   └── logger.rs                  #   日志写入 + 轮转
+│
+├── config/                        # 配置持久化
+│   ├── mod.rs
+│   └── store.rs                   #   tauri-plugin-store 封装（含损坏恢复）
+│
 ├── capabilities/
-│   └── default.json        # 权限声明
-├── icons/                  # 应用图标
+│   └── default.json               # 权限声明
+├── icons/                         # 应用图标
 ├── Cargo.toml
 ├── build.rs
 └── tauri.conf.json
 ```
 
+## Cargo.toml 关键依赖
+
+```toml
+[dependencies]
+tauri = { version = "2", features = ["tray-icon"] }  # 系统托盘支持
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+thiserror = "2"
+tauri-plugin-store = "2"
+tauri-plugin-single-instance = "2"  # 单实例防护
+tauri-plugin-log = "2"              # 日志
+log = "0.4"
+tauri-plugin-window-state = "2"     # 窗口状态持久化
+```
+
 ## 分层职责
 
 ```
-commands/   → 接口层：参数校验、调用 service、返回结果（薄层，不写业务逻辑）
-services/   → 业务层：执行 SVN 命令、解析输出、错误处理（核心逻辑所在）
-models/     → 数据层：类型定义、序列化（纯数据结构，无方法）
-lib.rs      → 应用入口：注册 plugin 和 command
+commands/             → 接口层：参数校验、调用 service、返回结果（薄层，不写业务逻辑）
+svn/                  → SVN 核心：CLI 执行、XML 解析、并发控制
+  executor.rs         →   CLI 调用 + 超时 + 取消检测
+  parser.rs           →   XML 输出解析
+  queue.rs            →   操作队列与 Mutex 并发控制
+  types.rs            →   共享数据类型
+models/               → 数据层：类型定义、序列化（纯数据结构，无方法）
+services/             → 业务层（预留，复杂逻辑可放此处）
+shell_integration/    → 右键菜单注册/清理
+logging/              → 日志写入和轮转
+config/               → 配置持久化与损坏恢复
+lib.rs                → 应用入口：注册 plugin 和 command
 ```
 
-禁止反向依赖：`services/` 不能 import `commands/`。
+禁止反向依赖：`svn/` 不能 import `commands/`；`logging/` 不能 import `commands/`。
 
 ---
 
@@ -60,32 +118,67 @@ lib.rs      → 应用入口：注册 plugin 和 command
 每个 Command 放在独立的 rs 文件中，按业务领域划分。
 
 ```rust
-// commands/repo.rs
+// commands/status.rs
 use serde::Deserialize;
 use crate::models::error::AppError;
-use crate::services::svn;
+use crate::svn;
 
 #[derive(Deserialize)]
-pub struct OpenRepoParams {
+pub struct StatusParams {
     pub path: String,
 }
 
 #[tauri::command]
-pub async fn open_repo(params: OpenRepoParams) -> Result<String, AppError> {
+pub async fn get_status(params: StatusParams) -> Result<SvnStatusOutput, AppError> {
     if params.path.is_empty() {
-        return Err(AppError::InvalidInput("仓库路径不能为空".into()));
+        return Err(AppError::InvalidInput("路径不能为空".into()));
     }
-    svn::info(&params.path).await
+    // Command 只做参数校验 + 调用 svn 模块，不做业务处理
+    svn::executor::status(&params.path).await
 }
 ```
+
+## 命令清单
+
+每个操作对应一个 Tauri Command（参见业务设计文档 §6.1）：
+
+| 操作 | 输入参数 | Command 文件 |
+|------|---------|-------------|
+| status | path | `commands/status.rs` |
+| info | path | `commands/status.rs` |
+| checkout | url, targetPath, depth, ignoreExternals | `commands/checkout.rs` |
+| commit | paths[], message, keepLocks | `commands/commit.rs` |
+| update | path, revision?, depth?, ignoreExternals? | `commands/update.rs` |
+| log | path, limit, revision?, search? | `commands/log.rs` |
+| diff | path, revision1?, revision2? | `commands/diff.rs` |
+| add | path[] | `commands/file_ops.rs` |
+| delete | path[], keepLocal? | `commands/file_ops.rs` |
+| revert | path[] | `commands/file_ops.rs` |
+| resolve | path, resolution | `commands/file_ops.rs` |
+| switch | path, targetUrl, ignoreAncestry? | `commands/branch_ops.rs` |
+| copy (branch/tag) | srcUrl, dstUrl, message, revision? | `commands/branch_ops.rs` |
+| merge | srcUrl, revStart, revEnd, targetPath | `commands/branch_ops.rs` |
+| cleanup | path | `commands/cleanup.rs` |
+| export | path, targetDir, revision?, ignoreExternals? | `commands/cleanup.rs` |
+| ignore | path, pattern | `commands/ignore.rs` |
+| blame | path, revision? | `commands/log.rs` |
+| relocate | path, fromUrl, toUrl | `commands/relocate.rs` |
+| property | path, propName?, action? | `commands/ignore.rs` |
+| lock | path[], message? | `commands/lock.rs` |
+| unlock | path[] | `commands/lock.rs` |
+| cancel_operation | 无（取消当前操作） | `commands/cancel.rs` |
+| get_logs | 无 | `commands/logs.rs` |
+| export_logs | target_path | `commands/logs.rs` |
 
 ## Command 规范
 
 - **Command 函数必须是异步的**（`async fn`）
 - 参数较多时（≥2 个）使用 `#[derive(Deserialize)]` 结构体，避免逐个参数传递
-- 返回值统一使用 `Result<T, AppError>`，错误信息通过 `AppError` 的 `Display` 实现返回给前端
+- 返回值统一使用 `Result<T, AppError>`，`AppError` 通过 `#[error("ERROR_CODE: {0}")]` 返回**错误码 key**（非中文文字）
 - 一个 Command 只做一件事，不做"万能接口"
-- Command 内部只做参数校验 + 调用 service，不做业务处理
+- Command 内部只做参数校验 + 调用 svn 模块，不做业务处理
+- 所有与服务端通信的 Command（log/diff/update/checkout/switch/merge/copy/export 等）**执行前调用网络检测**；`status` 为纯本地操作，不检测网络
+- 长操作（checkout/update/export/merge）执行前检查取消标志
 
 ## 注册命令
 
@@ -93,14 +186,57 @@ pub async fn open_repo(params: OpenRepoParams) -> Result<String, AppError> {
 // lib.rs
 pub fn run() {
     tauri::Builder::default()
+        .plugin(tauri_plugin_single_instance::init())  // 单实例防护
+        .plugin(tauri_plugin_window_state::default())   // 窗口状态持久化
+        .plugin(tauri_plugin_store::Builder::default().build())
+        .setup(|app| {
+            // 初始化日志
+            logging::logger::init(app.handle())?;
+            // 初始化配置存储
+            config::store::init(app.handle())?;
+            Ok(())
+        })
         .invoke_handler(tauri::generate_handler![
-            commands::repo::open_repo,
             commands::status::get_status,
+            commands::status::get_info,
             commands::commit::create_commit,
+            commands::update::update_workspace,
+            commands::checkout::checkout_repo,
+            commands::log::get_log,
+            commands::log::get_blame,
+            commands::diff::get_diff,
+            commands::file_ops::add_files,
+            commands::file_ops::delete_files,
+            commands::file_ops::revert_files,
+            commands::file_ops::resolve_conflict,
+            commands::branch_ops::switch_branch,
+            commands::branch_ops::copy_branch_tag,
+            commands::branch_ops::merge_branch,
+            commands::ignore::set_ignore,
+            commands::cleanup::cleanup_workspace,
+            commands::cleanup::export_workspace,
+            commands::relocate::relocate_repo,
+            commands::lock::lock_files,
+            commands::lock::unlock_files,
+            commands::cancel::cancel_operation,
+            commands::logs::get_logs,
+            commands::logs::export_logs,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
+```
+
+### 系统托盘与右键菜单注册
+
+```rust
+// lib.rs setup 中
+app.on_tray_event(|app, event| {
+    match event {
+        TrayIconEvent::Click(_) => { /* 显示主窗口 */ }
+        _ => {}
+    }
+});
 ```
 
 ---
@@ -108,6 +244,8 @@ pub fn run() {
 # 03-错误处理规范（thiserror）
 
 使用 `thiserror` 定义 `AppError`，Command 返回 `Result<T, AppError>`，Tauri 自动通过 `Display` 序列化错误给前端。
+
+**⚡ 错误码规则（重要）：** 后端返回**错误码 key**（如 `SVN_TIMEOUT`）而非中文文字。前端根据当前 locale 将错误码渲染为用户界面语言。仅在日志中记录原始 stderr 供诊断。
 
 ```rust
 // Cargo.toml 依赖
@@ -119,32 +257,56 @@ use thiserror::Error;
 #[derive(Error, Debug)]
 pub enum AppError {
     /// SVN 命令执行失败
-    #[error("SVN 执行失败: {0}")]
+    #[error("SVN_EXEC_FAILED: {0}")]
     SvnCommand(String),
 
+    /// SVN XML 输出解析失败
+    #[error("SVN_PARSE_FAILED: {0}")]
+    ParseFailed(String),
+
     /// 参数校验失败
-    #[error("参数错误: {0}")]
+    #[error("INVALID_INPUT: {0}")]
     InvalidInput(String),
 
     /// 文件系统错误
-    #[error("文件系统错误: {0}")]
+    #[error("IO_ERROR: {0}")]
     Io(#[from] std::io::Error),
 
     /// 仓库操作异常
-    #[error("仓库异常: {0}")]
+    #[error("REPO_ERROR: {0}")]
     Repo(String),
 
-    /// 超时
-    #[error("操作超时: {0}")]
+    /// 操作超时
+    #[error("SVN_TIMEOUT: {0}")]
     Timeout(String),
+
+    /// 内置 svn 未找到/不可执行
+    #[error("SVN_NOT_FOUND")]
+    SvnNotFound,
+
+    /// 不是 SVN 工作副本
+    #[error("SVN_NOT_WORKING_COPY")]
+    NotWorkingCopy,
+
+    /// 有写操作正在进行中
+    #[error("SVN_OP_IN_PROGRESS")]
+    OperationInProgress,
+
+    /// 操作被用户取消
+    #[error("SVN_CANCELLED")]
+    Cancelled,
+
+    /// 网络不可达（服务端操作前检测）
+    #[error("NETWORK_UNREACHABLE")]
+    NetworkUnreachable,
 }
 ```
 
 ## 规范
 
 - 自定义 `AppError` 枚举，覆盖所有业务错误场景
-- 使用 `thiserror` crate 定义错误，通过 `#[error("...")]` 指定显示格式
-- Command 返回 `Result<T, AppError>`，Tauri 自动通过 `Display` 将错误信息发送给前端
+- 使用 `thiserror` crate 定义错误，通过 `#[error("ERROR_CODE: {0}")]` 指定错误码 key
+- Command 返回 `Result<T, AppError>`，Tauri 自动通过 `Display` 将错误码发送给前端
 - 关键路径必须记录日志：`log::error!("...")` / `log::info!("...")`
 - 不需要为 AppError 额外实现 `From` 或 `Into` trait，`thiserror` 自动处理
 
@@ -152,26 +314,58 @@ pub enum AppError {
 
 # 04-SVN 操作规范
 
-## SVN 命令封装
+SVN 操作统一封装在 `svn/` 模块中，**禁止**散布 `Command::new("svn")` 调用。
 
-统一封装在 `services/svn.rs` 中，**禁止**散布 `Command::new("svn")` 调用。
+## 模块结构
+
+```
+svn/
+├── mod.rs               # 模块入口，pub use 重导出
+├── executor.rs          # CLI 调用 + 超时 + 错误处理 + 取消检测
+├── parser.rs            # XML 输出解析（serde 反序列化）
+├── queue.rs             # 操作队列与并发控制（Mutex 封装）
+└── types.rs             # 共享数据类型
+```
+
+## Executor — CLI 调用核心
 
 ```rust
-// services/svn.rs
-use std::process::Command;
+// svn/executor.rs
+use std::process::{Command, Stdio};
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::Arc;
 use log;
 use tokio::time::{timeout, Duration};
 use tokio::task::spawn_blocking;
 use crate::models::error::AppError;
 
-/// 同步执行 SVN 命令（在 spawn_blocking 中运行）
-fn run_svn_sync(args: &[&str]) -> Result<String, AppError> {
-    log::info!("execute: svn {}", args.join(" "));
+/// 全局取消标志
+pub static CANCELLED: AtomicBool = AtomicBool::new(false);
 
-    let output = Command::new("svn")
+/// 当前 svn 子进程的句柄（用于取消时 kill）
+pub static CURRENT_CHILD: Mutex<Option<std::process::Child>> = ...;
+
+/// 检测取消信号
+pub fn is_cancelled() -> bool {
+    CANCELLED.load(Ordering::SeqCst)
+}
+
+/// 同步执行 SVN 命令（在 spawn_blocking 中运行）
+fn run_svn_sync(args: &[&str], cwd: &str) -> Result<String, AppError> {
+    log::info!("svn {} (cwd: {})", args.join(" "), cwd);
+
+    let mut child = Command::new(get_svn_path())
         .args(args)
-        .output()
+        .current_dir(cwd)
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .spawn()
         .map_err(AppError::Io)?;
+
+    // 保存子进程句柄用于取消
+    *CURRENT_CHILD.lock().unwrap() = Some(child.try_wait().ok());
+
+    let output = child.wait_with_output().map_err(AppError::Io)?;
 
     if output.status.success() {
         Ok(String::from_utf8_lossy(&output.stdout).to_string())
@@ -181,36 +375,124 @@ fn run_svn_sync(args: &[&str]) -> Result<String, AppError> {
     }
 }
 
-/// 异步执行 SVN 命令（带超时控制）
-async fn run_svn(args: &[&str]) -> Result<String, AppError> {
-    let args: Vec<String> = args.iter().map(|s| s.to_string()).collect();
+/// 异步执行 SVN 命令（带超时控制 + 取消检测）
+async fn run_svn(args: &[&str], cwd: &str) -> Result<String, AppError> {
+    // 取消检测
+    if is_cancelled() {
+        return Err(AppError::Cancelled);
+    }
 
-    timeout(Duration::from_secs(60), spawn_blocking(move || {
-        run_svn_sync(&args.iter().map(|s| s.as_str()).collect::<Vec<&str>>())
+    let args: Vec<String> = args.iter().map(|s| s.to_string()).collect();
+    let cwd = cwd.to_string();
+
+    timeout(Duration::from_secs(get_timeout_secs()), spawn_blocking(move || {
+        run_svn_sync(&args.iter().map(|s| s.as_str()).collect::<Vec<&str>>(), &cwd)
     }))
     .await
-    .map_err(|_| AppError::Timeout("SVN 命令执行超时（60秒）".into()))?
-    .map_err(|e| e)?  // 展开 spawn_blocking 的 JoinError
+    .map_err(|_| AppError::Timeout("SVN 命令执行超时".into()))?
+    .map_err(|e| match e {
+        AppError::Cancelled => AppError::Cancelled,
+        _ => e,
+    })?
+}
+```
+
+## Queue — 操作队列与并发控制
+
+```rust
+// svn/queue.rs
+use std::sync::Mutex;
+use tokio::task::JoinHandle;
+
+pub struct SvnQueue {
+    /// 当前写操作的句柄（同一工作副本的写操作互斥）
+    write_lock: Mutex<Option<JoinHandle<()>>>,
 }
 
-/// 获取仓库信息
-pub async fn info(path: &str) -> Result<String, AppError> {
-    run_svn(&["info", "--xml", path]).await
+impl SvnQueue {
+    /// 尝试获取写操作锁
+    pub fn try_lock(&self) -> Result<(), AppError> {
+        let mut guard = self.write_lock.lock().unwrap();
+        if guard.is_some() {
+            Err(AppError::OperationInProgress)
+        } else {
+            *guard = None; // 标记占用
+            Ok(())
+        }
+    }
+
+    /// 释放写操作锁
+    pub fn unlock(&self) {
+        *self.write_lock.lock().unwrap() = None;
+    }
 }
 
-/// 获取文件状态
-pub async fn status(path: &str) -> Result<String, AppError> {
-    run_svn(&["status", "--xml", path]).await
+/// 分类：
+/// - 只读操作（可并发）：status, info, diff, log, blame
+/// - 写操作（互斥）：commit, update, switch, merge, checkout, cleanup, revert, resolve, add, delete, ignore, lock, unlock, copy, export, relocate, property
+/// - 取消操作（特殊，不经过锁）：cancel_operation
+```
+
+## 长操作取消模式
+
+```rust
+// commands/cancel.rs
+#[tauri::command]
+pub async fn cancel_operation(state: State<'_, AppState>) -> Result<(), AppError> {
+    // 1. 设置取消标志
+    svn::executor::CANCELLED.store(true, Ordering::SeqCst);
+
+    // 2. 终止当前 svn 子进程
+    if let Some(mut child) = svn::executor::CURRENT_CHILD.lock().unwrap().take() {
+        // 发送 SIGTERM（Unix）/ TerminateProcess（Windows）
+        child.kill().ok();
+        child.wait().ok();
+    }
+
+    // 3. 执行 svn cleanup 恢复工作副本状态
+    let path = state.current_path.lock().unwrap().clone();
+    if let Some(p) = path {
+        svn::executor::run_svn(&["cleanup"], &p).await.ok();
+    }
+
+    // 4. 重置取消标志
+    svn::executor::CANCELLED.store(false, Ordering::SeqCst);
+
+    // 5. 通知前端（通过 Tauri event）
+    state.app_handle.emit("operation:completed", "已取消").ok();
+
+    Ok(())
+}
+```
+
+## 网络可达性检测
+
+```rust
+/// 检测网络是否可达（使用 tokio::net::TcpStream 尝试连接 SVN 服务器）
+/// 仅对有服务端通信的操作执行，status（纯本地）不检测
+pub async fn check_network(server_url: &str) -> Result<(), AppError> {
+    let host = extract_host(server_url)?;
+    match tokio::time::timeout(
+        Duration::from_secs(5),
+        tokio::net::TcpStream::connect((host.as_str(), 3690))
+    ).await {
+        Ok(Ok(_)) => Ok(()),
+        _ => Err(AppError::NetworkUnreachable),
+    }
 }
 ```
 
 ## SVN 操作原则
 
-- 所有 SVN 子进程调用走 `run_svn`，禁止散布 `Command::new("svn")`
-- 优先 `--xml` 参数获取结构化输出
-- 每次执行必须设置超时
-- SVN 输出用 serde 反序列化 XML，禁止字符串正则匹配
-- 执行前后必须记录日志
+- 所有 SVN 子进程调用走 `svn::executor::run_svn`，禁止散布 `Command::new("svn")`
+- 优先 `--xml` 参数获取结构化输出，用 `svn::parser` 中的 serde 反序列化
+- 每次执行必须设置超时（默认 60 秒）
+- 禁止字符串正则匹配解析 SVN 输出
+- 执行前后必须记录日志（命令 + 参数 + 耗时）
+- 写操作通过 `svn::queue::SvnQueue` 互斥（同一工作副本）
+- 长操作循环中检测 `svn::executor::is_cancelled()`
+- 服务端操作前调用网络检测；status（纯本地）跳过检测
+- 使用内置 svn 可执行文件路径（通过 Tauri `resource_dir()` 获取），不依赖系统 svn
 
 ---
 
@@ -233,6 +515,155 @@ fn validate_path(path: &str) -> Result<&str, AppError> {
 
 ---
 
+# 05.1-日志规范
+
+## 日志位置
+
+使用 `tauri::api::path::app_log_dir()` 获取：
+- macOS: `~/Library/Logs/com.free-svn/`
+- Windows: `%APPDATA%/Free-SVN/logs/`
+- Linux: `~/.local/share/Free-SVN/logs/`
+
+## 日志文件
+
+| 文件 | 说明 |
+|------|------|
+| `free-svn.log` | 当前日志 |
+| `free-svn.log.1` | 轮转备份 1 |
+| `free-svn.log.2` | 轮转备份 2 |
+
+## 日志级别
+
+| 级别 | 记录内容 |
+|------|---------|
+| ERROR | SVN 命令执行失败、解析失败、超时、未捕获异常 |
+| WARN | 非致命问题（store 损坏已恢复、右键菜单注册失败） |
+| INFO | SVN 命令执行（命令+参数+耗时）、操作开始/完成、窗口事件 |
+| DEBUG | 原始 svn stdout/stderr、Tauri event 详情、状态变更日志 |
+
+## 日志轮转
+
+- 单文件最大 5MB
+- 保留最近 3 个文件
+- 应用启动时检查并轮转
+
+## 日志导出
+
+```rust
+#[tauri::command]
+fn get_logs() -> Result<String, AppError>       // 返回日志内容
+#[tauri::command]
+fn export_logs(target_path: String) -> Result<(), AppError>  // 导出日志到指定路径
+```
+
+设置页 → 关于 → [导出日志] 按钮触发，导出包含：日志文件 + 应用版本 + 系统信息 + 内置 svn 版本
+
+---
+
+# 05.2-配置存储规范
+
+## 存储内容
+
+使用 `tauri-plugin-store` 存储，序列化为 JSON：
+
+```json
+{
+  "recentWorkspaces": ["/path/to/project1", ...],
+  "currentWorkspace": "/path/to/project1",
+  "settings": {
+    "defaultCheckoutDir": "~/Documents",
+    "globalIgnorePattern": "*.o *.lo *.la",
+    "diffTool": "builtin",
+    "mergeTool": "builtin",
+    "showUnversioned": true,
+    "language": "system",
+    "autoStart": false
+  },
+  "windowState": { "x": 100, "y": 100, "width": 1200, "height": 800, "maximized": false }
+}
+```
+
+## recentWorkspaces 限制
+
+最多保留 20 条记录，超出时移除最早加入的。
+
+## 存储损坏恢复
+
+```rust
+// config/store.rs
+pub fn load_settings() -> Settings {
+    match store.inner().try_deserialize::<Settings>() {
+        Ok(s) => s,
+        Err(_) => {
+            log::warn!("store 损坏，已重置为默认配置");
+            backup_corrupted_store(); // 备份为 .store.json.bak
+            reset_to_default()        // 重置为默认
+        }
+    }
+}
+```
+
+读取 store 时使用 `try_deserialize`，失败时备份损坏文件 + 重置为默认配置。应用正常启动不崩溃。
+
+## 跨版本升级
+
+store 中不存在的字段采用默认值，不做 migration（tauri-plugin-store 自然处理）。
+
+---
+
+# 05.3-Shell 集成规范
+
+## 右键菜单注册
+
+```rust
+// shell_integration/macos.rs — macOS Finder 扩展注册
+// shell_integration/windows.rs — Windows 注册表 Shell 扩展
+// shell_integration/linux.rs — Nautilus 脚本 / Thunar UCA
+```
+
+| 平台 | 实现方式 |
+|------|----------|
+| macOS | Finder 扩展 / Quick Action / URL scheme 回调 |
+| Windows | 注册表 Shell 扩展（GUID 注册） |
+| Linux | Nautilus 脚本 / Thunar UCA 配置 |
+
+## 右键菜单内容
+
+**SVN 工作副本目录上（完整菜单）：**
+
+```
+SVN 提交...              → 打开主窗口提交面板
+SVN 更新                 → 后台执行 + 系统通知
+SVN 查看日志             → 打开主窗口日志视图
+SVN 更新到版本...        → 打开版本选择对话框
+───────────────────────────────────────────
+SVN 差异对比             → 打开差异视图
+SVN 还原...              → 确认后还原
+───────────────────────────────────────────
+SVN 切换(Switch)...      → 打开切换分支对话框
+SVN 分支/标签...         → 打开分支/标签创建对话框
+SVN 合并...              → 打开合并向导
+───────────────────────────────────────────
+SVN 清理                 → 后台执行 + 系统通知
+SVN 导出...              → 选择目录后导出
+```
+
+普通文件夹/空目录：仅 "SVN 检出..."
+
+## 单实例与右键菜单交互
+
+- 使用 `tauri-plugin-single-instance` 确保单实例运行
+- 第二实例携带右键菜单参数 → 传递给首实例处理
+- 行为：主窗口最小化到托盘 → 激活并前置；携带工作副本参数 → 切换
+
+## 系统托盘
+
+- 关闭窗口 → 最小化到系统托盘（不退出）
+- 托盘右键菜单：显示主窗口 / 更新/清理 / 关于 / 退出
+- 后台操作完成 → 系统通知（macOS Notification Center / Windows Toast / Linux notify-send）
+
+---
+
 # 06-编码规范
 
 ## 代码风格
@@ -252,8 +683,11 @@ fn validate_path(path: &str) -> Result<&str, AppError> {
 | 类型 | 行数警戒线 | 达到后如何拆分 |
 |------|-----------|---------------|
 | `commands/*.rs` | 150 行 | 按业务领域拆文件（如 `commands/repo.rs`、`commands/status.rs`） |
-| `services/*.rs` | 300 行 | 按功能拆分为多个 service 文件（如 `services/svn.rs` → `services/svn/mod.rs` + `services/svn/status.rs`） |
+| `svn/*.rs` | 300 行 | 按功能拆分子模块（已按 executor/parser/queue/types 拆分） |
 | `models/*.rs` | 150 行 | 按实体拆分（如 `models/repo.rs`、`models/file.rs`） |
+| `logging/*.rs` | 100 行 | 日志写入和轮转分离 |
+| `config/*.rs` | 100 行 | 配置加载和存储操作分离 |
+| `shell_integration/*.rs` | 100 行 | 每平台一个文件 |
 | `lib.rs` | 60 行 | 将 command 注册、plugin 注册、setup 各提取到独立子模块 |
 | `mod.rs` | 30 行 | 只做声明和重导出，不做任何业务逻辑 |
 
@@ -268,28 +702,25 @@ fn validate_path(path: &str) -> Result<&str, AppError> {
 
 ```
 # 拆分前
-services/svn.rs                              ← 280 行，包含 run_svn + status + log + commit + diff + blame
+svn/executor.rs                            ← 280 行，包含 run_svn + status + log + commit + diff + blame
 
 # 拆分后
-services/svn/
-├── mod.rs                                   # 公共 run_svn 函数 + pub use 重导出
-├── status.rs                                # svn status 相关
-├── commit.rs                                # svn commit 相关
-├── log.rs                                   # svn log 相关
-└── diff.rs                                  # svn diff 相关
+svn/
+├── mod.rs                                   # 模块入口 + pub use 重导出
+├── executor.rs                              # CLI 调用 + 超时 + 取消检测
+├── parser.rs                                # XML 输出解析
+└── types.rs                                 # 共享数据类型
 ```
 
 `mod.rs` 模式：
 ```rust
-// services/svn/mod.rs
-mod status;
-mod commit;
-mod log;
+// svn/mod.rs
+mod executor;
+mod parser;
+pub mod types;
 
 // 只重导出外部需要调用的函数
-pub use status::get_status;
-pub use commit::create_commit;
-pub use log::get_log;
+pub use executor::{status, info, commit, log, diff};
 ```
 
 ## 文件级规范
@@ -324,15 +755,17 @@ pub use log::get_log;
 | `pub` 函数 | 回溯调用链 |
 | 已注册的 Tauri Command | 检索前端 `invoke('xxx')` 是否存在 |
 | 已注册的 Tauri Plugin | 检索前端是否使用对应 API |
+| `svn/` 模块中的 `pub` 函数 | 检索 `commands/` 是否导入 |
 
 ## AI 清理流程（删除功能时）
 
 1. 删除入口文件/命令，运行 `cargo build 2>&1 | grep "warning:"`
 2. 逐条修复编译器警告，重复直到零警告
 3. 对每个 `generate_handler!` 中的命令，检索前端是否存在 `invoke("命令名")`
-4. 未找到则删除 command 文件 + `mod.rs` 中对应声明
-5. 检查 `Cargo.toml` 是否有不再使用的依赖
-6. `cargo build && cargo test` 最终验证
+4. 未找到则删除 command 文件 + `commands/mod.rs` 中对应声明
+5. 检查 `svn/` 中是否有不再被任何 command 引用的函数
+6. 检查 `Cargo.toml` 是否有不再使用的依赖
+7. `cargo build && cargo test` 最终验证
 
 ## 编码阶段规则
 

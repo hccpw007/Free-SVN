@@ -18,33 +18,206 @@
 
 ```
 src/
-├── assets/           # 静态资源（图片、字体等）
-├── components/       # 通用可复用组件
-│   ├── common/       #   跨业务通用组件（Modal、Table、Tree等）
-│   └── svn/          #   SVN 业务专用组件
-├── layouts/          # 布局组件（侧边栏、顶栏等整体布局）
-├── pages/            # 页面级组件（一个目录一个页面，支持嵌套子页面）
-│   └── HomePage.vue
-├── stores/           # Pinia 状态仓库
-├── services/         # 业务逻辑层（封装 Tauri invoke 调用、数据处理）
-├── types/            # TypeScript 类型定义（接口、枚举、类型别名）
-├── utils/            # 纯工具函数
-├── router/           # 路由配置
-│   └── index.ts
-├── App.vue           # 根组件（仅放置 <RouterView />）
-├── main.ts           # 应用入口
-└── style.css         # Tailwind 入口（仅一行 @import "tailwindcss"）
+├── assets/              # 静态资源（图片、字体、图标等）
+├── components/          # 通用可复用组件
+│   ├── common/          #   跨业务通用组件
+│   └── svn/             #   SVN 业务专用组件
+├── dialogs/             # 模态对话框组件（检出/切换/合并向导等）
+├── layouts/             # 布局组件
+├── pages/               # 页面级组件
+├── stores/              # Pinia 状态仓库
+├── services/            # 业务逻辑层（封装 Tauri invoke）
+├── types/               # TypeScript 类型定义
+├── utils/               # 纯工具函数
+├── locales/             # i18n 语言包
+├── router/              # 路由配置
+├── fonts/               # JetBrains Mono 字体文件（打包到 Tauri resources）
+├── App.vue              # 根组件（仅 <RouterView />）
+├── main.ts              # 应用入口
+└── style.css            # Tailwind 入口 + @theme Token + @font-face
 ```
+
+**组件目录树**（与交互设计文档一致）：
+
+```
+layouts/
+└── MainLayout.vue               # TopBar + ToolBar + RouterView + StatusBar
+
+pages/
+├── HomePage.vue                  # 欢迎页/变更文件列表（空状态切换）
+├── CommitPage.vue                # 提交面板
+├── LogPage.vue                   # 日志视图
+├── SettingsPage.vue              # 设置页
+
+components/common/
+├── TopBar.vue                    # 顶部状态栏（路径/切换/分支 + 暗色切换）
+├── ToolBar.vue                   # SVN 操作工具栏
+├── StatusBar.vue                 # 底部状态栏
+
+components/svn/
+├── FileListTable.vue             # 变更文件表格（含全选+批量+搜索/筛选+排序）
+├── FileStatusIcon.vue            # 文件状态图标（M/✚/!/🗑/?/-）
+├── FileActionButtons.vue         # 操作按钮列
+├── DiffViewer.vue                # diff2html 差异查看器（底部面板，可路由）
+├── CommitForm.vue                # 提交信息输入区
+├── LogTable.vue                  # 日志列表（含展开详情）
+├── LogDetail.vue                 # 单条日志详情
+├── ProgressOverlay.vue           # 操作进度遮罩（含 [取消] 按钮）
+
+dialogs/
+├── CheckoutDialog.vue            # 检出对话框
+├── SwitchDialog.vue              # 切换分支对话框
+├── BranchTagDialog.vue           # 分支/标签创建对话框
+├── MergeWizard.vue               # 合并向导（4 步）
+├── ResolveConflict.vue           # 冲突解决对话框
+├── IgnoreDialog.vue              # 忽略确认对话框
+├── ConfirmDialog.vue             # 通用确认对话框
+├── ExportDialog.vue              # 导出对话框
+└── UpdateRevisionDialog.vue      # 更新到版本对话框
+```
+
+## 路由设计
+
+```
+/                           → 重定向到 /workspace
+/workspace                  → 变更文件列表/欢迎页
+/workspace/commit           → 提交面板
+/workspace/log              → 日志页面
+/workspace/diff?file=xxx    → 差异对比（可路由）
+/workspace/resolve?file=xxx → 冲突解决
+/settings                   → 设置页面
+```
+
+- 所有 `workspace` 前缀的路由共享 MainLayout（顶栏+工具栏+底栏）
+- `settings` 页面独立布局
+- 对话框操作不占用路由：检出/分支标签/合并向导/切换/更新到版本 使用模态对话框
 
 ## 分层职责
 
 - `pages/` → 组合组件，禁止写业务逻辑
 - `components/` → UI 单元，接收 props、抛出 emit
+- `dialogs/` → 模态对话框，使用 `<el-dialog>` 实现
 - `stores/` → 跨组件共享状态
 - `services/` → 无状态业务逻辑，封装 Tauri invoke
 - `utils/` → 纯函数
 
 禁止：`services/` import `components/`；`pages/` 直接调用 Tauri invoke。
+
+---
+
+# 01.1-设计系统（Design Token）
+
+## 色彩体系
+
+使用 Tailwind 内置色板，**禁止**在 `<style>` 或自定义 CSS 中定义 CSS 变量。Token 通过 `src/style.css` 的 `@theme` 指令声明。
+
+```css
+/* style.css — 仅允许的全局样式入口 */
+@import "tailwindcss";
+@theme {
+  --color-primary: #22C55E;   /* green-500 */
+  --color-danger: #EF4444;    /* red-500 */
+  --color-warning: #F59E0B;   /* amber-500 */
+}
+```
+
+**亮色模式：**
+
+| 角色 | Tailwind | 用途 |
+|------|----------|------|
+| 主要色 | `slate-800` | 顶部栏、活跃状态 |
+| 品牌色 | `green-500` | 提交按钮、SVN 状态指示 |
+| 背景色 | `slate-50` | 主背景 |
+| 卡片色 | `white` | 文件列表、对话框 |
+| 前景色 | `slate-900` | 主要文字 |
+| 次要文字 | `slate-500` | 辅助信息 |
+| 边框色 | `slate-200` | 分割线、表格边框 |
+| 危险色 | `red-500` | 删除、冲突警告 |
+| 警告色 | `amber-500` | 注意提示 |
+
+**暗色模式：** 使用 `dark:` 前缀覆盖，暗色使用 `slate-900` 背景 / `slate-800` 卡片 / `slate-50` 前景 / `slate-400` 次要文字。
+
+## 文件状态色
+
+| 状态 | 亮色 | 暗色 |
+|------|------|------|
+| 已修改 (M) | `blue-500` | `blue-400` |
+| 新增 (✚) | `green-500` | `green-400` |
+| 冲突 (!) | `red-500`（加粗+左侧3px红色指示条） | `red-400` |
+| 删除 (🗑) | `amber-500` | `amber-400` |
+| 未加入 (?) | `slate-400` | `slate-500` |
+| 锁定 (-) | `violet-500` | `violet-400` |
+
+## 字体排版
+
+| 层次 | Tailwind 类 | 字体栈 | 用法 |
+|------|-------------|--------|------|
+| Display | `text-3xl font-bold` | `'Inter', system-ui, sans-serif` | 欢迎页标题 |
+| H1 | `text-xl font-semibold` | 同上 | 页面标题 |
+| H2 | `text-base font-semibold` | 同上 | 面板标题 |
+| Body | `text-sm` | 同上 | 正文、文件列表 |
+| Body Small | `text-sm` | 同上 | 次要文字、状态栏 |
+| Mono | `text-sm font-mono` | `'JetBrains Mono', monospace` | 文件路径、diff、版本号 |
+| Mono Small | `text-xs font-mono` | 同上 | diff 行内文字 |
+| Label | `text-sm font-medium` | `'Inter', system-ui, sans-serif` | 按钮、标签 |
+| Tooltip | `text-xs` | 同上 | 工具提示 |
+
+**字体加载：**
+- Inter：使用系统字体栈（`system-ui, -apple-system`），不额外加载
+- JetBrains Mono：打包字体文件到 `resources/fonts/`，`style.css` 中 `@font-face` 加载
+
+## 间距系统
+
+使用 Tailwind 内置间距类（4px 基准）：`p-1`(4px) / `p-2`(8px) / `p-3`(12px) / `p-4`(16px) / `p-5`(20px) / `p-6`(24px) / `p-8`(32px)
+
+## 圆角与阴影
+
+| 层级 | Tailwind 类 |
+|------|-------------|
+| 小型控件 | `rounded-sm` |
+| 按钮、对话框 | `rounded-md` |
+| 卡片、面板 | `rounded-lg` |
+| 卡片阴影（亮色） | `shadow-sm` |
+| 对话框阴影 | `shadow-md` |
+| 模态遮罩层 | `shadow-lg`（暗色 `dark:shadow-none` + 边框替代）|
+
+## 图标
+
+- 使用 **Lucide** 图标库，统一 1.5px 描边
+- 尺寸：16px（内联）/ 20px（按钮）/ 24px（状态指示）
+- **禁止使用 emoji 作为功能图标**
+
+## 动画基础
+
+| 场景 | 持续时间 | 缓动 |
+|------|---------|------|
+| 悬停状态 | 150ms | ease-out |
+| 面板展开/收起 | 200ms | ease-in-out |
+| 对话框出现 | 200ms | ease-out + scale(0.95→1) |
+| toast | 300ms | ease-out |
+| 列表刷新 | 150ms | ease-out |
+| 进度条 | 持续 | linear |
+
+- 使用 Tailwind `transition-{property}` 和 `duration-{n}` 实现
+- 尊重系统 `prefers-reduced-motion`，动画用 `motion-safe:` 前缀
+
+---
+
+# 01.2-Element Plus 组件使用约定
+
+| 组件 | 场景 | 定制 |
+|------|------|------|
+| `<el-table>` | 文件列表、日志表 | `size="small"` 紧凑模式，行高 40px |
+| `<el-dialog>` | 所有对话框 | 默认支持遮罩点击关闭；**操作进行中的对话框禁止遮罩关闭** |
+| `<el-input>` | 输入框 | `size="default"` |
+| `<el-select>` | 下拉选择 | 全局使用 |
+| `<el-button>` | 按钮 | 主操作 `type="primary"`（映射为 green）|
+| `<el-message>` | toast | 成功/错误/警告三类 |
+| `<el-progress>` | 进度条 | 线性样式 |
+| `<el-switch>` | 开关（设置页） | — |
+| `<el-tooltip>` | 禁用解释 | `effect="dark"` |
+
+Element Plus 主题色在 `style.css` 的 `@theme` 中覆盖，不修改 Element Plus 源码。
 
 ---
 
@@ -144,6 +317,202 @@ export enum RepoStatus {
 - 布局容器用 Tailwind，表单/表格/对话框用 Element Plus 组件
 - Element Plus 组件通过全局 class 覆盖调整样式
 - 高优先级覆盖：`class="!p-0"`（Tailwind `!` 前缀生成 `!important`）
+
+---
+
+# 04.1-暗色模式
+
+- **默认跟随系统**：通过 CSS `prefers-color-scheme` media query（Tailwind 的 `dark:` 变体）
+- **手动切换**：TopBar 右侧提供切换按钮，选择持久化到 `tauri-plugin-store`
+- **仅使用 `dark:` 前缀**：所有暗色适配只通过 Tailwind `dark:` 变体实现，禁止自定义 CSS 变量
+- 禁止在 `<style>` 标签中写暗色样式
+
+```html
+<!-- 正确 -->
+<div class="bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-50">
+```
+
+**暗色特殊处理：**
+
+| 元素 | 暗色适配 |
+|------|---------|
+| Diff 删除行 | `dark:bg-red-900/30` |
+| Diff 新增行 | `dark:bg-green-900/30` |
+| 对话框遮罩 | `dark:bg-black/60` |
+| 阴影 | `dark:shadow-none` + 边框替代 |
+| 输入框 | `dark:bg-slate-800 dark:border-slate-600` |
+
+---
+
+# 04.2-交互模式
+
+## 行状态
+
+| 模式 | 亮色 | 暗色 |
+|------|------|------|
+| hover | `bg-slate-50` | `dark:bg-slate-700/50` |
+| 选中 | `bg-blue-50` | `dark:bg-blue-900/20` |
+| 冲突行指示 | 左侧 3px `border-l-3 border-red-500` | 同左 |
+
+## 操作按钮颜色
+
+| 按钮 | 颜色 |
+|------|------|
+| [差异] | `text-blue-600`，hover 下划线 |
+| [还原] | `text-amber-600`，hover 下划线 |
+| [忽略] | `text-slate-500`，hover 下划线 |
+| [合并] | `text-red-600`，hover 下划线 |
+| [删除] | `text-red-500`，hover 下划线 |
+| [解锁] | `text-violet-600`，hover 下划线 |
+
+所有操作按钮 hover 均显示下划线 + 对应颜色加深。
+
+## 文件路径溢出
+
+- 文件路径列使用 `truncate` 类（`text-overflow: ellipsis`），过长时末尾省略
+- 鼠标悬停显示完整路径 tooltip
+- TopBar 中的工作副本路径采用中间省略（保留首尾路径段）
+
+## 多选交互
+
+- `Shift+Click`：范围选择（点击起始行，Shift+点击结束行）
+- `Ctrl+Click` / `Cmd+Click`：切换单行选中状态（macOS 用 Cmd）
+- 复选框操作等价于点击该行切换选中
+
+## 排序
+
+- 点击列头（状态/文件）按该列排序，再次点击切换升序/降序
+- 排序指示器使用 `text-blue-500` 的 ▲/▼ 图标
+- 默认按文件状态分组排序：冲突 → 已修改 → 新增 → 其他
+- 日志表的版本列默认降序
+
+## 搜索与筛选
+
+- 搜索框输入使用 **300ms 防抖** 后过滤
+- 筛选切换即时生效
+- 搜索/筛选状态下显示"清除过滤"按钮
+- 搜索框 placeholder 明确告知搜索能力边界
+
+## 工具栏溢出
+
+窗口宽度不足时，超出按钮自动折叠到末尾的 `···` 更多菜单中。溢出阈值动态计算，至少保留"提交"和"设置"两个按钮在可见区域。禁用态使用 `opacity-50 cursor-not-allowed`。
+
+## 全选底栏粘性
+
+底栏（"全选/已选 N 个文件/批量还原"）固定在表格底部，不随列表内容滚动。表格高度不足以显示底栏时仍固定在表格底部边界。
+
+## 状态栏可交互性
+
+- 点击版本号 → 复制 revision 号到剪贴板
+- 鼠标悬停状态栏项 → 显示 tooltip 完整信息
+
+---
+
+# 04.3-状态与反馈
+
+## 加载状态
+
+| 场景 | 反馈 | 实现 |
+|------|------|------|
+| 首次加载文件列表 | 骨架屏/加载遮罩 | `<el-table v-loading>` |
+| 提交中 | 按钮 loading + 进度条 | `<el-button loading>` + `<el-progress>` |
+| 更新/检出中 | ProgressOverlay（可取消） | 全屏半透明 + 进度 + 阶段文字 + [取消] 按钮 |
+| 差异加载中 | diff 区 skeleton | 灰色矩形脉冲动画 |
+| 日志加载中 | 行 skeleton | 3-5 行灰色条脉冲动画 |
+
+## 空状态
+
+| 场景 | 说明 | 区别 |
+|------|------|------|
+| 欢迎页 | 首次启动/无最近工作副本 | 显示 [从仓库检出] 和 [打开已有工作副本] 按钮 |
+| 工作副本无变更 | 已关联工作副本，无未提交变更 | 显示 ✅ "工作副本无变更" + [刷新] [查看日志] [切换分支] |
+| 搜索/筛选无结果 | 搜索结果为空 | 显示 "未找到匹配的文件" + [清除过滤] |
+
+## 空状态实现
+
+- 欢迎页（无工作副本时）：不显示 ToolBar 和 StatusBar（MainLayout 自动隐藏子组件）
+- 导航至变更列表视图时自动判断：有最近工作副本 → 直接进入主视图；否则 → 欢迎页
+- 搜索/筛选空结果与"工作副本无变更"是两种不同的空状态，必须分别处理
+
+## Toast 通知
+
+| 类型 | 颜色 | 行为 |
+|------|------|------|
+| 成功 | `green-500` | 3s 自动关闭 |
+| 错误 | `red-500` | 持续显示，手动关闭 |
+| 警告 | `amber-500` | 持续显示，手动关闭 |
+
+使用 Element Plus `<el-message>` 组件实现。所有 toast 默认 3s 自动关闭，错误和警告类型持续显示直到用户手动关闭。
+
+## 系统通知
+
+后台操作（更新/清理）完成时通过系统通知反馈（macOS Notification Center / Windows Toast / Linux notify-send）。用户点击通知 → 激活主窗口。
+
+## 操作反馈对照表
+
+参见交互设计文档 §4.2 操作反馈表，编码时按对应关系实现 toast/系统通知/确认对话框。
+
+## 取消按钮交互
+
+- ProgressOverlay 的 [取消] 按钮点击后 → 按钮变为"正在取消..."（禁用态）
+- 取消完成后 → ProgressOverlay 关闭 → toast 展示结果（如"检出已取消"）
+
+## 操作进行中全局禁用
+
+ProgressOverlay 展示期间：
+- 所有工具栏按钮禁用（tooltip "操作进行中，请等待"）
+- 文件行操作按钮禁用
+- 键盘快捷键不生效（Esc 和取消按钮除外）
+
+---
+
+# 04.4-键盘快捷键
+
+> **平台适配：** 所有 `Ctrl+` 快捷键在 macOS 上自动映射为 `Cmd+`。实现时使用 Tauri 的 `CmdOrCtrl` 修饰键。下表中统一写作 `Ctrl+`。
+
+| 快捷键 | 操作 | 作用域 |
+|--------|------|--------|
+| `Ctrl+Enter` | 提交 | 提交面板 |
+| `Ctrl+D` | 打开差异 | 全局 |
+| `Ctrl+R` | 刷新文件列表 | 全局 |
+| `Ctrl+,` | 打开设置 | 全局 |
+| `Ctrl+W` | 关闭当前面板 | 全局 |
+| `Esc` | 关闭对话框/面板 | 全局 |
+| `Ctrl+F` | 在 diff 内容中搜索 | Diff 面板 |
+| `Ctrl+Down` | 下一个差异块 | Diff 面板 |
+| `Ctrl+Up` | 上一个差异块 | Diff 面板 |
+
+**Diff 面板键盘导航：** `Ctrl+Down` / `Ctrl+Up` 导航差异块；`Ctrl+W`/`Esc` 关闭面板。
+
+---
+
+# 04.5-对话框规范
+
+所有对话框使用 `<el-dialog>` 组件。
+
+**入场动画：** 200ms scale(0.95→1) + fade，背景半透明遮罩（`dark:bg-black/60`）。
+
+**遮罩点击行为：**
+- 默认：支持遮罩点击关闭
+- **操作进行中的对话框（检出中、合并执行中）禁止遮罩点击关闭**，必须通过 [取消] 按钮或操作完成后自动关闭
+
+**必填标记：** 必填输入项右侧显示 `*`。
+
+**确认对话框：** 所有破坏性操作（还原/删除/切换分支等）必须使用确认对话框。确认按钮使用 `type="danger"` 样式。
+
+---
+
+# 04.6-无障碍设计
+
+| 要求 | 实现 |
+|------|------|
+| 对比度 | 文字 4.5:1 最小对比度（亮色/暗色均满足）|
+| 键盘导航 | 所有操作均支持键盘完成（见 §04.4 快捷键）|
+| 焦点指示 | 2px `blue-400` outline 在所有可交互元素上 |
+| 颜色非唯一指示 | 文件状态使用颜色 + 图标双通道传递 |
+| 屏幕阅读器 | `<el-table>` 默认支持 ARIA；图标按钮加 `aria-label` |
+| 动画尊重 | `prefers-reduced-motion` 时禁用非必要动画 |
+| 文本缩放 | 使用 Tailwind 类而非 px 硬编码 |
 
 ---
 
