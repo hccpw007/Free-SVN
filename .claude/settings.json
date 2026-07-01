@@ -11,7 +11,8 @@
     "planning-with-files@planning-with-files": true
   },
   "includeCoAuthoredBy": false,
-  "model": "sonnet",
+  "model": "opus",
+  "effort": "max",
   "statusLine": {
     "type": "command",
     "command": "bash ~/.claude/hooks/status-line.sh",
