@@ -15,6 +15,8 @@ export const useSvnStore = defineStore('svn', () => {
   const isLoading = ref(false)
   const isOperationRunning = ref(false)
   let initialized = false
+  /** 存储 listen() 返回的 UnlistenFn 句柄，用于在 store 销毁时取消注册事件监听 */
+  const unlistenFns: Array<() => void> = []
 
   // ── v5 认证失败→AuthDialog 联动状态（业务设计 §8.3 + 视觉设计 §4.2） ──
   /**
@@ -58,33 +60,48 @@ export const useSvnStore = defineStore('svn', () => {
   function initEventListeners() {
     if (initialized) return
     initialized = true
-    listen<OperationProgress>('operation:progress', e => { progress.value = e.payload })
-    listen('operation:started', () => {
-      isOperationRunning.value = true
-      useFileListStore().isOperationRunning = true
-    })
-    listen('operation:completed', () => {
-      isOperationRunning.value = false; progress.value = null
-      useFileListStore().isOperationRunning = false
-    })
-    listen('operation:error', () => {
-      isOperationRunning.value = false; progress.value = null
-      useFileListStore().isOperationRunning = false
-    })
+    // 使用 Promise.all 收集所有 listen() 返回的 UnlistenFn，供后续清理
+    Promise.all([
+      listen<OperationProgress>('operation:progress', e => { progress.value = e.payload }),
+      listen('operation:started', () => {
+        isOperationRunning.value = true
+        useFileListStore().isOperationRunning = true
+      }),
+      listen('operation:completed', () => {
+        isOperationRunning.value = false; progress.value = null
+        useFileListStore().isOperationRunning = false
+      }),
+      listen('operation:error', () => {
+        isOperationRunning.value = false; progress.value = null
+        useFileListStore().isOperationRunning = false
+      }),
+    ]).then(fns => { unlistenFns.push(...fns) })
+      .catch(err => console.error('[svn store] Failed to register event listeners:', err))
+  }
+
+  /** 销毁事件监听：调用所有 UnlistenFn 取消注册，防止 HMR 热重载场景下孤立监听 */
+  function destroyEventListeners() {
+    unlistenFns.forEach(fn => fn())
+    unlistenFns.length = 0
+    initialized = false
   }
 
   async function call<T>(command: string, args?: Record<string, unknown>): Promise<T> {
     try { return await invoke<T>(command, args) }
     catch (err) {
       const msg = getErrorMessage(err)
+      // 提取原始错误码，绕过错码翻译层，避免 locale 依赖导致检测失效
+      const rawError: string = err && typeof err === 'object'
+        ? String((err as Record<string, unknown>).error ?? '')
+        : ''
       // SVN_AUTH_FAILED(E170001) → 保存失败上下文供 AuthDialog 自动弹出
-      if (msg.includes('SVN_AUTH_FAILED') || msg.includes('E170001')) {
+      if (rawError === 'SVN_AUTH_FAILED' || rawError.includes('E170001')) {
         authContext.value = { command, args, errorMessage: msg }
         authFailed.value = true
       }
       // SVN_OPERATION_IN_PROGRESS → 队列冲突，抛出携带错误码的异常供前端 toast 展示
       // 前端组件应 catch 此错误并通过 ElMessage.warning(t('error.SVN_OPERATION_IN_PROGRESS')) 显示提示
-      if (msg.includes('SVN_OPERATION_IN_PROGRESS')) {
+      if (rawError === 'SVN_OPERATION_IN_PROGRESS') {
         throw new Error('SVN_OPERATION_IN_PROGRESS')
       }
       throw new Error(msg)
@@ -202,7 +219,7 @@ export const useSvnStore = defineStore('svn', () => {
   async function listBranches(url: string) { return call<string[]>('list_branches', { url }) }
 
   return {
-    progress, isOperationRunning, initEventListeners,
+    progress, isOperationRunning, initEventListeners, destroyEventListeners,
     getStatus, getInfo, getDiff, getLog, getBlame,
     checkoutRepo, updateWorkspace, commit, addFiles, deleteFiles,
     revertFiles, resolveConflict, setIgnore,
