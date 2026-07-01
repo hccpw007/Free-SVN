@@ -123,12 +123,7 @@ pub async fn merge_branch(
     app_handle.emit("operation:started", serde_json::json!({"operation": "merge"})).ok();
 
     let mut args = vec!["merge".to_string()];
-    let rev_range = match (params.rev_start, params.rev_end) {
-        (Some(s), Some(e)) => format!("{}:{}", s, e),
-        (Some(s), None) => format!("{}:HEAD", s),
-        (None, Some(e)) => format!("0:{}", e),
-        (None, None) => String::new(),
-    };
+    let rev_range = build_merge_rev_range(params.rev_start, params.rev_end);
     if !rev_range.is_empty() { args.push("-r".to_string()); args.push(rev_range); }
     args.push(params.src_url.clone());
     args.push(params.target_path.clone());
@@ -163,6 +158,16 @@ pub async fn merge_branch(
     })
 }
 
+/// 构造 svn merge 的 -r 参数值，根据 rev_start/rev_end 的四种组合返回对应格式
+pub(crate) fn build_merge_rev_range(rev_start: Option<u64>, rev_end: Option<u64>) -> String {
+    match (rev_start, rev_end) {
+        (Some(s), Some(e)) => format!("{}:{}", s, e),
+        (Some(s), None) => format!("{}:HEAD", s),
+        (None, Some(e)) => format!("0:{}", e),
+        (None, None) => String::new(),
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -189,5 +194,29 @@ mod tests {
         let params: MergeParams = serde_json::from_str(json).unwrap();
         assert_eq!(params.rev_start, Some(10));
         assert_eq!(params.rev_end, Some(20));
+    }
+
+    #[test]
+    fn test_build_merge_rev_range_both() {
+        // rev_start 和 rev_end 都有值 → "start:end"
+        assert_eq!(build_merge_rev_range(Some(10), Some(20)), "10:20");
+    }
+
+    #[test]
+    fn test_build_merge_rev_range_start_only() {
+        // 仅有 rev_start → "start:HEAD"
+        assert_eq!(build_merge_rev_range(Some(10), None), "10:HEAD");
+    }
+
+    #[test]
+    fn test_build_merge_rev_range_end_only() {
+        // 仅有 rev_end → "0:end"
+        assert_eq!(build_merge_rev_range(None, Some(20)), "0:20");
+    }
+
+    #[test]
+    fn test_build_merge_rev_range_none() {
+        // rev_start 和 rev_end 都无 → 空字符串（不传 -r 参数）
+        assert_eq!(build_merge_rev_range(None, None), "");
     }
 }

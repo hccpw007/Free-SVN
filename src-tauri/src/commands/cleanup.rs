@@ -90,4 +90,16 @@ mod tests {
         let params: ExportParams = serde_json::from_str(json).unwrap();
         assert_eq!(params.revision, Some(42));
     }
+
+    #[test]
+    fn test_cleanup_path_validation_rejects_empty() {
+        // cleanup_workspace 将路径校验委托给 svn::executor::validate_path
+        // 验证空路径经过 validate_path 后返回 InvalidInput
+        let result = crate::svn::executor::validate_path("");
+        assert!(result.is_err());
+        match result {
+            Err(crate::models::error::AppError::InvalidInput(msg)) => assert!(!msg.is_empty()),
+            _ => panic!("expected InvalidInput for empty path"),
+        }
+    }
 }
