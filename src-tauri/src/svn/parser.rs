@@ -304,7 +304,7 @@ pub fn parse_mergeinfo(xml: &str) -> Result<Vec<u64>, AppError> {
 
 // ── 以下为骨架阶段已定义的结构体 ──
 
-#[derive(Debug, Clone, serde::Deserialize)]
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct LogEntry {
     pub revision: u64,
     pub author: Option<String>,
@@ -313,14 +313,14 @@ pub struct LogEntry {
     pub paths: Option<Vec<LogPathEntry>>,
 }
 
-#[derive(Debug, Clone, serde::Deserialize)]
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct LogPathEntry {
     pub action: String,
     #[serde(rename = "$value")]
     pub path: String,
 }
 
-#[derive(Debug, Clone, serde::Deserialize)]
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct BlameLine {
     pub revision: u64,
     pub author: String,
