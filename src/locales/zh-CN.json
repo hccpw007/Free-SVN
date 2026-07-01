@@ -1,0 +1,32 @@
+{
+  "app": {
+    "name": "Free-SVN",
+    "description": "跨平台 SVN 图形化工具"
+  },
+  "error": {
+    "SVN_EXEC_FAILED": "SVN 命令执行失败",
+    "SVN_PARSE_FAILED": "SVN 输出解析错误",
+    "INVALID_INPUT": "输入参数无效",
+    "IO_ERROR": "文件系统错误",
+    "REPO_ERROR": "仓库操作异常",
+    "SVN_TIMEOUT": "操作超时，请重试",
+    "SVN_AUTH_FAILED": "认证失败，请检查凭据配置或使用 SSH key / ~/.subversion/auth/ 缓存",
+    "SVN_NOT_FOUND": "svn 未找到，请重新安装 Free-SVN",
+    "SVN_NOT_WORKING_COPY": "不是 SVN 工作副本",
+    "SVN_OPERATION_IN_PROGRESS": "操作进行中，请稍候",
+    "SVN_CANCELLED": "操作已取消",
+    "NETWORK_UNREACHABLE": "网络不可用，请检查网络连接"
+  },
+  "common": {
+    "cancel": "取消",
+    "confirm": "确认",
+    "save": "保存设置",
+    "close": "关闭",
+    "refresh": "刷新",
+    "search": "搜索",
+    "filter": "筛选",
+    "all": "全部",
+    "copy": "复制",
+    "copied": "已复制"
+  }
+}

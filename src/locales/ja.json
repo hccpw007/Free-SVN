@@ -1,0 +1,32 @@
+{
+  "app": {
+    "name": "Free-SVN",
+    "description": "Cross-platform SVN GUI Tool"
+  },
+  "error": {
+    "SVN_EXEC_FAILED": "SVN command execution failed",
+    "SVN_PARSE_FAILED": "SVN output parse error",
+    "INVALID_INPUT": "Invalid input",
+    "IO_ERROR": "File system error",
+    "REPO_ERROR": "Repository operation error",
+    "SVN_TIMEOUT": "Operation timed out, please retry",
+    "SVN_AUTH_FAILED": "Authentication failed. Please configure SSH key or ~/.subversion/auth/ credentials",
+    "SVN_NOT_FOUND": "svn not found, please reinstall Free-SVN",
+    "SVN_NOT_WORKING_COPY": "Not a SVN working copy",
+    "SVN_OPERATION_IN_PROGRESS": "Operation in progress, please wait",
+    "SVN_CANCELLED": "Operation cancelled",
+    "NETWORK_UNREACHABLE": "Network unreachable, please check your connection"
+  },
+  "common": {
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "save": "Save Settings",
+    "close": "Close",
+    "refresh": "Refresh",
+    "search": "Search",
+    "filter": "Filter",
+    "all": "All",
+    "copy": "Copy",
+    "copied": "Copied"
+  }
+}
