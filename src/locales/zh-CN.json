@@ -1,7 +1,9 @@
 {
   "app": {
     "name": "Free-SVN",
-    "description": "跨平台 SVN 图形化工具"
+    "description": "跨平台 SVN 图形化客户端",
+    "welcomeTitle": "欢迎使用 Free-SVN",
+    "welcomeSubtitle": "跨平台 SVN 图形化客户端"
   },
   "error": {
     "SVN_EXEC_FAILED": "SVN 命令执行失败",
@@ -15,18 +17,35 @@
     "SVN_NOT_WORKING_COPY": "不是 SVN 工作副本",
     "SVN_OPERATION_IN_PROGRESS": "操作进行中，请稍候",
     "SVN_CANCELLED": "操作已取消",
-    "NETWORK_UNREACHABLE": "网络不可用，请检查网络连接"
+    "NETWORK_UNREACHABLE": "网络不可用，请检查网络连接",
+    "TOOL_NOT_FOUND": "外部工具未找到，请检查设置"
   },
   "common": {
-    "cancel": "取消",
-    "confirm": "确认",
-    "save": "保存设置",
-    "close": "关闭",
-    "refresh": "刷新",
-    "search": "搜索",
-    "filter": "筛选",
-    "all": "全部",
-    "copy": "复制",
-    "copied": "已复制"
+    "cancel": "取消", "confirm": "确认", "save": "保存设置",
+    "close": "关闭", "refresh": "刷新", "search": "搜索",
+    "filter": "筛选", "all": "全部", "copy": "复制",
+    "copied": "已复制", "back": "返回", "submit": "提交",
+    "checkout": "检出", "update": "更新", "log": "日志",
+    "settings": "设置", "version": "版本", "loading": "加载中..."
+  },
+  "workspace": {
+    "noChanges": "工作副本无变更",
+    "latestVersion": "最新版本",
+    "lastCommit": "上次提交",
+    "noRecentWorkspaces": "最近打开的工作副本将显示在这里",
+    "pathNotExist": "工作副本路径不存在或被移动",
+    "clearFilter": "清除过滤",
+    "noSearchResult": "未找到匹配的文件",
+    "selectFiles": "请至少选择一个文件",
+    "selectedCount": "已选 {count} 个文件"
+  },
+  "file": {
+    "statusModified": "已修改", "statusAdded": "已新增",
+    "statusConflicted": "冲突", "statusDeleted": "已删除",
+    "statusUnversioned": "未加入", "statusLocked": "锁定",
+    "actionDiff": "差异", "actionRevert": "还原",
+    "actionIgnore": "忽略", "actionDelete": "删除",
+    "actionMerge": "合并", "actionUnlock": "解锁",
+    "binaryFileHint": "该文件为二进制文件，无法显示差异"
   }
 }

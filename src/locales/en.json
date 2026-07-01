@@ -1,7 +1,9 @@
 {
   "app": {
     "name": "Free-SVN",
-    "description": "Cross-platform SVN GUI Tool"
+    "description": "Cross-platform SVN GUI Tool",
+    "welcomeTitle": "Welcome to Free-SVN",
+    "welcomeSubtitle": "Cross-platform SVN GUI Client"
   },
   "error": {
     "SVN_EXEC_FAILED": "SVN command execution failed",
@@ -15,18 +17,35 @@
     "SVN_NOT_WORKING_COPY": "Not a SVN working copy",
     "SVN_OPERATION_IN_PROGRESS": "Operation in progress, please wait",
     "SVN_CANCELLED": "Operation cancelled",
-    "NETWORK_UNREACHABLE": "Network unreachable, please check your connection"
+    "NETWORK_UNREACHABLE": "Network unreachable, please check your connection",
+    "TOOL_NOT_FOUND": "External tool not found, please check settings"
   },
   "common": {
-    "cancel": "Cancel",
-    "confirm": "Confirm",
-    "save": "Save Settings",
-    "close": "Close",
-    "refresh": "Refresh",
-    "search": "Search",
-    "filter": "Filter",
-    "all": "All",
-    "copy": "Copy",
-    "copied": "Copied"
+    "cancel": "Cancel", "confirm": "Confirm", "save": "Save Settings",
+    "close": "Close", "refresh": "Refresh", "search": "Search",
+    "filter": "Filter", "all": "All", "copy": "Copy",
+    "copied": "Copied", "back": "Back", "submit": "Submit",
+    "checkout": "Checkout", "update": "Update", "log": "Log",
+    "settings": "Settings", "version": "Version", "loading": "Loading..."
+  },
+  "workspace": {
+    "noChanges": "No changes in working copy",
+    "latestVersion": "Latest revision",
+    "lastCommit": "Last commit",
+    "noRecentWorkspaces": "Recent workspaces will appear here",
+    "pathNotExist": "Working copy path does not exist or has been moved",
+    "clearFilter": "Clear filter",
+    "noSearchResult": "No matching files found",
+    "selectFiles": "Please select at least one file",
+    "selectedCount": "{count} files selected"
+  },
+  "file": {
+    "statusModified": "Modified", "statusAdded": "Added",
+    "statusConflicted": "Conflicted", "statusDeleted": "Deleted",
+    "statusUnversioned": "Unversioned", "statusLocked": "Locked",
+    "actionDiff": "Diff", "actionRevert": "Revert",
+    "actionIgnore": "Ignore", "actionDelete": "Delete",
+    "actionMerge": "Merge", "actionUnlock": "Unlock",
+    "binaryFileHint": "This is a binary file and cannot display diff"
   }
 }
