@@ -947,6 +947,7 @@ dependencies = [
  "tauri-build",
  "tauri-plugin-log",
  "tauri-plugin-store",
+ "thiserror 2.0.18",
 ]
 
 [[package]]
