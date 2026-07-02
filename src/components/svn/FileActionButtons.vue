@@ -7,6 +7,7 @@ const { t } = useI18n()
 const props = defineProps<{ file: { status: string; path: string } }>()
 const emit = defineEmits<{
   diff: [path: string]
+  add: [path: string]
   revert: [path: string]
   ignore: [path: string]
   delete: [path: string]
@@ -30,7 +31,8 @@ const btn = (labelKey: string, cls: string, action: string) => ({
         isOp('added') ? [btn('file.diff','text-blue-600 dark:text-blue-400','diff'),btn('file.ignore','text-slate-500 dark:text-slate-400','ignore'),btn('file.delete','text-red-500 dark:text-red-400','delete')] :
         isOp('conflicted') ? [btn('file.diff','text-blue-600 dark:text-blue-400','diff'),btn('file.merge','text-red-600 dark:text-red-400','merge')] :
         isOp('deleted') ? [btn('file.diff','text-blue-600 dark:text-blue-400','diff'),btn('file.ignore','text-slate-500 dark:text-slate-400','ignore'),btn('file.revert','text-amber-600 dark:text-amber-400','revert')] :
-        isOp('unversioned') ? [btn('file.diff','text-blue-600 dark:text-blue-400','diff'),btn('file.ignore','text-slate-500 dark:text-slate-400','ignore')] :
+        isOp('unversioned') ? [btn('file.diff','text-blue-600 dark:text-blue-400','diff'),btn('file.add','text-green-600 dark:text-green-400','add'),btn('file.ignore','text-slate-500 dark:text-slate-400','ignore')] :
+        isOp('missing') ? [btn('file.diff','text-blue-600 dark:text-blue-400','diff'),btn('file.add','text-green-600 dark:text-green-400','add'),btn('file.delete','text-red-500 dark:text-red-400','delete')] :
         isOp('locked') ? [btn('file.diff','text-blue-600 dark:text-blue-400','diff'),btn('file.unlock','text-violet-600 dark:text-violet-400','unlock')] : []
       )" :key="b.labelKey" :disabled="disabled"
       class="text-xs underline-offset-2 hover:underline transition-colors duration-150 focus:ring-2 focus:ring-offset-2 focus:ring-blue-400 focus:outline-none"

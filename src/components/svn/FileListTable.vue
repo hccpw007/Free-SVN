@@ -97,6 +97,7 @@ async function openWithEditor(p: string) {
 // 事件冒泡架构: FileActionButtons → FileListTable(转发) → HomePage
 const emit = defineEmits<{ diff: [path: string]; merge: [path: string] }>()
 function diffFile(path: string) { emit('diff', path) }
+function addFile(path: string) { fileListStore.addFile(path).catch(e => console.error('[FileListTable] addFile 失败:', e)) }
 function revertFile(path: string) { fileListStore.revertFile(path).catch(e => console.error('[FileListTable] revertFile 失败:', e)) }
 function ignoreFile(path: string) { fileListStore.ignoreFile(path).catch(e => console.error('[FileListTable] ignoreFile 失败:', e)) }
 function deleteFile(path: string) { fileListStore.deleteFile(path).catch(e => console.error('[FileListTable] deleteFile 失败:', e)) }
@@ -151,7 +152,7 @@ function unlockFile(path: string) { fileListStore.unlockFile(path).catch(e => co
       </el-table-column>
       <el-table-column :label="t('file.actions')" width="180" fixed="right">
         <template #default="{ row }">
-          <FileActionButtons :file="row" @diff="diffFile" @revert="revertFile" @ignore="ignoreFile" @delete="deleteFile" @merge="mergeFile" @unlock="unlockFile" />
+          <FileActionButtons :file="row" @diff="diffFile" @add="addFile" @revert="revertFile" @ignore="ignoreFile" @delete="deleteFile" @merge="mergeFile" @unlock="unlockFile" />
         </template>
       </el-table-column>
     </el-table>

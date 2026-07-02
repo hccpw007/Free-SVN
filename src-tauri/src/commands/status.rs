@@ -3,6 +3,7 @@ use crate::models::error::AppError;
 use crate::models::file::FileItem;
 use crate::models::repo::RepoInfo;
 use crate::svn;
+use std::path::Path;
 
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -22,8 +23,10 @@ pub async fn get_status(params: StatusParams) -> Result<Vec<FileItem>, AppError>
     svn::executor::validate_path(&params.path)?;
     let xml = svn::executor::run_svn(&["status", "--xml", "--depth", "infinity"], &params.path, None).await?;
     let mut items = svn::parser::parse_status(&xml)?;
-    // svn status --xml 不包含文件大小，通过文件系统 stat 获取
     let base = std::path::Path::new(&params.path);
+    // svn status --xml 不包含文件大小，通过文件系统 stat 获取
+    // 同时对标记为 unversioned 的目录递归展开内部文件
+    let mut expanded = Vec::new();
     for item in items.iter_mut() {
         let full = base.join(&item.path);
         // 目录和已删除的文件无法 stat，保持 size=None
@@ -32,8 +35,40 @@ pub async fn get_status(params: StatusParams) -> Result<Vec<FileItem>, AppError>
                 item.size = Some(meta.len());
             }
         }
+        if item.status == "unversioned" && full.is_dir() {
+            expand_unversioned_dir(&full, base, &mut expanded);
+        }
     }
+    items.append(&mut expanded);
     Ok(items)
+}
+
+/// 递归展开未版本控制的目录，将其内部所有文件添加为 unversioned 条目
+fn expand_unversioned_dir(dir: &Path, base: &Path, result: &mut Vec<FileItem>) {
+    use walkdir::WalkDir;
+    for entry in WalkDir::new(dir).into_iter().filter_entry(|e| {
+        // 跳过 .svn 目录
+        e.file_name().to_str().map(|s| s != ".svn").unwrap_or(true)
+    }) {
+        match entry {
+            Ok(entry) => {
+                let path = entry.path();
+                if path.is_file() {
+                    let relative = path.strip_prefix(base).unwrap_or(path);
+                    let size = std::fs::metadata(path).ok().map(|m| m.len());
+                    result.push(FileItem {
+                        path: relative.to_string_lossy().to_string(),
+                        status: "unversioned".to_string(),
+                        size,
+                        ..Default::default()
+                    });
+                }
+            }
+            Err(e) => {
+                log::warn!("expand_unversioned_dir: 无法访问 {:?}: {}", dir, e);
+            }
+        }
+    }
 }
 
 /// 获取工作副本信息

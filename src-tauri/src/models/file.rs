@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 
 /// 单个文件状态条目（对应 `svn status --xml` 输出中的每个 entry）
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct FileItem {
     pub path: String,
     pub status: String,
