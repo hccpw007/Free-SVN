@@ -131,8 +131,8 @@ onMounted(async () => {
     win.onCloseRequested(async () => {
       await win.hide()
     })
-  } catch {
-    // Tauri 环境不可用（如浏览器开发环境）
+  } catch (e: unknown) {
+    console.warn('[App] Tauri webviewWindow 不可用（浏览器环境）:', e)
   }
 
   // 全局焦点跟踪：同步 fileListStore.isOperationRunning 到 useKeyboardShortcuts
@@ -185,8 +185,8 @@ onMounted(async () => {
       const { command, files } = event.payload
       handleShellCommand(command, files)
     })
-  } catch {
-    // Tauri 环境不可用
+  } catch (e: unknown) {
+    console.warn('[App] Tauri event listener 不可用（浏览器环境）:', e)
   }
 })
 </script>

@@ -37,7 +37,10 @@ const diffHtml = computed(() => {
       outputFormat: 'line-by-file',
       highlight: true,
     })
-  } catch { return '<p class="text-sm text-red-500 p-4">差异渲染失败</p>' }
+  } catch (e: unknown) {
+    console.error('[DiffViewer] diff2html 渲染失败:', e)
+    return '<p class="text-sm text-red-500 p-4">差异渲染失败</p>'
+  }
 })
 
 const panelTitle = computed(() => {
@@ -53,7 +56,8 @@ async function openDiff(path: string) {
   try {
     const r = await svnStore.getDiff({ path })
     diffFile.value = { path, content: r.content, isBinary: r.isBinary, rev1: r.revision1, rev2: r.revision2, author: r.author }
-  } catch {
+  } catch (e: unknown) {
+    console.error('[DiffViewer] openDiff 获取差异失败:', e)
     diffFile.value = { path, content: '', isBinary: false }
   }
   finally { isLoading.value = false }

@@ -19,7 +19,8 @@ const repoUrl = ref('')
 onMounted(async () => {
   try {
     svnVersion.value = await wrappedInvoke<string>('get_svn_version')
-  } catch {
+  } catch (e: unknown) {
+    console.warn('[SettingsPage] 获取 SVN 版本失败:', e)
     svnVersion.value = t('common.unknown')
   }
   const ws = useWorkspaceStore()

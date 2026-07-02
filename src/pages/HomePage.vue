@@ -67,8 +67,8 @@ onMounted(async () => {
         await workspaceStore.switchWorkspace('')
         return
       }
-    } catch {
-      // fallback: 路径检查失败时继续加载
+    } catch (e: unknown) {
+      console.warn('[HomePage] path exists 检查失败，继续加载:', e)
     }
     await fileListStore.refresh()
   }
@@ -97,7 +97,9 @@ async function refreshWorkspaceInfo() {
     workspaceStore.url = info.url ?? ''
     workspaceStore.sourceUrl = info.url ?? ''
     workspaceStore.branchName = info.branchName ?? ''
-  } catch { /* 静默处理 */ }
+  } catch (e: unknown) {
+    console.warn('[HomePage] refreshWorkspaceInfo 失败:', e)
+  }
 }
 
 async function handleOpenWorkspace() {
@@ -106,8 +108,8 @@ async function handleOpenWorkspace() {
     if (selected && typeof selected === 'string') {
       await workspaceStore.switchWorkspace(selected)
     }
-  } catch {
-    // fallback
+  } catch (e: unknown) {
+    console.warn('[HomePage] 打开工作副本失败:', e)
   }
 }
 </script>

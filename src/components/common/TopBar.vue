@@ -40,7 +40,8 @@ async function copyPath() {
   try {
     await navigator.clipboard.writeText(workspaceStore.currentPath)
     ElMessage.success(t('common.copied'))
-  } catch {
+  } catch (e: unknown) {
+    console.warn('[TopBar] 复制路径失败:', e)
     ElMessage.warning(`${t('common.copyFailed')}：${workspaceStore.currentPath}`)
   }
 }

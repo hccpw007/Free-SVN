@@ -44,7 +44,8 @@ export const useFileListStore = defineStore('fileList', () => {
       files.value = newFiles
       lastCachedFiles.value = newFiles
       return newFiles
-    } catch {
+    } catch (e: unknown) {
+      console.error('[fileList store] refresh 失败:', e)
       return files.value
     }
   }
@@ -101,7 +102,9 @@ export const useFileListStore = defineStore('fileList', () => {
     try {
       await svnRevertFiles([path])
       await refresh()
-    } catch { /* 错误由 services/svn.ts 统一处理 */ }
+    } catch (e: unknown) {
+      console.error('[fileList store] revertFile 失败:', e)
+    }
   }
 
   /** 批量还原选中的文件 */
@@ -112,7 +115,9 @@ export const useFileListStore = defineStore('fileList', () => {
       await svnRevertFiles(paths)
       selectedPaths.value = new Set()
       await refresh()
-    } catch { /* 静默 */ }
+    } catch (e: unknown) {
+      console.error('[fileList store] batchRevertFiles 失败:', e)
+    }
   }
 
   /** 忽略文件 */
@@ -122,7 +127,9 @@ export const useFileListStore = defineStore('fileList', () => {
       const ws = useWorkspaceStore()
       await svnSetIgnore({ path: ws.currentPath, pattern: path })
       await refresh()
-    } catch { /* 静默 */ }
+    } catch (e: unknown) {
+      console.error('[fileList store] ignoreFile 失败:', e)
+    }
   }
 
   /** 删除文件 */
@@ -130,7 +137,9 @@ export const useFileListStore = defineStore('fileList', () => {
     try {
       await svnDeleteFiles({ paths: [path] })
       await refresh()
-    } catch { /* 静默 */ }
+    } catch (e: unknown) {
+      console.error('[fileList store] deleteFile 失败:', e)
+    }
   }
 
   /** 解锁文件 */
@@ -138,7 +147,9 @@ export const useFileListStore = defineStore('fileList', () => {
     try {
       await svnUnlockFiles([path])
       await refresh()
-    } catch { /* 静默 */ }
+    } catch (e: unknown) {
+      console.error('[fileList store] unlockFile 失败:', e)
+    }
   }
 
   return {

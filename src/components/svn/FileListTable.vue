@@ -65,11 +65,11 @@ async function openWithEditor(p: string) {
 // 事件冒泡架构: FileActionButtons → FileListTable(转发) → HomePage
 const emit = defineEmits<{ diff: [path: string]; merge: [path: string] }>()
 function diffFile(path: string) { emit('diff', path) }
-function revertFile(path: string) { fileListStore.revertFile(path).catch(() => {}) }
-function ignoreFile(path: string) { fileListStore.ignoreFile(path).catch(() => {}) }
-function deleteFile(path: string) { fileListStore.deleteFile(path).catch(() => {}) }
+function revertFile(path: string) { fileListStore.revertFile(path).catch(e => console.error('[FileListTable] revertFile 失败:', e)) }
+function ignoreFile(path: string) { fileListStore.ignoreFile(path).catch(e => console.error('[FileListTable] ignoreFile 失败:', e)) }
+function deleteFile(path: string) { fileListStore.deleteFile(path).catch(e => console.error('[FileListTable] deleteFile 失败:', e)) }
 function mergeFile(path: string) { emit('merge', path) }
-function unlockFile(path: string) { fileListStore.unlockFile(path).catch(() => {}) }
+function unlockFile(path: string) { fileListStore.unlockFile(path).catch(e => console.error('[FileListTable] unlockFile 失败:', e)) }
 </script>
 
 <template>

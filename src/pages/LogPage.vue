@@ -43,7 +43,10 @@ async function fetchLogs() {
     })
     logs.value = r.entries
     totalLogs.value = r.totalCount
-  } catch { logs.value = [] }
+  } catch (e: unknown) {
+    console.warn('[LogPage] fetchLogs 失败:', e)
+    logs.value = []
+  }
   finally { isLoading.value = false }
 }
 

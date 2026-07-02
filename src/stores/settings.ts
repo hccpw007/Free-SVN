@@ -54,7 +54,9 @@ export const useSettingsStore = defineStore('settings', () => {
       mergeCommandTemplate.value = s.mergeCommandTemplate || ''
       fallbackToBuiltin.value = s.fallbackToBuiltin ?? true
       isDirty.value = false
-    } catch { /* 默认值 */ }
+    } catch (e: unknown) {
+      console.error('[settings store] loadSettings 失败，使用默认值:', e)
+    }
   }
 
   /**

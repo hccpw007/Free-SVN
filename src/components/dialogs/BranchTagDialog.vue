@@ -36,7 +36,10 @@ async function handleCreate() {
     })
     ElMessage.success(t('workspace.branchCreated'))
     emit('close')
-  } catch { ElMessage.error(t('workspace.branchFailed')) }
+  } catch (e: unknown) {
+    console.error('[BranchTagDialog] 创建分支/标签失败:', e)
+    ElMessage.error(t('workspace.branchFailed'))
+  }
   finally { isCreating.value = false }
 }
 </script>

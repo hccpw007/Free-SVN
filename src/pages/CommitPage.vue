@@ -28,7 +28,9 @@ async function saveRecentMessage(msg: string) {
     recentMessages.value = updated
     await store.set(RECENT_MSG_KEY, updated)
     await store.save()
-  } catch { /* 持久化失败不影响提交流程 */ }
+  } catch (e: unknown) {
+      console.warn('[CommitPage] saveRecentMessage 持久化失败:', e)
+    }
 }
 
 const commitSelected = ref<Set<string>>(new Set())

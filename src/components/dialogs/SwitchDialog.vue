@@ -20,7 +20,9 @@ const isSwitching = ref(false)
 onMounted(async () => {
   try {
     branches.value = await listBranches(workspaceStore.url)
-  } catch { /* 忽略：用户仍可手动输入分支路径 */ }
+  } catch (e: unknown) {
+    console.warn('[SwitchDialog] 获取分支列表失败，用户可手动输入:', e)
+  }
 })
 
 async function handleSwitch() {
@@ -34,7 +36,10 @@ async function handleSwitch() {
     })
     ElMessage.success(t('workspace.switchSuccess'))
     emit('close')
-  } catch { ElMessage.error(t('workspace.switchFailed')) }
+  } catch (e: unknown) {
+    console.error('[SwitchDialog] 切换分支失败:', e)
+    ElMessage.error(t('workspace.switchFailed'))
+  }
   finally { isSwitching.value = false }
 }
 </script>

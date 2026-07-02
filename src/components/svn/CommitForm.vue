@@ -21,7 +21,9 @@ onMounted(async () => {
     const store = await Store.load('settings.json')
     const saved = await store.get<string[]>(RECENT_MSG_KEY)
     recentMessages.value = saved || []
-  } catch { /* 读取失败不影响提交流程 */ }
+  } catch (e: unknown) {
+      console.warn('[CommitForm] 读取最近提交消息失败:', e)
+    }
 })
 
 function selectRecent(msg: string) { model.value = msg }
