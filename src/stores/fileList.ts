@@ -24,7 +24,10 @@ export const useFileListStore = defineStore('fileList', () => {
       const statusMap: Record<string, string[]> = {
         modified: ['modified'], added: ['added'],
         conflicted: ['conflicted'], deleted: ['deleted'],
-        unversioned: ['unversioned'],
+        unversioned: ['unversioned'], ignored: ['ignored'],
+        missing: ['missing'], replaced: ['replaced'],
+        obstructed: ['obstructed'], external: ['external'],
+        incomplete: ['incomplete'],
       }
       const ss = statusMap[filterStatus.value]
       if (ss) result = result.filter(f => ss.includes(f.status))

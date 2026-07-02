@@ -143,6 +143,12 @@ async function refreshWorkspaceInfo() {
         <el-option :label="t('file.statusConflicted')" value="conflicted" />
         <el-option :label="t('file.statusDeleted')" value="deleted" />
         <el-option :label="t('file.statusUnversioned')" value="unversioned" />
+        <el-option :label="t('file.statusIgnored')" value="ignored" />
+        <el-option :label="t('file.statusMissing')" value="missing" />
+        <el-option :label="t('file.statusReplaced')" value="replaced" />
+        <el-option :label="t('file.statusObstructed')" value="obstructed" />
+        <el-option :label="t('file.statusExternal')" value="external" />
+        <el-option :label="t('file.statusIncomplete')" value="incomplete" />
       </el-select>
       <button
         class="p-1.5 rounded-md text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors duration-150 focus:ring-2 focus:ring-offset-2 focus:ring-blue-400 focus:outline-none"
