@@ -191,7 +191,7 @@ mod tests {
         let params: TestConnectionParams = serde_json::from_str(json).unwrap();
         assert_eq!(params.url, "https://svn.example.com/repo");
         assert_eq!(params.credentials.username, "user1");
-        assert_eq!(params.credentials.save_to_cache, true);
+        assert!(params.credentials.save_to_cache);
     }
 
     #[test]

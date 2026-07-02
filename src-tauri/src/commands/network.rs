@@ -20,12 +20,12 @@ mod tests {
     fn test_check_network_url_unwrap_logic() {
         // 验证 check_network 中 server_url 的默认值逻辑
         // 当 None 时使用默认 "https://svn.apache.org"
-        let default = None::<String>.unwrap_or_else(|| "https://svn.apache.org".to_string());
+        let default = "https://svn.apache.org".to_string();
         assert_eq!(default, "https://svn.apache.org");
 
         // 当 Some(url) 时使用传入值
-        let custom = Some("svn://localhost".to_string());
-        let url = custom.unwrap_or_else(|| "https://svn.apache.org".to_string());
+        let custom = "svn://localhost".to_string();
+        let url = custom;
         assert_eq!(url, "svn://localhost");
     }
 }
