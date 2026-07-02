@@ -58,7 +58,11 @@ export const useFileListStore = defineStore('fileList', () => {
     const { useWorkspaceStore } = await import('./workspace')
     const ws = useWorkspaceStore()
     if (!ws.currentPath) return []
-    return fetchStatus(ws.currentPath)
+    // 从 settings store 读取全局忽略规则，传入后端进行过滤
+    const { useSettingsStore } = await import('./settings')
+    const settings = useSettingsStore()
+    const ignorePatterns = settings.globalIgnorePattern || undefined
+    return fetchStatus(ws.currentPath, ignorePatterns)
   }
 
   function reset() {

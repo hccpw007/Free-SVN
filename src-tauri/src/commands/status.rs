@@ -9,6 +9,8 @@ use std::path::Path;
 #[serde(rename_all = "camelCase")]
 pub struct StatusParams {
     pub path: String,
+    #[serde(default)]
+    pub ignore_patterns: Option<String>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -40,7 +42,53 @@ pub async fn get_status(params: StatusParams) -> Result<Vec<FileItem>, AppError>
         }
     }
     items.append(&mut expanded);
+    // 应用全局忽略规则过滤
+    if let Some(patterns) = &params.ignore_patterns {
+        if !patterns.is_empty() {
+            let ignore_list: Vec<&str> = patterns.lines().map(|l| l.trim()).filter(|l| !l.is_empty()).collect();
+            if !ignore_list.is_empty() {
+                items.retain(|item| {
+                    let filename = Path::new(&item.path)
+                        .file_name()
+                        .and_then(|s| s.to_str())
+                        .unwrap_or("");
+                    !ignore_list.iter().any(|p| matches_glob(p, filename))
+                });
+            }
+        }
+    }
     Ok(items)
+}
+
+/// 简单的 glob 匹配（支持 * 匹配任意字符序列，? 匹配单个字符）
+fn matches_glob(pattern: &str, s: &str) -> bool {
+    if pattern.is_empty() {
+        return s.is_empty();
+    }
+    let pat_bytes = pattern.as_bytes();
+    let s_bytes = s.as_bytes();
+    let (mut pi, mut si) = (0, 0);
+    let (mut star_pi, mut star_si): (Option<usize>, Option<usize>) = (None, None);
+    while si < s_bytes.len() {
+        if pi < pat_bytes.len() && (pat_bytes[pi] == b'?' || pat_bytes[pi] == s_bytes[si]) {
+            pi += 1;
+            si += 1;
+        } else if pi < pat_bytes.len() && pat_bytes[pi] == b'*' {
+            star_pi = Some(pi);
+            star_si = Some(si);
+            pi += 1;
+        } else if let (Some(sp), Some(ss)) = (star_pi, star_si) {
+            pi = sp + 1;
+            star_si = Some(ss + 1);
+            si = ss + 1;
+        } else {
+            return false;
+        }
+    }
+    while pi < pat_bytes.len() && pat_bytes[pi] == b'*' {
+        pi += 1;
+    }
+    pi == pat_bytes.len()
 }
 
 /// 递归展开未版本控制的目录，将其内部所有文件添加为 unversioned 条目

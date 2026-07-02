@@ -131,8 +131,8 @@ function translateError(msg: string): string {
 }
 
 // ── 只读操作（5个） ──────────────────────────
-export async function getStatus(path: string): Promise<FileItem[]> {
-  return invokeWithParams<FileItem[]>('get_status', { path })
+export async function getStatus(path: string, ignorePatterns?: string): Promise<FileItem[]> {
+  return invokeWithParams<FileItem[]>('get_status', { path, ignorePatterns })
 }
 export async function getInfo(path: string): Promise<RepoInfo> {
   return invokeWithParams<RepoInfo>('get_info', { path })
