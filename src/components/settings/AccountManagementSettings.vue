@@ -97,7 +97,7 @@ onMounted(loadCachedCredentials)
   <div class="max-w-2xl">
     <div>
       <div class="flex items-center justify-between mb-4">
-        <h3 class="text-base font-medium text-slate-800 dark:text-slate-200">{{ t('settings.accountManagement') }}</h3>
+        <h3 class="text-base font-medium text-slate-800 dark:text-slate-200">{{ t('settings.account') }}</h3>
         <el-button size="small" type="primary" class="focus:ring-2 focus:ring-offset-2 focus:ring-blue-400 focus:outline-none" @click="openAddDialog">
           <Plus class="w-4 h-4 mr-1" />{{ t('settings.addAccount') }}
         </el-button>

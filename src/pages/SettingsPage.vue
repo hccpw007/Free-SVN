@@ -9,8 +9,7 @@ import { ElMessage } from 'element-plus'
 import { wrappedInvoke } from '@/services/svn'
 import SvnSettings from '@/components/settings/SvnSettings.vue'
 import IgnoreFilesSettings from '@/components/settings/IgnoreFilesSettings.vue'
-import DiffMergeSettings from '@/components/settings/DiffMergeSettings.vue'
-import InterfaceSettings from '@/components/settings/InterfaceSettings.vue'
+import LanguageSettings from '@/components/settings/LanguageSettings.vue'
 import GeneralSettings from '@/components/settings/GeneralSettings.vue'
 import AccountManagementSettings from '@/components/settings/AccountManagementSettings.vue'
 import AboutSettings from '@/components/settings/AboutSettings.vue'
@@ -34,7 +33,7 @@ onMounted(async () => {
 })
 
 // ── Tab 定义 ──
-type TabKey = 'svn' | 'ignoreFiles' | 'diffMerge' | 'interface' | 'general' | 'accountManagement' | 'about'
+type TabKey = 'svn' | 'ignoreFiles' | 'language' | 'general' | 'account' | 'about'
 const activeTab = ref<TabKey>('svn')
 
 interface TabItem {
@@ -45,10 +44,9 @@ interface TabItem {
 const tabs: TabItem[] = [
   { key: 'svn', label: t('settings.svn') },
   { key: 'ignoreFiles', label: t('settings.ignoreFiles') },
-  { key: 'diffMerge', label: t('settings.diffMerge') },
-  { key: 'interface', label: t('settings.interface') },
+  { key: 'language', label: t('settings.languageTab') },
   { key: 'general', label: t('settings.general') },
-  { key: 'accountManagement', label: t('settings.accountManagement') },
+  { key: 'account', label: t('settings.account') },
   { key: 'about', label: t('settings.about') },
 ]
 
@@ -61,10 +59,8 @@ const form = reactive({
   diffCommandTemplate: settingsStore.diffCommandTemplate || '',
   mergeCommandTemplate: settingsStore.mergeCommandTemplate || '',
   fallbackToBuiltin: settingsStore.fallbackToBuiltin,
-  showUnversioned: settingsStore.showUnversioned,
   language: settingsStore.language,
   autoStart: settingsStore.autoStart,
-  darkMode: settingsStore.darkMode,
 })
 const hasChanges = ref(false)
 
@@ -76,20 +72,16 @@ function resetTabDefaults() {
     switch (activeTab.value) {
       case 'svn':
         form.defaultCheckoutDir = DEFAULT_SETTINGS.defaultCheckoutDir
-        break
-      case 'ignoreFiles':
-        form.globalIgnorePattern = DEFAULT_SETTINGS.globalIgnorePattern
-        break
-      case 'diffMerge':
         form.diffTool = DEFAULT_SETTINGS.diffTool
         form.mergeTool = DEFAULT_SETTINGS.mergeTool
         form.diffCommandTemplate = DEFAULT_SETTINGS.diffCommandTemplate
         form.mergeCommandTemplate = DEFAULT_SETTINGS.mergeCommandTemplate
         form.fallbackToBuiltin = DEFAULT_SETTINGS.fallbackToBuiltin
         break
-      case 'interface':
-        form.darkMode = DEFAULT_SETTINGS.darkMode
-        form.showUnversioned = DEFAULT_SETTINGS.showUnversioned
+      case 'ignoreFiles':
+        form.globalIgnorePattern = DEFAULT_SETTINGS.globalIgnorePattern
+        break
+      case 'language':
         form.language = DEFAULT_SETTINGS.language
         break
       case 'general':
@@ -115,10 +107,8 @@ async function handleSave() {
   settingsStore.diffCommandTemplate = form.diffCommandTemplate
   settingsStore.mergeCommandTemplate = form.mergeCommandTemplate
   settingsStore.fallbackToBuiltin = form.fallbackToBuiltin
-  settingsStore.showUnversioned = form.showUnversioned
   settingsStore.language = form.language
   settingsStore.autoStart = form.autoStart
-  settingsStore.darkMode = form.darkMode
   await settingsStore.save()
 
   try {
@@ -195,6 +185,11 @@ async function handleSave() {
           </div>
           <SvnSettings
             v-model:defaultCheckoutDir="form.defaultCheckoutDir"
+            v-model:diffTool="form.diffTool"
+            v-model:diffCommandTemplate="form.diffCommandTemplate"
+            v-model:mergeTool="form.mergeTool"
+            v-model:mergeCommandTemplate="form.mergeCommandTemplate"
+            v-model:fallbackToBuiltin="form.fallbackToBuiltin"
             @changed="markChanged"
           />
         </div>
@@ -210,29 +205,12 @@ async function handleSave() {
           />
         </div>
 
-        <div v-show="activeTab === 'diffMerge'">
+        <div v-show="activeTab === 'language'">
           <div class="flex items-center justify-between mb-4">
-            <h3 class="text-base font-medium text-slate-800 dark:text-slate-200">{{ t('settings.diffMerge') }}</h3>
+            <h3 class="text-base font-medium text-slate-800 dark:text-slate-200">{{ t('settings.languageTab') }}</h3>
             <el-button size="small" @click="resetTabDefaults">{{ t('settings.resetDefaults') }}</el-button>
           </div>
-          <DiffMergeSettings
-            v-model:diffTool="form.diffTool"
-            v-model:diffCommandTemplate="form.diffCommandTemplate"
-            v-model:mergeTool="form.mergeTool"
-            v-model:mergeCommandTemplate="form.mergeCommandTemplate"
-            v-model:fallbackToBuiltin="form.fallbackToBuiltin"
-            @changed="markChanged"
-          />
-        </div>
-
-        <div v-show="activeTab === 'interface'">
-          <div class="flex items-center justify-between mb-4">
-            <h3 class="text-base font-medium text-slate-800 dark:text-slate-200">{{ t('settings.interface') }}</h3>
-            <el-button size="small" @click="resetTabDefaults">{{ t('settings.resetDefaults') }}</el-button>
-          </div>
-          <InterfaceSettings
-            v-model:darkMode="form.darkMode"
-            v-model:showUnversioned="form.showUnversioned"
+          <LanguageSettings
             v-model:language="form.language"
             @changed="markChanged"
           />
@@ -249,7 +227,7 @@ async function handleSave() {
           />
         </div>
 
-        <div v-show="activeTab === 'accountManagement'">
+        <div v-show="activeTab === 'account'">
           <AccountManagementSettings />
         </div>
 

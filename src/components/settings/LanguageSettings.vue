@@ -3,8 +3,6 @@ import { useI18n } from 'vue-i18n'
 
 const { t } = useI18n()
 
-const darkMode = defineModel<boolean>('darkMode', { required: true })
-const showUnversioned = defineModel<boolean>('showUnversioned', { required: true })
 const language = defineModel<string>('language', { required: true })
 const emit = defineEmits<{ changed: [] }>()
 </script>
@@ -12,14 +10,6 @@ const emit = defineEmits<{ changed: [] }>()
 <template>
   <div class="max-w-xl">
     <div class="space-y-4">
-      <div class="flex items-center justify-between">
-        <span class="text-sm text-slate-600 dark:text-slate-400">{{ t('settings.darkMode') }}</span>
-        <el-switch v-model="darkMode" @change="emit('changed')" />
-      </div>
-      <div class="flex items-center justify-between">
-        <span class="text-sm text-slate-600 dark:text-slate-400">{{ t('settings.showUnversioned') }}</span>
-        <el-switch v-model="showUnversioned" @change="emit('changed')" />
-      </div>
       <div>
         <label class="text-xs text-slate-500 dark:text-slate-400">{{ t('settings.language') }}</label>
         <el-select v-model="language" size="default" class="!w-full mt-1" @change="emit('changed')">
