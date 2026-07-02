@@ -26,7 +26,11 @@
     "filter": "Filter", "all": "All", "copy": "Copy",
     "copied": "Copied", "back": "Back", "submit": "Submit",
     "checkout": "Checkout", "update": "Update", "log": "Log",
-    "settings": "Settings", "version": "Version", "loading": "Loading..."
+    "settings": "Settings", "version": "Version", "loading": "Loading...",
+    "copyFailed": "Failed to copy",
+    "credentialManagement": "Credential Management",
+    "switchToLightMode": "Switch to light mode",
+    "switchToDarkMode": "Switch to dark mode"
   },
   "workspace": {
     "noChanges": "No changes in working copy",
@@ -47,5 +51,30 @@
     "actionIgnore": "Ignore", "actionDelete": "Delete",
     "actionMerge": "Merge", "actionUnlock": "Unlock",
     "binaryFileHint": "This is a binary file and cannot display diff"
+  },
+  "toolbar": {
+    "commit": "Commit", "diff": "Diff",
+    "update": "Update", "updateToRevision": "Update to Revision",
+    "log": "Log", "switch": "Switch",
+    "branchTag": "Branch/Tag", "merge": "Merge",
+    "cleanup": "Cleanup", "export": "Export",
+    "settings": "Settings", "moreOperations": "More Operations",
+    "operationInProgress": "Operation in progress, please wait",
+    "noWorkingCopy": "No working copy available",
+    "noChanges": "No changes in working copy",
+    "noSelection": "Please select a file first"
+  },
+  "statusBar": {
+    "revision": "Revision {rev}",
+    "revisionNone": "No revision info",
+    "lastCommit": "Last commit: {time}",
+    "svnVersion": "SVN {ver}",
+    "copyRevision": "Click to copy revision"
+  },
+  "progress": {
+    "operationInProgress": "Operation in Progress",
+    "processing": "Processing...",
+    "filesProcessed": "{count} files processed",
+    "cancelling": "Cancelling..."
   }
 }

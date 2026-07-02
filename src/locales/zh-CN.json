@@ -26,7 +26,11 @@
     "filter": "筛选", "all": "全部", "copy": "复制",
     "copied": "已复制", "back": "返回", "submit": "提交",
     "checkout": "检出", "update": "更新", "log": "日志",
-    "settings": "设置", "version": "版本", "loading": "加载中..."
+    "settings": "设置", "version": "版本", "loading": "加载中...",
+    "copyFailed": "复制失败",
+    "credentialManagement": "凭据管理",
+    "switchToLightMode": "切换到亮色模式",
+    "switchToDarkMode": "切换到暗色模式"
   },
   "workspace": {
     "noChanges": "工作副本无变更",
@@ -47,5 +51,30 @@
     "actionIgnore": "忽略", "actionDelete": "删除",
     "actionMerge": "合并", "actionUnlock": "解锁",
     "binaryFileHint": "该文件为二进制文件，无法显示差异"
+  },
+  "toolbar": {
+    "commit": "提交", "diff": "差异比较",
+    "update": "更新", "updateToRevision": "更新到版本",
+    "log": "日志", "switch": "切换",
+    "branchTag": "分支/标签", "merge": "合并",
+    "cleanup": "清理", "export": "导出",
+    "settings": "设置", "moreOperations": "更多操作",
+    "operationInProgress": "操作进行中，请等待",
+    "noWorkingCopy": "无可用工作副本",
+    "noChanges": "当前工作副本无变更",
+    "noSelection": "请先选中文件"
+  },
+  "statusBar": {
+    "revision": "版本 {rev}",
+    "revisionNone": "无版本信息",
+    "lastCommit": "上次提交：{time}",
+    "svnVersion": "SVN {ver}",
+    "copyRevision": "点击复制版本号"
+  },
+  "progress": {
+    "operationInProgress": "操作进行中",
+    "processing": "处理中...",
+    "filesProcessed": "已处理 {count} 个文件",
+    "cancelling": "正在取消..."
   }
 }
