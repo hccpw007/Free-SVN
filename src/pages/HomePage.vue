@@ -30,9 +30,9 @@ const isSearchEmpty = computed(() => {
     && fileListStore.files.length > 0
     && fileListStore.filteredFiles.length === 0
 })
-/** 已勾选的可提交文件数（排除未加入文件） */
+/** 已勾选的可提交文件数（含未加入/缺失，提交时会自动预处理） */
 const selectedCommitCount = computed(() =>
-  fileListStore.files.filter(f => fileListStore.selectedPaths.has(f.path) && f.status !== 'unversioned').length
+  fileListStore.files.filter(f => fileListStore.selectedPaths.has(f.path)).length
 )
 
 const showCheckoutDialog = ref(false)

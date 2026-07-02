@@ -63,8 +63,32 @@ async function handleCommit() {
   isSubmitting.value = true
   submitError.value = ''
   try {
+    const selectedPaths = Array.from(commitSelected.value)
+
+    // 构建 path → status 映射，无须重新调用 SVN
+    const pathStatus = new Map(
+      commitFiles.value
+        .filter(f => commitSelected.value.has(f.path))
+        .map(f => [f.path, f.status])
+    )
+
+    // 分离需要预处理的文件
+    const unversionedPaths = selectedPaths.filter(p => pathStatus.get(p) === 'unversioned')
+    const missingPaths = selectedPaths.filter(p => pathStatus.get(p) === 'missing')
+
+    // 步骤1：对未加入文件自动执行 svn add
+    if (unversionedPaths.length > 0) {
+      await svnStore.addFiles(unversionedPaths)
+    }
+
+    // 步骤2：对缺失文件自动执行 svn delete（无 --keep-local，从版本库删除）
+    if (missingPaths.length > 0) {
+      await svnStore.deleteFiles({ paths: missingPaths, keepLocal: false })
+    }
+
+    // 步骤3：提交所有文件
     const result = await svnStore.commit({
-      paths: Array.from(commitSelected.value),
+      paths: selectedPaths,
       message: commitMessage.value,
       keepLocks: false,
     })

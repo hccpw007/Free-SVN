@@ -20,7 +20,7 @@ pub struct InfoParams {
 #[tauri::command]
 pub async fn get_status(params: StatusParams) -> Result<Vec<FileItem>, AppError> {
     svn::executor::validate_path(&params.path)?;
-    let xml = svn::executor::run_svn(&["status", "--xml"], &params.path, None).await?;
+    let xml = svn::executor::run_svn(&["status", "--xml", "--depth", "infinity"], &params.path, None).await?;
     let mut items = svn::parser::parse_status(&xml)?;
     // svn status --xml 不包含文件大小，通过文件系统 stat 获取
     let base = std::path::Path::new(&params.path);
