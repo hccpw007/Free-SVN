@@ -8,20 +8,21 @@ import { join } from '@tauri-apps/api/path'
 import { ElCheckbox, ElButton } from 'element-plus'
 import FileStatusIcon from './FileStatusIcon.vue'
 import FileActionButtons from './FileActionButtons.vue'
+import type { FileItem } from '@/types/svn'
 
 const { t } = useI18n()
 const fileListStore = useFileListStore()
 const workspaceStore = useWorkspaceStore()
 
 // 右键菜单状态
-const ctxMenu = ref({ show: false, x: 0, y: 0, file: null as any })
+const ctxMenu = ref<{ show: boolean; x: number; y: number; file: FileItem | null }>({ show: false, x: 0, y: 0, file: null })
 
 // 冲突行红色指示条
 function rowClassName({ row }: { row: { status: string } }): string {
   return row.status === 'conflicted' ? 'border-l-[3px] border-red-500' : ''
 }
 
-function handleRowClick(row: any, _column: any, event: MouseEvent) {
+function handleRowClick(row: FileItem, _column: unknown, event: MouseEvent) {
   const set = new Set(fileListStore.selectedPaths)
   if (event.shiftKey) {
     // Shift+Click: 范围选择
@@ -41,7 +42,7 @@ function handleRowClick(row: any, _column: any, event: MouseEvent) {
   fileListStore.selectedPaths = set
 }
 
-function handleContextMenu(e: MouseEvent, row: any) {
+function handleContextMenu(e: MouseEvent, row: FileItem) {
   e.preventDefault()
   ctxMenu.value = { show: true, x: e.clientX, y: e.clientY, file: row }
 }
@@ -86,8 +87,8 @@ function unlockFile(path: string) { fileListStore.unlockFile(path).catch(() => {
       size="small" style="width:100%;height:100%" row-key="path"
       :row-class-name="rowClassName"
       @row-click="handleRowClick"
-      @cell-contextmenu="(r: any) => handleContextMenu($event, r)"
-      @sort-change="({ prop, order }: any) => {
+      @cell-contextmenu="(r: FileItem) => handleContextMenu($event, r)"
+      @sort-change="({ prop, order }: { prop: string | null; order: string | null }) => {
         fileListStore.sortField = prop || 'status'
         fileListStore.sortOrder = order === 'ascending' ? 'asc' : 'desc'
       }"

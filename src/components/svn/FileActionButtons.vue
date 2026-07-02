@@ -26,12 +26,12 @@ const btn = (labelKey: string, cls: string, action: string) => ({
   <div class="flex items-center gap-2">
     <button
       v-for="b in (
-        isOp('modified') ? [btn('file.actionDiff','text-blue-600','diff'),btn('file.actionRevert','text-amber-600','revert')] :
-        isOp('added') ? [btn('file.actionDiff','text-blue-600','diff'),btn('file.actionIgnore','text-slate-500','ignore'),btn('file.actionDelete','text-red-500','delete')] :
-        isOp('conflicted') ? [btn('file.actionDiff','text-blue-600','diff'),btn('file.actionMerge','text-red-600','merge')] :
-        isOp('deleted') ? [btn('file.actionDiff','text-blue-600','diff'),btn('file.actionIgnore','text-slate-500','ignore'),btn('file.actionRevert','text-amber-600','revert')] :
-        isOp('unversioned') ? [btn('file.actionDiff','text-blue-600','diff'),btn('file.actionIgnore','text-slate-500','ignore')] :
-        isOp('locked') ? [btn('file.actionDiff','text-blue-600','diff'),btn('file.actionUnlock','text-violet-600','unlock')] : []
+        isOp('modified') ? [btn('file.diff','text-blue-600','diff'),btn('file.revert','text-amber-600','revert')] :
+        isOp('added') ? [btn('file.diff','text-blue-600','diff'),btn('file.ignore','text-slate-500','ignore'),btn('file.delete','text-red-500','delete')] :
+        isOp('conflicted') ? [btn('file.diff','text-blue-600','diff'),btn('file.merge','text-red-600','merge')] :
+        isOp('deleted') ? [btn('file.diff','text-blue-600','diff'),btn('file.ignore','text-slate-500','ignore'),btn('file.revert','text-amber-600','revert')] :
+        isOp('unversioned') ? [btn('file.diff','text-blue-600','diff'),btn('file.ignore','text-slate-500','ignore')] :
+        isOp('locked') ? [btn('file.diff','text-blue-600','diff'),btn('file.unlock','text-violet-600','unlock')] : []
       )" :key="b.labelKey" :disabled="disabled"
       class="text-xs underline-offset-2 hover:underline transition-colors duration-150 focus:ring-2 focus:ring-blue-400 focus:outline-none"
       :class="[b.cls, disabled ? 'opacity-50 cursor-not-allowed' : '']"

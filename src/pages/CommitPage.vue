@@ -6,7 +6,7 @@ import { useSvnStore } from '@/stores/svn'
 import { useI18n } from 'vue-i18n'
 import { ArrowLeft } from 'lucide-vue-next'
 import { Store } from '@tauri-apps/plugin-store'
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import CommitForm from '@/components/svn/CommitForm.vue'
 
 const router = useRouter()
@@ -48,7 +48,16 @@ function toggleFile(path: string) {
 
 async function handleCommit() {
   if (selectedCount.value === 0) return
-  if (!commitMessage.value.trim()) return
+  if (!commitMessage.value.trim()) {
+    // 空提交信息时弹出确认（步骤文档验收标准 6.4 #5：空信息时弹出确认）
+    try {
+      await ElMessageBox.confirm(t('file.emptyCommitConfirm'), t('common.confirm'), {
+        confirmButtonText: t('common.submit'),
+        cancelButtonText: t('common.cancel'),
+        type: 'warning',
+      })
+    } catch { return }
+  }
   isSubmitting.value = true
   submitError.value = ''
   try {
@@ -114,7 +123,7 @@ async function handleCommit() {
       <div class="flex items-center gap-2">
         <button class="px-4 py-1.5 text-xs rounded-md border border-slate-300 dark:border-slate-600 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700 focus:ring-2 focus:ring-blue-400 focus:outline-none" @click="router.push('/workspace')">{{ t('common.cancel') }}</button>
         <el-tooltip :content="t('workspace.selectFiles')" :disabled="selectedCount > 0" effect="dark">
-          <button class="px-4 py-1.5 text-xs rounded-md font-medium text-white bg-green-500 hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors focus:ring-2 focus:ring-blue-400 focus:outline-none" :disabled="selectedCount === 0 || isSubmitting || !commitMessage.value.trim()" @click="handleCommit">
+          <button class="px-4 py-1.5 text-xs rounded-md font-medium text-white bg-green-500 hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors focus:ring-2 focus:ring-blue-400 focus:outline-none" :disabled="selectedCount === 0 || isSubmitting" @click="handleCommit">
             {{ isSubmitting ? t('common.submitting') : t('common.submit') }}
           </button>
         </el-tooltip>

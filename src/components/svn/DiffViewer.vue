@@ -43,7 +43,8 @@ const panelTitle = computed(() => {
   const f = diffFile.value
   if (!f) return ''
   const revInfo = f.rev1 !== undefined ? t('common.revisionRange', { r1: f.rev1, r2: f.rev2 ?? '' }) : ''
-  return `${f.path}${revInfo ? ` (${revInfo})` : ''}`
+  const authorInfo = f.author ? ` ${t('common.authorLabel', { author: f.author })}` : ''
+  return `${f.path}${revInfo ? ` (${revInfo})` : ''}${authorInfo}`
 })
 
 async function openDiff(path: string) {

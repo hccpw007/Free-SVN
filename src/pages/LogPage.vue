@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, watch, onMounted } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useSvnStore } from '@/stores/svn'
 import { useWorkspaceStore } from '@/stores/workspace'
@@ -20,12 +20,16 @@ const currentPage = ref(1)
 const pageSize = 50
 const totalLogs = ref(0)
 const expandedRow = ref<number | null>(null)
-let timer: any
+let timer: ReturnType<typeof setTimeout>
 
 // 搜索防抖 300ms
 watch(searchQuery, () => {
   clearTimeout(timer)
   timer = setTimeout(() => { currentPage.value = 1; fetchLogs() }, 300)
+})
+
+onUnmounted(() => {
+  clearTimeout(timer)
 })
 
 async function fetchLogs() {

@@ -21,7 +21,7 @@ const emptyOnly = ref(false)
 const isCheckingOut = ref(false)
 
 // URL 校验
-const urlValid = computed(() => /^svn:\/\/|^https:\/\/|^svn\+sssh:\/\//.test(repoUrl.value))
+const urlValid = computed(() => /^svn:\/\/|^https:\/\/|^svn\+ssh:\/\//.test(repoUrl.value))
 const urlError = computed(() => {
   if (!repoUrl.value) return ''
   if (!urlValid.value) return t('dialog.urlInvalid')
