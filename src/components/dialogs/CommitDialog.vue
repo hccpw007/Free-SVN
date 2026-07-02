@@ -85,7 +85,7 @@ async function handleCommit() {
 <template>
   <el-dialog
     :model-value="true"
-    :title="`${t('toolbar.commit')} (${fileListStore.selectedPaths.size})`"
+    :title="`${t('toolbar.commit')}（${fileListStore.selectedPaths.size}${t('file.fileName')}）`"
     width="480px"
     :close-on-click-modal="false"
     :close-on-press-escape="!isSubmitting"

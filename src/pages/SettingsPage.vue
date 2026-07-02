@@ -50,7 +50,7 @@ const tabs: TabItem[] = [
   { key: 'about', label: t('settings.about') },
 ]
 
-// ── 表单 ──
+// ── 表单（v-model 绑定） ──
 const form = reactive({
   defaultCheckoutDir: settingsStore.defaultCheckoutDir,
   globalIgnorePattern: settingsStore.globalIgnorePattern,
@@ -62,36 +62,8 @@ const form = reactive({
   language: settingsStore.language,
   autoStart: settingsStore.autoStart,
 })
-const hasChanges = ref(false)
 
-function markChanged() { hasChanges.value = true }
-
-/** 重置当前 tab 的表单项为默认值 */
-function resetTabDefaults() {
-  import('@/types/settings').then(({ DEFAULT_SETTINGS }) => {
-    switch (activeTab.value) {
-      case 'svn':
-        form.defaultCheckoutDir = DEFAULT_SETTINGS.defaultCheckoutDir
-        form.diffTool = DEFAULT_SETTINGS.diffTool
-        form.mergeTool = DEFAULT_SETTINGS.mergeTool
-        form.diffCommandTemplate = DEFAULT_SETTINGS.diffCommandTemplate
-        form.mergeCommandTemplate = DEFAULT_SETTINGS.mergeCommandTemplate
-        form.fallbackToBuiltin = DEFAULT_SETTINGS.fallbackToBuiltin
-        break
-      case 'ignoreFiles':
-        form.globalIgnorePattern = DEFAULT_SETTINGS.globalIgnorePattern
-        break
-      case 'language':
-        form.language = DEFAULT_SETTINGS.language
-        break
-      case 'general':
-        form.autoStart = DEFAULT_SETTINGS.autoStart
-        break
-    }
-    markChanged()
-  })
-}
-
+// ── 校验 ──
 const validationMessages = computed(() => {
   const msgs: string[] = []
   if (form.defaultCheckoutDir && !/^\/|^[A-Z]:\\/.test(form.defaultCheckoutDir))
@@ -99,7 +71,11 @@ const validationMessages = computed(() => {
   return msgs
 })
 
-async function handleSave() {
+// ── 自动保存 ──
+let saveTimer: ReturnType<typeof setTimeout> | null = null
+
+async function doSave() {
+  // 复制 form → store
   settingsStore.defaultCheckoutDir = form.defaultCheckoutDir
   settingsStore.globalIgnorePattern = form.globalIgnorePattern
   settingsStore.diffTool = form.diffTool
@@ -109,21 +85,64 @@ async function handleSave() {
   settingsStore.fallbackToBuiltin = form.fallbackToBuiltin
   settingsStore.language = form.language
   settingsStore.autoStart = form.autoStart
+
   await settingsStore.save()
 
+  // 更新自启动
   try {
     await wrappedInvoke('set_auto_start', { enabled: form.autoStart })
   } catch (e) {
     console.warn('Failed to set auto start:', e)
   }
 
+  // 更新语言（切换后立即生效）
   const langMap: Record<string, string> = {
     system: navigator.language.split('-')[0],
     'zh-CN': 'zh-CN', en: 'en', ja: 'ja', ko: 'ko',
   }
   locale.value = langMap[form.language] || 'en'
-  hasChanges.value = false
+
   ElMessage.success(t('common.saved'))
+}
+
+// 文本输入：防抖 500ms 保存
+function handleDebouncedSave() {
+  if (saveTimer) clearTimeout(saveTimer)
+  saveTimer = setTimeout(doSave, 500)
+}
+
+// 选择/开关：立即保存
+async function handleImmediateSave() {
+  if (saveTimer) {
+    clearTimeout(saveTimer)
+    saveTimer = null
+  }
+  await doSave()
+}
+
+/** 重置当前 tab 的表单项为默认值并自动保存 */
+async function resetTabDefaults() {
+  const { DEFAULT_SETTINGS } = await import('@/types/settings')
+  switch (activeTab.value) {
+    case 'svn':
+      form.defaultCheckoutDir = DEFAULT_SETTINGS.defaultCheckoutDir
+      form.diffTool = DEFAULT_SETTINGS.diffTool
+      form.mergeTool = DEFAULT_SETTINGS.mergeTool
+      form.diffCommandTemplate = DEFAULT_SETTINGS.diffCommandTemplate
+      form.mergeCommandTemplate = DEFAULT_SETTINGS.mergeCommandTemplate
+      form.fallbackToBuiltin = DEFAULT_SETTINGS.fallbackToBuiltin
+      break
+    case 'ignoreFiles':
+      form.globalIgnorePattern = DEFAULT_SETTINGS.globalIgnorePattern
+      break
+    case 'language':
+      form.language = DEFAULT_SETTINGS.language
+      break
+    case 'general':
+      form.autoStart = DEFAULT_SETTINGS.autoStart
+      break
+  }
+  await handleImmediateSave()
 }
 </script>
 
@@ -157,18 +176,6 @@ async function handleSave() {
             {{ tab.label }}
           </button>
         </nav>
-
-        <!-- 保存按钮固定在左侧底部 -->
-        <div class="px-4 pt-2 border-t border-slate-200 dark:border-slate-700">
-          <el-button
-            type="primary"
-            :disabled="!hasChanges"
-            class="!w-full focus:ring-2 focus:ring-offset-2 focus:ring-blue-400 focus:outline-none"
-            @click="handleSave"
-          >
-            {{ t('common.save') }}
-          </el-button>
-        </div>
       </div>
 
       <!-- 右侧设置内容 -->
@@ -190,7 +197,7 @@ async function handleSave() {
             v-model:mergeTool="form.mergeTool"
             v-model:mergeCommandTemplate="form.mergeCommandTemplate"
             v-model:fallbackToBuiltin="form.fallbackToBuiltin"
-            @changed="markChanged"
+            @changed="handleDebouncedSave"
           />
         </div>
 
@@ -201,7 +208,7 @@ async function handleSave() {
           </div>
           <IgnoreFilesSettings
             v-model:ignorePattern="form.globalIgnorePattern"
-            @changed="markChanged"
+            @changed="handleDebouncedSave"
           />
         </div>
 
@@ -212,7 +219,7 @@ async function handleSave() {
           </div>
           <LanguageSettings
             v-model:language="form.language"
-            @changed="markChanged"
+            @changed="handleImmediateSave"
           />
         </div>
 
@@ -223,7 +230,7 @@ async function handleSave() {
           </div>
           <GeneralSettings
             v-model:autoStart="form.autoStart"
-            @changed="markChanged"
+            @changed="handleImmediateSave"
           />
         </div>
 

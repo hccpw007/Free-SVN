@@ -250,6 +250,7 @@
   },
   "dialog": {
     "checkout": "检出仓库",
+    "commitTitle": "提交 {count} 个文件",
     "repoUrl": "仓库 URL",
     "repoUrlPlaceholder": "svn:// 或 https:// 或 svn+ssh://",
     "targetPath": "目标路径",
