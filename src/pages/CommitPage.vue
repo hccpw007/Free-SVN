@@ -2,6 +2,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useFileListStore } from '@/stores/fileList'
+import { storeToRefs } from 'pinia'
 import { useSvnStore } from '@/stores/svn'
 import { useI18n } from 'vue-i18n'
 import { ArrowLeft } from 'lucide-vue-next'
@@ -40,7 +41,7 @@ const submitError = ref('')
 
 onMounted(() => { commitSelected.value = new Set(fileListStore.selectedPaths) })
 
-const commitFiles = computed(() => fileListStore.files)
+const { files: commitFiles } = storeToRefs(fileListStore)
 const selectedCount = computed(() => commitSelected.value.size)
 
 function toggleFile(path: string) {
