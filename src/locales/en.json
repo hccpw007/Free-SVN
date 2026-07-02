@@ -217,6 +217,7 @@
     "cleanup": "Cleanup",
     "export": "Export",
     "checkout": "Checkout",
+    "switchWorkspace": "Switch Workspace",
     "settings": "Settings",
     "moreOperations": "More Operations",
     "operationInProgress": "Operation in progress, please wait",

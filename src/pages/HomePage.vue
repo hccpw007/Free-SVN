@@ -4,7 +4,7 @@ import { useWorkspaceStore } from '@/stores/workspace'
 import { useFileListStore } from '@/stores/fileList'
 import { useSvnStore } from '@/stores/svn'
 import { useNetworkStatus } from '@/composables/useNetworkStatus'
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, watch, inject } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { ElMessage } from 'element-plus'
 import { RefreshCw, CheckCircle, Search, GitCommit, RotateCcw } from 'lucide-vue-next'
@@ -20,6 +20,9 @@ const { t } = useI18n()
 const workspaceStore = useWorkspaceStore()
 const fileListStore = useFileListStore()
 const svnStore = useSvnStore()
+
+// 从 App.vue 注入的打开提交弹窗函数
+const openCommitDialog = inject<() => void>('openCommitDialog', () => {})
 
 // 网络可达性检测：更新 workspaceStore.isOffline
 const { checkNetwork } = useNetworkStatus()
@@ -137,7 +140,7 @@ async function refreshWorkspaceInfo() {
         :disabled="selectedCommitCount === 0"
         :title="selectedCommitCount === 0 ? t('toolbar.noSelection') : t('toolbar.descCommit')"
         :aria-label="t('toolbar.commit')"
-        @click="router.push('/workspace/commit')"
+        @click="openCommitDialog()"
       >
         <GitCommit class="w-4 h-4" /><span>{{ t('toolbar.commit') }}</span>
         <span class="ml-0.5 tabular-nums">({{ selectedCommitCount }})</span>

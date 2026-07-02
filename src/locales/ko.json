@@ -74,6 +74,7 @@
     "branchTag": "Branch/Tag", "merge": "Merge",
     "cleanup": "Cleanup", "export": "Export",
     "checkout": "Checkout",
+    "switchWorkspace": "작업공간 전환",
     "settings": "Settings", "moreOperations": "More Operations",
     "operationInProgress": "Operation in progress, please wait",
     "noWorkingCopy": "No working copy available",

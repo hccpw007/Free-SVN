@@ -73,7 +73,7 @@ async function handleSwitchWorkspace() {
           class="px-3 py-1 rounded-md bg-green-500 hover:bg-green-600 text-white text-xs font-medium transition-colors duration-150 focus:ring-2 focus:ring-offset-2 focus:ring-blue-400 focus:outline-none shrink-0"
           @click="handleSwitchWorkspace"
         >
-          切换工作空间
+          {{ t('toolbar.switchWorkspace') }}
         </button>
 
         <span
