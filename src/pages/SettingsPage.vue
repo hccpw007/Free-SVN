@@ -70,6 +70,36 @@ const hasChanges = ref(false)
 
 function markChanged() { hasChanges.value = true }
 
+/** 重置当前 tab 的表单项为默认值 */
+function resetTabDefaults() {
+  import('@/types/settings').then(({ DEFAULT_SETTINGS }) => {
+    switch (activeTab.value) {
+      case 'svn':
+        form.defaultCheckoutDir = DEFAULT_SETTINGS.defaultCheckoutDir
+        break
+      case 'ignoreFiles':
+        form.globalIgnorePattern = DEFAULT_SETTINGS.globalIgnorePattern
+        break
+      case 'diffMerge':
+        form.diffTool = DEFAULT_SETTINGS.diffTool
+        form.mergeTool = DEFAULT_SETTINGS.mergeTool
+        form.diffCommandTemplate = DEFAULT_SETTINGS.diffCommandTemplate
+        form.mergeCommandTemplate = DEFAULT_SETTINGS.mergeCommandTemplate
+        form.fallbackToBuiltin = DEFAULT_SETTINGS.fallbackToBuiltin
+        break
+      case 'interface':
+        form.darkMode = DEFAULT_SETTINGS.darkMode
+        form.showUnversioned = DEFAULT_SETTINGS.showUnversioned
+        form.language = DEFAULT_SETTINGS.language
+        break
+      case 'general':
+        form.autoStart = DEFAULT_SETTINGS.autoStart
+        break
+    }
+    markChanged()
+  })
+}
+
 const validationMessages = computed(() => {
   const msgs: string[] = []
   if (form.defaultCheckoutDir && !/^\/|^[A-Z]:\\/.test(form.defaultCheckoutDir))
@@ -163,6 +193,9 @@ async function handleSave() {
             v-model:defaultCheckoutDir="form.defaultCheckoutDir"
             @changed="markChanged"
           />
+          <div class="mt-6 pt-4 border-t border-slate-200 dark:border-slate-700">
+            <el-button size="small" @click="resetTabDefaults">{{ t('settings.resetDefaults') }}</el-button>
+          </div>
         </div>
 
         <div v-show="activeTab === 'ignoreFiles'">
@@ -170,6 +203,9 @@ async function handleSave() {
             v-model:ignorePattern="form.globalIgnorePattern"
             @changed="markChanged"
           />
+          <div class="mt-6 pt-4 border-t border-slate-200 dark:border-slate-700">
+            <el-button size="small" @click="resetTabDefaults">{{ t('settings.resetDefaults') }}</el-button>
+          </div>
         </div>
 
         <div v-show="activeTab === 'diffMerge'">
@@ -181,6 +217,9 @@ async function handleSave() {
             v-model:fallbackToBuiltin="form.fallbackToBuiltin"
             @changed="markChanged"
           />
+          <div class="mt-6 pt-4 border-t border-slate-200 dark:border-slate-700">
+            <el-button size="small" @click="resetTabDefaults">{{ t('settings.resetDefaults') }}</el-button>
+          </div>
         </div>
 
         <div v-show="activeTab === 'interface'">
@@ -190,6 +229,9 @@ async function handleSave() {
             v-model:language="form.language"
             @changed="markChanged"
           />
+          <div class="mt-6 pt-4 border-t border-slate-200 dark:border-slate-700">
+            <el-button size="small" @click="resetTabDefaults">{{ t('settings.resetDefaults') }}</el-button>
+          </div>
         </div>
 
         <div v-show="activeTab === 'general'">
@@ -197,6 +239,9 @@ async function handleSave() {
             v-model:autoStart="form.autoStart"
             @changed="markChanged"
           />
+          <div class="mt-6 pt-4 border-t border-slate-200 dark:border-slate-700">
+            <el-button size="small" @click="resetTabDefaults">{{ t('settings.resetDefaults') }}</el-button>
+          </div>
         </div>
 
         <div v-show="activeTab === 'accountManagement'">

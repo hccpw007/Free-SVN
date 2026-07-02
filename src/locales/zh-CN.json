@@ -391,6 +391,7 @@
     "securityTipSessionOnly": "建议在公共环境中使用会话凭据而非持久保存",
     "securityNotice": "处理敏感数据时请注意保护您的 SVN 凭据",
     "exportLogs": "导出日志",
-    "checkoutDirInvalidFormat": "目录路径格式可能不正确"
+    "checkoutDirInvalidFormat": "目录路径格式可能不正确",
+    "resetDefaults": "恢复默认"
   }
 }

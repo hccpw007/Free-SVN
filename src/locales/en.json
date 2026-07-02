@@ -391,6 +391,7 @@
     "securityTipSessionOnly": "Use session-only credentials in public environments",
     "securityNotice": "Please protect your SVN credentials when handling sensitive data",
     "exportLogs": "Export Logs",
-    "checkoutDirInvalidFormat": "Directory path may be invalid"
+    "checkoutDirInvalidFormat": "Directory path may be invalid",
+    "resetDefaults": "Reset to Defaults"
   }
 }
