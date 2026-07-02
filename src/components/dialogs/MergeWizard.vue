@@ -87,7 +87,7 @@ async function handleMerge() {
     <!-- 步骤 1 -->
     <div v-if="currentStep === 1" class="space-y-3">
       <p class="text-sm font-medium text-slate-700 dark:text-slate-300">{{ t('workspace.mergeStep1') }}</p>
-      <el-input v-model="sourceUrl" size="default" :placeholder="t('dialog.sourceRepoUrl')" />
+      <el-input v-model="sourceUrl" size="default" :placeholder="t('workspace.sourceUrl')" />
     </div>
 
     <!-- 步骤 2 -->

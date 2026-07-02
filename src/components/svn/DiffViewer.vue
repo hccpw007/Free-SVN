@@ -19,6 +19,7 @@ const diffFile = ref<{
   isBinary: boolean
   rev1?: number
   rev2?: number
+  author?: string
 } | null>(null)
 const isVisible = computed(() => !!diffFile.value)
 const panelHeight = ref(Math.min(360, window.innerHeight * 0.4))
@@ -51,7 +52,7 @@ async function openDiff(path: string) {
   isLoading.value = true
   try {
     const r = await svnStore.getDiff({ path })
-    diffFile.value = { path, content: r.content, isBinary: r.isBinary, rev1: r.revision1, rev2: r.revision2 }
+    diffFile.value = { path, content: r.content, isBinary: r.isBinary, rev1: r.revision1, rev2: r.revision2, author: (r as any).author }
   } catch {
     diffFile.value = { path, content: '', isBinary: false }
   }

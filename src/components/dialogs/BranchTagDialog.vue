@@ -58,7 +58,7 @@ async function handleCreate() {
         <el-input v-model="logMessage" type="textarea" :rows="3" size="default" class="mt-1" />
       </div>
       <div>
-        <label class="text-xs text-slate-500 dark:text-slate-400">{{ t('common.version') }}</label>
+        <label class="text-xs text-slate-500 dark:text-slate-400">{{ t('common.revision') }}</label>
         <el-input-number v-model="revision" :min="1" size="default" class="!w-32 mt-1" :placeholder="t('common.optional')" />
         <p v-if="revisionError" class="text-xs text-red-500 mt-1">{{ revisionError }}</p>
       </div>

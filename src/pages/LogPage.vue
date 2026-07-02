@@ -83,7 +83,7 @@ const isLogEmpty = computed(() => logs.value.length === 0 && !searchQuery.value 
     <div class="flex-1 min-h-0 overflow-auto">
       <el-table
         :data="logs" size="small" style="width:100%" v-loading="isLoading"
-        @row-click="(r: any) => toggleRow(r.revision)"
+        @row-click="(r: LogEntry) => toggleRow(r.revision)"
         :row-class-name="'cursor-pointer'" row-key="revision"
       >
         <el-table-column :label="t('log.revision')" width="80" sortable="custom" prop="revision">

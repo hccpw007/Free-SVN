@@ -8,6 +8,7 @@ import { ArrowLeft } from 'lucide-vue-next'
 import { Store } from '@tauri-apps/plugin-store'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import CommitForm from '@/components/svn/CommitForm.vue'
+import type { FileItem } from '@/types/svn'
 
 const router = useRouter()
 const { t } = useI18n()
@@ -98,7 +99,7 @@ async function handleCommit() {
     </div>
     <!-- 文件列表 -->
     <div class="flex-1 min-h-0 overflow-auto p-4">
-      <el-table :data="commitFiles" size="small" style="width:100%" row-key="path" @row-click="(r:any) => toggleFile(r.path)">
+      <el-table :data="commitFiles" size="small" style="width:100%" row-key="path" @row-click="(r: FileItem) => toggleFile(r.path)">
         <el-table-column width="40">
           <template #default="{ row }"><el-checkbox :model-value="commitSelected.has(row.path)" @change="() => toggleFile(row.path)" /></template>
         </el-table-column>
