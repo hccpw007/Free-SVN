@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, reactive, computed } from 'vue'
+import { ref, reactive, computed, nextTick } from 'vue'
 import { useSvnStore } from '@/stores/svn'
 import { useWorkspaceStore } from '@/stores/workspace'
 import { useI18n } from 'vue-i18n'
@@ -20,6 +20,8 @@ const depth = ref('infinity')
 const ignoreExternals = ref(false)
 const emptyOnly = ref(false)
 const isCheckingOut = ref(false)
+// 认证失败后标记，用于展开/高亮认证区域
+const authRetryVisible = ref(false)
 
 // URL 校验
 const urlValid = computed(() => /^svn:\/\/|^https:\/\/|^svn\+ssh:\/\//.test(repoUrl.value))
@@ -60,9 +62,17 @@ function validateAuth(): boolean {
   return valid
 }
 
+/** 判断错误是否为认证相关 */
+function isAuthError(msg: string): boolean {
+  return msg.includes('E215004') || msg.includes('E170001') || msg.includes('E170013')
+    || msg.includes('Authentication failed') || msg.includes('认证失败')
+    || msg.includes('No credentials') || msg.includes('authorization failed')
+}
+
 async function handleCheckout() {
   if (!urlValid.value || !validateAuth()) return
   isCheckingOut.value = true
+  authRetryVisible.value = false
   try {
     const actualDepth = emptyOnly.value ? 'empty' : depth.value
     const result = await svnStore.checkoutRepo({
@@ -82,7 +92,16 @@ async function handleCheckout() {
     }
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : String(err)
-    ElMessage.error(msg)
+    // 如果是认证错误，展开认证区域引导用户输入凭据
+    if (isAuthError(msg)) {
+      authRetryVisible.value = true
+      ElMessage.warning(t('error.SVN_AUTH_FAILED'))
+      nextTick(() => {
+        document.querySelector<HTMLInputElement>('#checkout-username')?.focus()
+      })
+    } else {
+      ElMessage.error(msg)
+    }
   } finally {
     isCheckingOut.value = false
   }
@@ -127,11 +146,16 @@ async function handleCheckout() {
       <el-checkbox v-model="emptyOnly" size="small">{{ t('dialog.currentDirOnly') }}</el-checkbox>
 
       <!-- 认证区域 -->
-      <div class="border-t border-slate-200 dark:border-slate-700 pt-3">
-        <label class="text-xs font-medium text-slate-700 dark:text-slate-300 mb-2 block">{{ t('dialog.authOptional') }}</label>
+      <div class="border-t pt-3" :class="authRetryVisible ? 'border-red-400 dark:border-red-500' : 'border-slate-200 dark:border-slate-700'">
+        <label class="text-xs font-medium mb-2 block" :class="authRetryVisible ? 'text-red-600 dark:text-red-400' : 'text-slate-700 dark:text-slate-300'">
+          {{ authRetryVisible ? t('error.SVN_AUTH_FAILED') : t('dialog.authOptional') }}
+        </label>
+        <div v-if="authRetryVisible" class="text-xs text-red-500 dark:text-red-400 mb-2">
+          {{ t('auth.authFailedTitle') }}
+        </div>
         <div class="flex flex-col gap-2">
           <div>
-            <el-input v-model="authForm.username" size="small" :placeholder="t('auth.username')" />
+            <el-input id="checkout-username" v-model="authForm.username" size="small" :placeholder="t('auth.username')" />
             <p v-if="usernameError" class="text-xs text-red-500 mt-1">{{ usernameError }}</p>
           </div>
           <div>
