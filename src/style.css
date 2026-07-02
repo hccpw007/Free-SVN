@@ -30,7 +30,18 @@
   font-style: italic;
 }
 
+/* Element Plus 对话框入场动画 */
+.el-dialog {
+  animation: dialog-enter 0.2s ease-out;
+}
+@keyframes dialog-enter {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+
 /* diff2html 暗色模式覆盖 */
+/* 使用 !important 是因为 diff2html 的 HTML 内容通过 v-html 动态注入，
+   无法在 Vue 模板中直接应用 Tailwind dark: 变体，必须覆盖其自带样式 */
 .dark .d2h-file-header {
   background-color: #1e293b !important;
   border-color: #334155 !important;

@@ -14,6 +14,7 @@ import { getInfo as fetchInfo } from '@/services/svn'
 import FileListTable from '@/components/svn/FileListTable.vue'
 import CheckoutDialog from '@/components/dialogs/CheckoutDialog.vue'
 import UpdateRevisionDialog from '@/components/dialogs/UpdateRevisionDialog.vue'
+import SwitchDialog from '@/components/dialogs/SwitchDialog.vue'
 
 const router = useRouter()
 const { t } = useI18n()
@@ -74,6 +75,7 @@ onMounted(async () => {
 })
 
 const showUpdateRevisionDialog = ref(false)
+const showSwitchDialog = ref(false)
 
 // 监听 svnStore.showUpdateRevisionDialog（由 App.vue handleShellCommand 触发）
 watch(() => svnStore.showUpdateRevisionDialog, (val) => {
@@ -165,6 +167,8 @@ async function handleOpenWorkspace() {
   <CheckoutDialog v-if="showCheckoutDialog" @close="showCheckoutDialog = false" />
   <!-- 更新到版本对话框（由右键菜单 --svn-cmd update-rev 触发） -->
   <UpdateRevisionDialog v-if="showUpdateRevisionDialog" @close="showUpdateRevisionDialog = false" />
+  <!-- 切换分支对话框 -->
+  <SwitchDialog v-if="showSwitchDialog" @close="showSwitchDialog = false" />
 
   <!-- 有工作副本：变更列表视图 -->
   <div v-else class="h-full flex flex-col">
@@ -209,6 +213,7 @@ async function handleOpenWorkspace() {
         <p class="text-xs text-slate-400 dark:text-slate-500 font-mono">{{ t('workspace.lastCommit') }}: {{ workspaceStore.lastCommitTime }}</p>
         <div class="mt-4 flex gap-3 justify-center">
           <button class="text-xs text-blue-600 hover:underline focus:ring-2 focus:ring-offset-2 focus:ring-blue-400 focus:outline-none rounded" @click="fileListStore.refresh()">{{ t('common.refresh') }}</button>
+          <button class="text-xs text-blue-600 hover:underline focus:ring-2 focus:ring-offset-2 focus:ring-blue-400 focus:outline-none rounded" @click="showSwitchDialog = true">{{ t('workspace.switchTitle') }}</button>
           <button class="text-xs text-blue-600 hover:underline focus:ring-2 focus:ring-offset-2 focus:ring-blue-400 focus:outline-none rounded" @click="router.push('/workspace/log')">{{ t('workspace.viewLog') }}</button>
         </div>
       </div>

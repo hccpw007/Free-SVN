@@ -133,6 +133,7 @@ async function handleMerge() {
         :class="resultStatus === 'success' ? 'bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-400' : resultStatus === 'conflict' ? 'bg-amber-50 text-amber-700 dark:bg-amber-900/20 dark:text-amber-400' : 'bg-red-50 text-red-700 dark:bg-red-900/20 dark:text-red-400'">
         {{ resultMessage }}
       </div>
+      <el-button v-if="resultStatus === 'conflict'" size="small" type="warning" class="focus:ring-2 focus:ring-offset-2 focus:ring-blue-400 focus:outline-none" @click="emit('close')">{{ t('dialog.viewConflicts') }}</el-button>
     </div>
 
     <template #footer>

@@ -6,7 +6,7 @@ import { useSvnStore } from '@/stores/svn'
 import { useI18n } from 'vue-i18n'
 import { ArrowLeft } from 'lucide-vue-next'
 import { Store } from '@tauri-apps/plugin-store'
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import CommitForm from '@/components/svn/CommitForm.vue'
 import type { FileItem } from '@/types/svn'
 
@@ -49,7 +49,15 @@ function toggleFile(path: string) {
 
 async function handleCommit() {
   if (selectedCount.value === 0) return
-  if (!commitMessage.value.trim()) return
+  if (!commitMessage.value.trim()) {
+    try {
+      await ElMessageBox.confirm(
+        t('file.emptyCommitConfirm'),
+        t('common.confirm'),
+        { confirmButtonText: t('common.confirm'), cancelButtonText: t('common.cancel'), type: 'warning' }
+      )
+    } catch { return }
+  }
   isSubmitting.value = true
   submitError.value = ''
   try {

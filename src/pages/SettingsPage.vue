@@ -188,8 +188,8 @@ async function handleSave() {
               <el-option :label="t('settings.langSystem')" value="system" />
               <el-option :label="t('settings.langZhCN')" value="zh-CN" />
               <el-option :label="t('settings.langEn')" value="en" />
-              <el-option :label="t('settings.langJa')" value="ja" />
-              <el-option :label="t('settings.langKo')" value="ko" />
+              <el-option :label="t('settings.langJa') + ' (Coming Soon)'" value="ja" />
+              <el-option :label="t('settings.langKo') + ' (Coming Soon)'" value="ko" />
             </el-select>
           </div>
         </div>

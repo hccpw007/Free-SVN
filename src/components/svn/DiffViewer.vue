@@ -151,7 +151,9 @@ watch(() => route.query.file, (f) => { if (f && typeof f === 'string') openDiff(
 <template>
   <Transition name="diff-slide"
     enter-from-class="translate-y-full opacity-0"
+    enter-to-class="translate-y-0 opacity-100"
     enter-active-class="transition-all duration-200 ease-in-out"
+    leave-from-class="translate-y-0 opacity-100"
     leave-active-class="transition-all duration-200 ease-in-out"
     leave-to-class="translate-y-full opacity-0"
   >

@@ -15,6 +15,7 @@ export function useAutoRefresh() {
   const fileListStore = useFileListStore()
   let t: ReturnType<typeof setTimeout> | null = null
   let unlisten: (() => void) | null = null
+  let isUnmounted = false
 
   const f = () => {
     if (t) clearTimeout(t)
@@ -22,13 +23,18 @@ export function useAutoRefresh() {
   }
 
   onMounted(async () => {
-    // 使用 Tauri 2 的 onFocusChanged 事件
     unlisten = await getCurrentWindow().onFocusChanged(({ payload: focused }) => {
       if (focused) f()
     })
+    // 防止 onUnmounted 在 onMounted 异步完成前触发导致的泄漏
+    if (isUnmounted && unlisten) {
+      unlisten()
+      unlisten = null
+    }
   })
 
   onUnmounted(() => {
+    isUnmounted = true
     if (unlisten) unlisten()
     if (t) clearTimeout(t)
   })

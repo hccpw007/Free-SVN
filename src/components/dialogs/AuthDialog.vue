@@ -160,6 +160,7 @@ async function handleClearCache() {
 
       <div
         v-if="statusMessage"
+        role="alert"
         class="flex items-center gap-2 text-sm px-3 py-2 rounded-md"
         :class="statusType === 'success'
           ? 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400'

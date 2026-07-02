@@ -104,6 +104,17 @@ export const useFileListStore = defineStore('fileList', () => {
     } catch { /* 错误由 services/svn.ts 统一处理 */ }
   }
 
+  /** 批量还原选中的文件 */
+  async function batchRevertFiles() {
+    const paths = Array.from(selectedPaths.value)
+    if (paths.length === 0) return
+    try {
+      await svnRevertFiles(paths)
+      selectedPaths.value = new Set()
+      await refresh()
+    } catch { /* 静默 */ }
+  }
+
   /** 忽略文件 */
   async function ignoreFile(path: string) {
     try {
@@ -135,6 +146,6 @@ export const useFileListStore = defineStore('fileList', () => {
     sortField, sortOrder, isLoading, isOperationRunning, lastCachedFiles,
     filteredFiles, selectedCount,
     refresh, reset, clearSelection, toggleSelect, toggleSelectAll,
-    applyFilter, clearFilter, revertFile, ignoreFile, deleteFile, unlockFile,
+    applyFilter, clearFilter, revertFile, batchRevertFiles, ignoreFile, deleteFile, unlockFile,
   }
 })

@@ -31,7 +31,11 @@
     "resources": {
       "../public/fonts/*": "fonts/",
       "svn-resources/macos/bin/*": "svn/macos/",
-      "svn-resources/macos/lib/*.dylib": "svn/macos/lib/"
+      "svn-resources/macos/lib/*.dylib": "svn/macos/lib/",
+      "svn-resources/windows/svn.exe": "svn/windows/",
+      "svn-resources/windows/*.dll": "svn/windows/",
+      "svn-resources/linux/bin/*": "svn/linux/",
+      "svn-resources/linux/lib/*": "svn/linux/lib/"
     },
     "icon": [
       "icons/32x32.png",

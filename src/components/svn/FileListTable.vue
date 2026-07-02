@@ -114,7 +114,7 @@ function unlockFile(path: string) { fileListStore.unlockFile(path).catch(() => {
         @change="(v: boolean) => fileListStore.toggleSelectAll(v)"
       />
       <span class="text-slate-500 dark:text-slate-400">{{ t('workspace.selectedCount', { count: fileListStore.selectedPaths.size }) }}</span>
-      <ElButton v-if="fileListStore.selectedPaths.size > 0" size="small" class="focus:ring-2 focus:ring-offset-2 focus:ring-blue-400 focus:outline-none">
+      <ElButton v-if="fileListStore.selectedPaths.size > 0" size="small" class="focus:ring-2 focus:ring-offset-2 focus:ring-blue-400 focus:outline-none" @click="fileListStore.batchRevertFiles()">
         {{ t('file.batchRevert') }}
       </ElButton>
     </div>

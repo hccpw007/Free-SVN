@@ -126,19 +126,25 @@ async function handleCheckout() {
       <div class="border-t border-slate-200 dark:border-slate-700 pt-3">
         <label class="text-xs font-medium text-slate-700 dark:text-slate-300 mb-2 block">{{ t('dialog.authOptional') }}</label>
         <div class="flex flex-col gap-2">
-          <el-input v-model="authForm.username" size="small" :placeholder="t('auth.username')" />
-          <div class="relative">
-            <el-input v-model="authForm.password" size="small"
-              :type="authForm.showPassword ? 'text' : 'password'"
-              :placeholder="t('auth.password')" />
-            <button
-              @click="authForm.showPassword = !authForm.showPassword"
-              class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 hover:text-slate-600 focus:ring-2 focus:ring-offset-2 focus:ring-blue-400 focus:outline-none rounded"
-              :aria-label="t('auth.togglePassword')"
-            >
-              <EyeOff v-if="authForm.showPassword" class="w-4 h-4" />
-              <Eye v-else class="w-4 h-4" />
-            </button>
+          <div>
+            <el-input v-model="authForm.username" size="small" :placeholder="t('auth.username')" />
+            <p v-if="usernameError" class="text-xs text-red-500 mt-1">{{ usernameError }}</p>
+          </div>
+          <div>
+            <div class="relative">
+              <el-input v-model="authForm.password" size="small"
+                :type="authForm.showPassword ? 'text' : 'password'"
+                :placeholder="t('auth.password')" />
+              <button
+                @click="authForm.showPassword = !authForm.showPassword"
+                class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 hover:text-slate-600 focus:ring-2 focus:ring-offset-2 focus:ring-blue-400 focus:outline-none rounded"
+                :aria-label="authForm.showPassword ? t('auth.hidePassword') : t('auth.showPassword')"
+              >
+                <EyeOff v-if="authForm.showPassword" class="w-4 h-4" />
+                <Eye v-else class="w-4 h-4" />
+              </button>
+            </div>
+            <p v-if="passwordError" class="text-xs text-red-500 mt-1">{{ passwordError }}</p>
           </div>
           <el-checkbox v-model="authForm.saveToCache" size="small">{{ t('auth.saveToCache') }}</el-checkbox>
         </div>

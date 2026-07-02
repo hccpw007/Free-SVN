@@ -12,17 +12,8 @@ const workspaceStore = useWorkspaceStore()
 const settingsStore = useSettingsStore()
 const showCredentialsDialog = ref(false)
 
-// 当前工作副本路径（中间省略）
-const displayPath = computed(() => {
-  const path = workspaceStore.currentPath
-  if (!path) return ''
-  if (path.length > 50) {
-    const head = path.slice(0, 25)
-    const tail = path.slice(-20)
-    return `${head}...${tail}`
-  }
-  return path
-})
+// 当前工作副本路径（CSS 截断）
+const displayPath = computed(() => workspaceStore.currentPath)
 
 // 完整路径（用于 tooltip）
 const fullPath = computed(() => workspaceStore.currentPath)
@@ -68,7 +59,7 @@ function handleSwitchWorkspace(path: string) {
       <!-- 有工作副本时：显示路径 + 切换下拉 + 分支名 -->
       <template v-if="workspaceStore.currentPath">
         <span
-          class="text-slate-600 dark:text-slate-300 truncate cursor-pointer hover:text-green-500 transition-colors duration-150"
+          class="truncate overflow-hidden whitespace-nowrap max-w-[400px] text-slate-600 dark:text-slate-300 cursor-pointer hover:text-green-500 transition-colors duration-150"
           :title="fullPath"
           @click="copyPath"
         >
