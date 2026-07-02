@@ -214,6 +214,11 @@ export async function clearCredentials(url: string): Promise<string> {
   return wrappedInvoke<string>('clear_credentials', { url })
 }
 
+// ── 分支查询（1个，7.4 新增） ──────────
+export async function listBranches(url: string): Promise<string[]> {
+  return wrappedInvoke<string[]>('list_branches', { url })
+}
+
 // ── Event Listeners（3个） ──────────────────
 export function onOperationProgress(cb: (p: OperationProgress) => void) {
   return listen<OperationProgress>('operation:progress', (e) => cb(e.payload))

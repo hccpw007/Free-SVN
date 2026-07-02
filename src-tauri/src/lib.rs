@@ -128,11 +128,13 @@ pub fn run() {
                             if !cwd.is_empty() {
                                 let handle = app_handle.clone();
                                 tauri::async_runtime::spawn(async move {
-                                    let _ = crate::commands::cleanup::cleanup_workspace(
+                                    match crate::commands::cleanup::cleanup_workspace(
                                         cwd,
                                         handle.state::<crate::svn::queue::SvnQueue>(),
-                                    ).await;
-                                    send_os_notification(&handle, "SVN Cleanup", "完成");
+                                    ).await {
+                                        Ok(_) => send_os_notification(&handle, "SVN Cleanup", "完成"),
+                                        Err(_) => send_os_notification(&handle, "SVN Cleanup", "失败"),
+                                    }
                                 });
                             }
                         }

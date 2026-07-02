@@ -29,7 +29,7 @@ const isWelcomePage = computed(() => {
     <ToolBar v-if="!isWelcomePage" class="shrink-0" />
 
     <!-- RouterView: 弹性填充，溢出滚动 -->
-    <main class="flex-1 min-h-0 overflow-auto">
+    <main class="flex-1 min-h-0 overflow-auto text-slate-900 dark:text-slate-100 p-4">
       <RouterView />
     </main>
 

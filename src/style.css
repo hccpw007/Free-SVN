@@ -37,6 +37,34 @@
   font-style: italic;
 }
 
+/* diff2html 暗色模式覆盖 */
+.dark .d2h-file-header {
+  background-color: #1e293b !important;
+  border-color: #334155 !important;
+}
+.dark .d2h-code-line {
+  background-color: #0f172a !important;
+  border-color: #1e293b !important;
+}
+.dark .d2h-code-side-line {
+  background-color: #0f172a !important;
+}
+.dark .d2h-code-line-prefix {
+  background-color: #1e293b !important;
+  color: #94a3b8 !important;
+}
+.dark .d2h-ins {
+  background-color: rgba(34, 197, 94, 0.15) !important;
+  border-color: rgba(34, 197, 94, 0.3) !important;
+}
+.dark .d2h-del {
+  background-color: rgba(239, 68, 68, 0.15) !important;
+  border-color: rgba(239, 68, 68, 0.3) !important;
+}
+.dark .d2h-code-line-ctn {
+  color: #cbd5e1 !important;
+}
+
 /* 尊重系统减少动画偏好 */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {

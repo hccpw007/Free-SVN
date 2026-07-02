@@ -17,6 +17,6 @@ export function useOperationGuard() {
 
   return {
     isBlocked: blocked,
-    tooltip: computed(() => (blocked.value ? t('operation.inProgress') : '')),
+    tooltip: computed(() => (blocked.value ? t('progress.operationInProgress') : '')),
   }
 }

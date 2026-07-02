@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
+import { listBranches } from '@/services/svn'
 import { useWorkspaceStore } from '@/stores/workspace'
 import { useSvnStore } from '@/stores/svn'
 import { useI18n } from 'vue-i18n'
@@ -18,8 +19,7 @@ const isSwitching = ref(false)
 
 onMounted(async () => {
   try {
-    const { invoke } = await import('@tauri-apps/api/core')
-    branches.value = await invoke<string[]>('list_branches', { url: workspaceStore.url })
+    branches.value = await listBranches(workspaceStore.url)
   } catch { /* 忽略：用户仍可手动输入分支路径 */ }
 })
 

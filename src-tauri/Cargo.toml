@@ -45,6 +45,12 @@ winreg = "0.52"
 tempfile = "3.14.0"
 
 [lints.clippy]
+# 与后端开发规范一致的配置
+similar_names = "allow"
+cast_lossless = "allow"
+cast_possible_truncation = "allow"
+cast_sign_loss = "allow"
+enum_variant_names = "allow"
 too_many_arguments = "allow"
 type_complexity = "allow"
 module_inception = "allow"
