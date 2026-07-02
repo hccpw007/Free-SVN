@@ -34,10 +34,10 @@ const statusCfg: Record<string, { labelKey: string; tagCls: string; descKey: str
   unversioned:  { labelKey: 'file.statusPendingAdd',    tagCls: 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300',  descKey: 'file.descPendingAdd' },
   ignored:      { labelKey: 'file.statusIgnored',      tagCls: 'bg-slate-100 text-slate-400 dark:bg-slate-800 dark:text-slate-500 italic', descKey: 'file.descIgnored' },
   missing:      { labelKey: 'file.statusPendingDelete', tagCls: 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300', descKey: 'file.descPendingDelete' },
-  replaced:     { labelKey: 'file.statusReplaced',     tagCls: 'bg-cyan-100 text-cyan-700 dark:bg-cyan-900/40 dark:text-cyan-300',     descKey: 'file.descReplaced' },
-  obstructed:   { labelKey: 'file.statusObstructed',   tagCls: 'bg-orange-100 text-orange-600 dark:bg-orange-900/30 dark:text-orange-300', descKey: 'file.descObstructed' },
-  external:     { labelKey: 'file.statusExternal',     tagCls: 'bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-300', descKey: 'file.descExternal' },
-  incomplete:   { labelKey: 'file.statusIncomplete',   tagCls: 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-300',        descKey: 'file.descIncomplete' },
+  replaced:     { labelKey: 'file.statusPendingAdd',    tagCls: 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300',  descKey: 'file.descPendingAdd' },
+  obstructed:   { labelKey: 'file.statusAbnormal',      tagCls: 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-300',        descKey: 'file.descAbnormal' },
+  external:     { labelKey: 'file.statusIgnored',       tagCls: 'bg-slate-100 text-slate-400 dark:bg-slate-800 dark:text-slate-500 italic', descKey: 'file.descIgnored' },
+  incomplete:   { labelKey: 'file.statusAbnormal',      tagCls: 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-300',        descKey: 'file.descAbnormal' },
 }
 
 function statusLabel(status: string): string {

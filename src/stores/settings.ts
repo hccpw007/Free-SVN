@@ -43,7 +43,7 @@ export const useSettingsStore = defineStore('settings', () => {
     try {
       const s = await loadSettings()
       defaultCheckoutDir.value = s.defaultCheckoutDir
-      globalIgnorePattern.value = s.globalIgnorePattern
+      globalIgnorePattern.value = s.globalIgnorePattern || DEFAULT_SETTINGS.globalIgnorePattern
       diffTool.value = s.diffTool
       mergeTool.value = s.mergeTool
       showUnversioned.value = s.showUnversioned

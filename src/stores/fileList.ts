@@ -23,14 +23,11 @@ export const useFileListStore = defineStore('fileList', () => {
     if (filterStatus.value !== 'all') {
       const statusMap: Record<string, string[]> = {
         modified: ['modified'],
-        pendingAdd: ['added', 'unversioned'],
+        pendingAdd: ['added', 'unversioned', 'replaced'],
         conflicted: ['conflicted'],
         pendingDelete: ['deleted', 'missing'],
-        ignored: ['ignored'], replaced: ['replaced'],
-        obstructed: ['obstructed'], external: ['external'],
-        incomplete: ['incomplete'],
-        added: ['added'], unversioned: ['unversioned'],
-        deleted: ['deleted'], missing: ['missing'],
+        ignored: ['ignored', 'external'],
+        abnormal: ['obstructed', 'incomplete'],
       }
       const ss = statusMap[filterStatus.value]
       if (ss) result = result.filter(f => ss.includes(f.status))
