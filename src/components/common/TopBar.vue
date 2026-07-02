@@ -1,16 +1,17 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
-import { GitBranch, KeyRound, Moon, Sun } from 'lucide-vue-next'
+import { computed } from 'vue'
+import { useRouter } from 'vue-router'
+import { GitBranch, Moon, Sun, Settings } from 'lucide-vue-next'
 import { ElMessage } from 'element-plus'
-import AuthDialog from '@/components/dialogs/AuthDialog.vue'
+import { open } from '@tauri-apps/plugin-dialog'
 import { useWorkspaceStore } from '@/stores/workspace'
 import { useSettingsStore } from '@/stores/settings'
 import { useI18n } from 'vue-i18n'
 
 const { t } = useI18n()
+const router = useRouter()
 const workspaceStore = useWorkspaceStore()
 const settingsStore = useSettingsStore()
-const showCredentialsDialog = ref(false)
 
 // 当前工作副本路径（CSS 截断）
 const displayPath = computed(() => workspaceStore.currentPath)
@@ -46,8 +47,16 @@ async function copyPath() {
   }
 }
 
-function handleSwitchWorkspace(path: string) {
-  workspaceStore.switchWorkspace(path)
+// 打开文件夹选择窗口切换工作空间
+async function handleSwitchWorkspace() {
+  try {
+    const selected = await open({ directory: true })
+    if (selected && typeof selected === 'string') {
+      await workspaceStore.switchWorkspace(selected)
+    }
+  } catch (e: unknown) {
+    console.warn('[TopBar] 切换工作空间失败:', e)
+  }
 }
 </script>
 
@@ -57,8 +66,16 @@ function handleSwitchWorkspace(path: string) {
     <div class="flex items-center gap-2 flex-1 min-w-0">
       <GitBranch class="w-5 h-5 text-green-500 shrink-0" />
 
-      <!-- 有工作副本时：显示路径 + 切换下拉 + 分支名 -->
+      <!-- 有工作副本时：切换按钮 + 路径 + 分支名 -->
       <template v-if="workspaceStore.currentPath">
+        <!-- 切换工作空间按钮 -->
+        <button
+          class="px-3 py-1 rounded-md bg-green-500 hover:bg-green-600 text-white text-xs font-medium transition-colors duration-150 focus:ring-2 focus:ring-offset-2 focus:ring-blue-400 focus:outline-none shrink-0"
+          @click="handleSwitchWorkspace"
+        >
+          切换工作空间
+        </button>
+
         <span
           class="truncate overflow-hidden whitespace-nowrap max-w-[400px] text-slate-600 dark:text-slate-300 cursor-pointer hover:text-green-500 transition-colors duration-150"
           :title="fullPath"
@@ -66,23 +83,6 @@ function handleSwitchWorkspace(path: string) {
         >
           {{ displayPath }}
         </span>
-
-        <!-- 切换下拉 -->
-        <el-select
-          v-if="workspaceStore.recentWorkspaces.length > 0"
-          :model-value="workspaceStore.currentPath"
-          size="small"
-          class="!w-32"
-          placeholder="切换..."
-          @change="handleSwitchWorkspace"
-        >
-          <el-option
-            v-for="wp in workspaceStore.recentWorkspaces"
-            :key="wp"
-            :label="wp"
-            :value="wp"
-          />
-        </el-select>
 
         <!-- 分支名 -->
         <span
@@ -101,15 +101,7 @@ function handleSwitchWorkspace(path: string) {
       </template>
     </div>
 
-    <!-- 右边区域：凭据管理 + 暗色模式切换 -->
-    <button
-      class="p-1.5 rounded-md hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors duration-150 focus:ring-2 focus:ring-offset-2 focus:ring-blue-400 focus:outline-none"
-      :aria-label="t('common.credentialManagement')"
-      @click="showCredentialsDialog = true"
-    >
-      <KeyRound class="w-4 h-4 text-slate-500" />
-    </button>
-    <AuthDialog v-if="showCredentialsDialog" mode="manage" :repo-url="workspaceStore.url" @close="showCredentialsDialog = false" />
+    <!-- 右边区域：暗色模式切换 + 设置 -->
     <button
       class="p-1.5 rounded-md hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors duration-150 focus:ring-2 focus:ring-offset-2 focus:ring-blue-400 focus:outline-none"
       :aria-label="isDark ? t('common.switchToLightMode') : t('common.switchToDarkMode')"
@@ -117,6 +109,13 @@ function handleSwitchWorkspace(path: string) {
     >
       <Moon v-if="!isDark" class="w-4 h-4 text-slate-500" />
       <Sun v-else class="w-4 h-4 text-sky-400" />
+    </button>
+    <button
+      class="p-1.5 rounded-md hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors duration-150 focus:ring-2 focus:ring-offset-2 focus:ring-blue-400 focus:outline-none"
+      :aria-label="t('toolbar.settings')"
+      @click="router.push('/settings')"
+    >
+      <Settings class="w-4 h-4 text-slate-500" />
     </button>
   </div>
 </template>

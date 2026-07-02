@@ -13,9 +13,12 @@ export const useWorkspaceStore = defineStore('workspace', () => {
   const svnVersion = ref('')
   const isOffline = ref(false)
   const isLoading = ref(false)
+  // 当前路径是否为有效 SVN 工作副本（由 HomePage.refreshWorkspaceInfo 维护）
+  const isWorkingCopy = ref(false)
+  // TopBar 触发检出弹窗的信号（HomePage watch 消费后重置）
+  const showCheckoutDialog = ref(false)
 
   function reset() {
-    currentPath.value = ''
     url.value = ''
     sourceUrl.value = ''
     branchName.value = ''
@@ -24,6 +27,8 @@ export const useWorkspaceStore = defineStore('workspace', () => {
     svnVersion.value = ''
     isOffline.value = false
     isLoading.value = false
+    isWorkingCopy.value = false
+    showCheckoutDialog.value = false
   }
 
   function switchWorkspace(path: string) {
@@ -49,6 +54,7 @@ export const useWorkspaceStore = defineStore('workspace', () => {
   return {
     currentPath, recentWorkspaces, url, sourceUrl, branchName, currentRevision,
     lastCommitTime, svnVersion, isOffline, isLoading,
+    isWorkingCopy, showCheckoutDialog,
     reset, switchWorkspace, addRecent, removeRecent,
   }
 })

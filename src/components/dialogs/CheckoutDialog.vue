@@ -13,9 +13,13 @@ const workspaceStore = useWorkspaceStore()
 
 const emit = defineEmits<{ close: [] }>()
 
+const props = withDefaults(defineProps<{
+  initialPath?: string
+}>(), { initialPath: '' })
+
 // 表单状态
 const repoUrl = ref('')
-const targetPath = ref('')
+const targetPath = ref(props.initialPath)
 const depth = ref('infinity')
 const ignoreExternals = ref(false)
 const emptyOnly = ref(false)

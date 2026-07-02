@@ -70,6 +70,8 @@ onMounted(async () => {
     } catch (e: unknown) {
       console.warn('[HomePage] path exists 检查失败，继续加载:', e)
     }
+    // 挂载时刷新工作副本信息（包括 isWorkingCopy 状态）
+    await refreshWorkspaceInfo()
     await fileListStore.refresh()
   }
 })
@@ -81,6 +83,14 @@ const showSwitchDialog = ref(false)
 watch(() => svnStore.showUpdateRevisionDialog, (val) => {
   showUpdateRevisionDialog.value = val
   if (val) svnStore.showUpdateRevisionDialog = false // 消费后重置
+})
+
+// 监听 workspaceStore.showCheckoutDialog（由 TopBar 非工作副本"检出"按钮触发）
+watch(() => workspaceStore.showCheckoutDialog, (val) => {
+  if (val) {
+    showCheckoutDialog.value = true
+    workspaceStore.showCheckoutDialog = false // 消费后重置
+  }
 })
 
 function handleCheckout() {
@@ -97,8 +107,10 @@ async function refreshWorkspaceInfo() {
     workspaceStore.url = info.url ?? ''
     workspaceStore.sourceUrl = info.url ?? ''
     workspaceStore.branchName = info.branchName ?? ''
+    workspaceStore.isWorkingCopy = true
   } catch (e: unknown) {
     console.warn('[HomePage] refreshWorkspaceInfo 失败:', e)
+    workspaceStore.isWorkingCopy = false
   }
 }
 
@@ -166,7 +178,7 @@ async function handleOpenWorkspace() {
   </div>
 
   <!-- 检出对话框 -->
-  <CheckoutDialog v-if="showCheckoutDialog" @close="showCheckoutDialog = false" />
+  <CheckoutDialog v-if="showCheckoutDialog" :initialPath="workspaceStore.currentPath" @close="showCheckoutDialog = false" />
   <!-- 更新到版本对话框（由右键菜单 --svn-cmd update-rev 触发） -->
   <UpdateRevisionDialog v-if="showUpdateRevisionDialog" @close="showUpdateRevisionDialog = false" />
   <!-- 切换分支对话框 -->

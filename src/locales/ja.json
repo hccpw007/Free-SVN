@@ -28,7 +28,6 @@
     "checkout": "Checkout", "update": "Update", "log": "Log",
     "settings": "Settings", "version": "Version", "loading": "Loading...",
     "copyFailed": "Failed to copy",
-    "credentialManagement": "Credential Management",
     "switchToLightMode": "Switch to light mode",
     "switchToDarkMode": "Switch to dark mode",
     "delete": "削除"
@@ -59,6 +58,7 @@
     "log": "Log", "switch": "Switch",
     "branchTag": "Branch/Tag", "merge": "Merge",
     "cleanup": "Cleanup", "export": "Export",
+    "checkout": "Checkout",
     "settings": "Settings", "moreOperations": "More Operations",
     "operationInProgress": "Operation in progress, please wait",
     "noWorkingCopy": "No working copy available",

@@ -4,7 +4,7 @@ import { useRouter } from 'vue-router'
 import {
   GitCommit, FileDiff, RefreshCw, ArrowUpCircle, History,
   GitBranch, Layers, GitMerge, Eraser, Package,
-  Settings, MoreHorizontal,
+  Download, MoreHorizontal,
 } from 'lucide-vue-next'
 import { useWorkspaceStore } from '@/stores/workspace'
 import { useFileListStore } from '@/stores/fileList'
@@ -29,13 +29,13 @@ let resizeObserver: ResizeObserver | undefined
 // 严格索引类型
 type IconKey = 'GitCommit' | 'FileDiff' | 'RefreshCw' | 'ArrowUpCircle' | 'History'
   | 'GitBranch' | 'Layers' | 'GitMerge' | 'Eraser' | 'Package'
-  | 'Settings' | 'MoreHorizontal'
+  | 'Download' | 'MoreHorizontal'
 
 // lucide-vue-next 图标组件映射
 const iconMap: Record<IconKey, Component> = {
   GitCommit, FileDiff, RefreshCw, ArrowUpCircle, History,
   GitBranch, Layers, GitMerge, Eraser, Package,
-  Settings, MoreHorizontal,
+  Download, MoreHorizontal,
 }
 
 interface ToolbarButton {
@@ -120,6 +120,11 @@ const buttons = computed<ToolbarButton[]>(() => [
 
 const btnDisabled = computed(() => wpUnavailable.value || globallyDisabled.value)
 
+// 非工作副本 → 触发检出弹窗
+function handleCheckout() {
+  workspaceStore.showCheckoutDialog = true
+}
+
 const visibleButtons = computed(() => {
   const count = Math.max(1, buttons.value.length - overflowCount.value)
   return buttons.value.slice(0, count)
@@ -143,6 +148,16 @@ onUnmounted(() => {
 <template>
   <div ref="toolbarRef" class="h-10 px-3 flex items-center bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
     <div class="flex items-center gap-1 flex-1 overflow-hidden">
+      <!-- 非工作副本路径时：检出按钮 -->
+      <button
+        v-if="workspaceStore.currentPath && !workspaceStore.isWorkingCopy"
+        class="inline-flex items-center gap-1 px-2.5 py-1 text-xs rounded-md whitespace-nowrap focus:ring-2 focus:ring-offset-2 focus:ring-blue-400 focus:outline-none text-orange-600 dark:text-orange-400 hover:bg-orange-50 dark:hover:bg-orange-900/20"
+        :aria-label="t('toolbar.checkout')"
+        @click="handleCheckout"
+      >
+        <Download class="w-4 h-4" /><span>{{ t('toolbar.checkout') }}</span>
+      </button>
+
       <template v-for="btn in visibleButtons" :key="btn.key">
         <el-tooltip
           :content="btn.getDisabledTooltip()"
@@ -177,10 +192,5 @@ onUnmounted(() => {
         </template>
       </el-dropdown>
     </div>
-    <el-tooltip :content="t('toolbar.settings')" placement="bottom">
-      <button class="p-1.5 rounded-md text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 focus:ring-2 focus:ring-offset-2 focus:ring-blue-400 focus:outline-none" :aria-label="t('toolbar.settings')" @click="router.push('/settings')">
-        <Settings class="w-4 h-4" />
-      </button>
-    </el-tooltip>
   </div>
 </template>

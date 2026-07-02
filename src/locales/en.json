@@ -34,7 +34,6 @@
     "checkout": "Checkout", "update": "Update", "log": "Log",
     "settings": "Settings", "version": "Version", "loading": "Loading...",
     "copyFailed": "Failed to copy",
-    "credentialManagement": "Credential Management",
     "switchToLightMode": "Switch to light mode",
     "switchToDarkMode": "Switch to dark mode",
     "revisionRange": "{r1} → {r2}",
@@ -155,11 +154,6 @@
     "changedFiles": "Changed Files",
     "viewDiff": "View Diff"
   },
-  "topbar": {
-    "credentials": "Credential Management",
-    "toggleDarkMode": "Switch to dark mode",
-    "toggleLightMode": "Switch to light mode"
-  },
   "home": {
     "checkout": "Checkout"
   },
@@ -169,6 +163,7 @@
     "log": "Log", "switch": "Switch",
     "branchTag": "Branch/Tag", "merge": "Merge",
     "cleanup": "Cleanup", "export": "Export",
+    "checkout": "Checkout",
     "settings": "Settings", "moreOperations": "More Operations",
     "operationInProgress": "Operation in progress, please wait",
     "noWorkingCopy": "No working copy available",
@@ -275,7 +270,6 @@
     "togglePassword": "Toggle password visibility",
     "saveToCache": "Save credentials to ~/.subversion/auth/",
     "authFailedTitle": "Authentication Failed",
-    "credentialManagement": "Credential Management",
     "serverRequiresAuth": "Server requires authentication",
     "operationPrefix": "Operation: ",
     "usernamePlaceholder": "Enter username",
@@ -285,10 +279,6 @@
     "operationSuccess": "Operation completed successfully",
     "authFailedMessage": "Authentication failed, please check username and password",
     "operationFailed": "Operation failed",
-    "testConnection": "Test Connection",
-    "connectionFailed": "Connection test failed",
-    "clearCache": "Clear Cache",
-    "clearFailed": "Failed to clear cache",
     "cancelOperation": "Cancel Operation",
     "retry": "Retry",
     "retrying": "Retrying..."

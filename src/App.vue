@@ -205,7 +205,6 @@ onMounted(async () => {
   <RouterView />
   <AuthDialog
     v-if="showAuthDialog"
-    mode="retry"
     :repo-url="svnStore.authContext?.args?.url as string || ''"
     :on-retry="handleAuthRetry"
     @close="handleAuthClose"

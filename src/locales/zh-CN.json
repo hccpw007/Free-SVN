@@ -34,7 +34,6 @@
     "checkout": "检出", "update": "更新", "log": "日志",
     "settings": "设置", "version": "版本", "loading": "加载中...",
     "copyFailed": "复制失败",
-    "credentialManagement": "凭据管理",
     "switchToLightMode": "切换到亮色模式",
     "switchToDarkMode": "切换到暗色模式",
     "revisionRange": "{r1} → {r2}",
@@ -155,11 +154,6 @@
     "changedFiles": "变更文件",
     "viewDiff": "查看差异"
   },
-  "topbar": {
-    "credentials": "凭据管理",
-    "toggleDarkMode": "切换到暗色模式",
-    "toggleLightMode": "切换到亮色模式"
-  },
   "home": {
     "checkout": "检出"
   },
@@ -169,6 +163,7 @@
     "log": "日志", "switch": "切换",
     "branchTag": "分支/标签", "merge": "合并",
     "cleanup": "清理", "export": "导出",
+    "checkout": "检出",
     "settings": "设置", "moreOperations": "更多操作",
     "operationInProgress": "操作进行中，请等待",
     "noWorkingCopy": "无可用工作副本",
@@ -275,7 +270,6 @@
     "togglePassword": "切换密码显示",
     "saveToCache": "保存凭据到 ~/.subversion/auth/",
     "authFailedTitle": "认证失败",
-    "credentialManagement": "凭据管理",
     "serverRequiresAuth": "服务器要求认证",
     "operationPrefix": "操作：",
     "usernamePlaceholder": "请输入用户名",
@@ -285,10 +279,6 @@
     "operationSuccess": "操作成功完成",
     "authFailedMessage": "认证失败，请检查用户名和密码",
     "operationFailed": "操作执行失败",
-    "testConnection": "测试连接",
-    "connectionFailed": "连接测试失败",
-    "clearCache": "清除缓存",
-    "clearFailed": "清除缓存失败",
     "cancelOperation": "取消操作",
     "retry": "重试",
     "retrying": "重试中..."
