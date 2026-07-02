@@ -150,7 +150,7 @@ async function handleCommit() {
       <span class="text-xs text-slate-500">{{ t('workspace.selectedCount', { count: selectedCount }) }}</span>
       <div class="flex items-center gap-2">
         <button class="px-4 py-1.5 text-xs rounded-md border border-slate-300 dark:border-slate-600 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700 focus:ring-2 focus:ring-offset-2 focus:ring-blue-400 focus:outline-none" @click="router.push('/workspace')">{{ t('common.cancel') }}</button>
-        <button class="px-4 py-1.5 text-xs rounded-md font-medium text-white bg-green-500 hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors focus:ring-2 focus:ring-offset-2 focus:ring-blue-400 focus:outline-none" :disabled="selectedCount === 0 || isSubmitting || !commitMessage.value.trim()" :title="selectedCount === 0 ? t('workspace.selectFiles') : ''" @click="handleCommit">{{ isSubmitting ? t('common.submitting') : t('common.submit') }}</button>
+        <button class="px-4 py-1.5 text-xs rounded-md font-medium text-white bg-green-500 hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors focus:ring-2 focus:ring-offset-2 focus:ring-blue-400 focus:outline-none" :disabled="selectedCount === 0 || isSubmitting || !commitMessage.trim()" :title="selectedCount === 0 ? t('workspace.selectFiles') : ''" @click="handleCommit">{{ isSubmitting ? t('common.submitting') : t('common.submit') }}</button>
       </div>
     </div>
   </div>
