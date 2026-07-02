@@ -35,7 +35,14 @@ pub async fn add_files(
     state.try_lock()?;
     let mut args = vec!["add".to_string()];
     args.extend(params.paths.clone());
-    let r = svn::executor::run_svn(&args.iter().map(String::as_str).collect::<Vec<&str>>(), &get_cwd(&params.paths[0]), None).await;
+    let r = match svn::executor::run_svn(&args.iter().map(String::as_str).collect::<Vec<&str>>(), &get_cwd(&params.paths[0]), None).await {
+        Ok(v) => Ok(v),
+        Err(AppError::SvnCommand(ref msg)) if msg.contains("W150002") || msg.contains("already under version control") => {
+            log::warn!("add_files: 部分文件已是版本控制，继续提交: {}", msg);
+            Ok(String::new())
+        }
+        Err(e) => Err(e),
+    };
     state.unlock(); r
 }
 
