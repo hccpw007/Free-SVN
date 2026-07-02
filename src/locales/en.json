@@ -250,6 +250,7 @@
   },
   "dialog": {
     "checkout": "Checkout Repository",
+    "commitTitle": "Commit ({count} file(s))",
     "repoUrl": "Repository URL",
     "repoUrlPlaceholder": "svn:// or https:// or svn+ssh://",
     "targetPath": "Target Path",
