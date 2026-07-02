@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
+import { invoke } from '@tauri-apps/api/core'
 import { listen } from '@tauri-apps/api/event'
 import { getErrorMessage } from '@/types/error-codes'
 import type {
@@ -40,7 +41,6 @@ import {
   testConnection as servicesTestConnection,
   saveCredentials as servicesSaveCredentials,
   clearCredentials as servicesClearCredentials,
-  wrappedInvoke,
 } from '@/services/svn'
 
 export const useSvnStore = defineStore('svn', () => {
@@ -65,9 +65,9 @@ export const useSvnStore = defineStore('svn', () => {
     if (!authContext.value) return false
     const ctx = authContext.value
     try {
-      // 使用 services 的统一 invoke 包装（wrappedInvoke）重试
+      // 使用 invoke 直接重试（服务端错误码由 services 层统一翻译）
       const retryArgs = { ...(ctx.args || {}), credentials: { username, password, saveToCache } }
-      await wrappedInvoke(ctx.command, retryArgs)
+      await invoke(ctx.command, retryArgs)
       authFailed.value = false
       authContext.value = null
       return true
@@ -111,14 +111,14 @@ export const useSvnStore = defineStore('svn', () => {
 
   /** 统一调用包装：捕获服务端错误、检测认证失败、翻译错误码
    * 仅 stores/svn.ts 内部使用，外部 page/component 通过 store 方法调用 */
-  async function call<T>(commandFn: () => Promise<T>): Promise<T> {
+  async function call<T>(commandFn: () => Promise<T>, command?: string, args?: Record<string, unknown>): Promise<T> {
     try { return await commandFn() }
     catch (err) {
       const errorCode = typeof err === 'string' ? err : ''
       const msg = errorCode || (typeof err === 'object' ? getErrorMessage(err) : 'Unknown error')
       // SVN_AUTH_FAILED → 保存失败上下文供 AuthDialog 自动弹出
       if (errorCode === 'error.authenticationFailed') {
-        authContext.value = { command: '', args: {}, errorMessage: msg }
+        authContext.value = { command: command || '', args: args || {}, errorMessage: msg }
         authFailed.value = true
       }
       // SVN_OPERATION_IN_PROGRESS → 队列冲突
