@@ -41,14 +41,14 @@ interface TabItem {
   label: string
 }
 
-const tabs: TabItem[] = [
+const tabs = computed<TabItem[]>(() => [
   { key: 'svn', label: t('settings.svn') },
   { key: 'ignoreFiles', label: t('settings.ignoreFiles') },
   { key: 'language', label: t('settings.languageTab') },
   { key: 'general', label: t('settings.general') },
   { key: 'account', label: t('settings.account') },
   { key: 'about', label: t('settings.about') },
-]
+])
 
 // ── 表单（v-model 绑定） ──
 const form = reactive({
