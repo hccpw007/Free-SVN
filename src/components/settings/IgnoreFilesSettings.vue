@@ -13,7 +13,6 @@ function markChanged() {
 
 <template>
   <div class="max-w-2xl">
-    <h3 class="text-base font-medium text-slate-800 dark:text-slate-200 mb-4">{{ t('settings.ignoreFiles') }}</h3>
     <div class="space-y-4">
       <div>
         <label class="text-xs text-slate-500 dark:text-slate-400">{{ t('settings.ignorePatternDescription') }}</label>

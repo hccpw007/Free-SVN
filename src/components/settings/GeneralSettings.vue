@@ -9,7 +9,6 @@ const emit = defineEmits<{ changed: [] }>()
 
 <template>
   <div class="max-w-xl">
-    <h3 class="text-base font-medium text-slate-800 dark:text-slate-200 mb-4">{{ t('settings.general') }}</h3>
     <div class="flex items-center justify-between">
       <span class="text-sm text-slate-600 dark:text-slate-400">{{ t('settings.autoStart') }}</span>
       <el-switch v-model="autoStart" @change="emit('changed')" class="focus:ring-2 focus:ring-offset-2 focus:ring-blue-400 focus:outline-none rounded" />

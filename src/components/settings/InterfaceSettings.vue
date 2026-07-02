@@ -11,7 +11,6 @@ const emit = defineEmits<{ changed: [] }>()
 
 <template>
   <div class="max-w-xl">
-    <h3 class="text-base font-medium text-slate-800 dark:text-slate-200 mb-4">{{ t('settings.interface') }}</h3>
     <div class="space-y-4">
       <div class="flex items-center justify-between">
         <span class="text-sm text-slate-600 dark:text-slate-400">{{ t('settings.darkMode') }}</span>

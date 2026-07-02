@@ -189,26 +189,32 @@ async function handleSave() {
         </div>
 
         <div v-show="activeTab === 'svn'">
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="text-base font-medium text-slate-800 dark:text-slate-200">{{ t('settings.svn') }}</h3>
+            <el-button size="small" @click="resetTabDefaults">{{ t('settings.resetDefaults') }}</el-button>
+          </div>
           <SvnSettings
             v-model:defaultCheckoutDir="form.defaultCheckoutDir"
             @changed="markChanged"
           />
-          <div class="mt-6 pt-4 border-t border-slate-200 dark:border-slate-700">
-            <el-button size="small" @click="resetTabDefaults">{{ t('settings.resetDefaults') }}</el-button>
-          </div>
         </div>
 
         <div v-show="activeTab === 'ignoreFiles'">
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="text-base font-medium text-slate-800 dark:text-slate-200">{{ t('settings.ignoreFiles') }}</h3>
+            <el-button size="small" @click="resetTabDefaults">{{ t('settings.resetDefaults') }}</el-button>
+          </div>
           <IgnoreFilesSettings
             v-model:ignorePattern="form.globalIgnorePattern"
             @changed="markChanged"
           />
-          <div class="mt-6 pt-4 border-t border-slate-200 dark:border-slate-700">
-            <el-button size="small" @click="resetTabDefaults">{{ t('settings.resetDefaults') }}</el-button>
-          </div>
         </div>
 
         <div v-show="activeTab === 'diffMerge'">
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="text-base font-medium text-slate-800 dark:text-slate-200">{{ t('settings.diffMerge') }}</h3>
+            <el-button size="small" @click="resetTabDefaults">{{ t('settings.resetDefaults') }}</el-button>
+          </div>
           <DiffMergeSettings
             v-model:diffTool="form.diffTool"
             v-model:diffCommandTemplate="form.diffCommandTemplate"
@@ -217,31 +223,30 @@ async function handleSave() {
             v-model:fallbackToBuiltin="form.fallbackToBuiltin"
             @changed="markChanged"
           />
-          <div class="mt-6 pt-4 border-t border-slate-200 dark:border-slate-700">
-            <el-button size="small" @click="resetTabDefaults">{{ t('settings.resetDefaults') }}</el-button>
-          </div>
         </div>
 
         <div v-show="activeTab === 'interface'">
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="text-base font-medium text-slate-800 dark:text-slate-200">{{ t('settings.interface') }}</h3>
+            <el-button size="small" @click="resetTabDefaults">{{ t('settings.resetDefaults') }}</el-button>
+          </div>
           <InterfaceSettings
             v-model:darkMode="form.darkMode"
             v-model:showUnversioned="form.showUnversioned"
             v-model:language="form.language"
             @changed="markChanged"
           />
-          <div class="mt-6 pt-4 border-t border-slate-200 dark:border-slate-700">
-            <el-button size="small" @click="resetTabDefaults">{{ t('settings.resetDefaults') }}</el-button>
-          </div>
         </div>
 
         <div v-show="activeTab === 'general'">
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="text-base font-medium text-slate-800 dark:text-slate-200">{{ t('settings.general') }}</h3>
+            <el-button size="small" @click="resetTabDefaults">{{ t('settings.resetDefaults') }}</el-button>
+          </div>
           <GeneralSettings
             v-model:autoStart="form.autoStart"
             @changed="markChanged"
           />
-          <div class="mt-6 pt-4 border-t border-slate-200 dark:border-slate-700">
-            <el-button size="small" @click="resetTabDefaults">{{ t('settings.resetDefaults') }}</el-button>
-          </div>
         </div>
 
         <div v-show="activeTab === 'accountManagement'">
