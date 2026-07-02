@@ -130,7 +130,7 @@ async function refreshWorkspaceInfo() {
     <div class="px-4 py-2 flex items-center gap-3 bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
       <!-- 提交 -->
       <button
-        class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md whitespace-nowrap transition-colors duration-150 focus:ring-2 focus:ring-offset-2 focus:ring-emerald-400 focus:outline-none border"
+        class="inline-flex items-center leading-none gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md whitespace-nowrap transition-colors duration-150 focus:ring-2 focus:ring-offset-2 focus:ring-emerald-400 focus:outline-none border"
         :class="selectedCommitCount > 0
           ? 'bg-emerald-50 border-emerald-200 text-emerald-700 hover:bg-emerald-100 dark:bg-emerald-900/20 dark:border-emerald-800 dark:text-emerald-300'
           : 'bg-slate-50 border-slate-200 text-slate-400 cursor-not-allowed dark:bg-slate-800 dark:border-slate-700 dark:text-slate-500'"
@@ -144,7 +144,7 @@ async function refreshWorkspaceInfo() {
       </button>
       <!-- 批量还原 -->
       <button
-        class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md whitespace-nowrap transition-colors duration-150 focus:ring-2 focus:ring-offset-2 focus:ring-amber-400 focus:outline-none border"
+        class="inline-flex items-center leading-none gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md whitespace-nowrap transition-colors duration-150 focus:ring-2 focus:ring-offset-2 focus:ring-amber-400 focus:outline-none border"
         :class="fileListStore.selectedPaths.size > 0
           ? 'bg-amber-50 border-amber-200 text-amber-700 hover:bg-amber-100 dark:bg-amber-900/20 dark:border-amber-800 dark:text-amber-300'
           : 'bg-slate-50 border-slate-200 text-slate-400 cursor-not-allowed dark:bg-slate-800 dark:border-slate-700 dark:text-slate-500'"
