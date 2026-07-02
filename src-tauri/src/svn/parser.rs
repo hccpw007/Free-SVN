@@ -106,13 +106,18 @@ pub fn parse_info(xml: &str) -> Result<RepoInfo, AppError> {
         url: String,
         #[serde(rename = "relative-url", default)]
         relative_url: Option<String>,
-        root: String,
-        uuid: String,
+        #[serde(rename = "repository")]
+        repository: Repository,
         #[serde(default)]
         wc_info: Option<WcInfo>,
         commit: CommitAuthorInfo,
         #[serde(default)]
         lock: Option<LockEntry>,
+    }
+    #[derive(Debug, serde::Deserialize)]
+    struct Repository {
+        root: String,
+        uuid: String,
     }
     #[derive(Debug, serde::Deserialize)]
     struct WcInfo {
@@ -151,8 +156,8 @@ pub fn parse_info(xml: &str) -> Result<RepoInfo, AppError> {
         path: entry.path,
         url: entry.url.clone(),
         relative_url: entry.relative_url,
-        root: entry.root,
-        repository_uuid: entry.uuid,
+        root: entry.repository.root,
+        repository_uuid: entry.repository.uuid,
         revision: entry.revision,
         node_kind: entry.kind,
         last_changed_revision: entry.commit.revision,
@@ -384,8 +389,10 @@ mod tests {
 <entry path="/repo/trunk" kind="dir" revision="100">
 <url>https://svn.example.com/svn/repo/trunk</url>
 <relative-url>^/trunk</relative-url>
+<repository>
 <root>https://svn.example.com/svn/repo</root>
 <uuid>abc123-def456</uuid>
+</repository>
 <wc-info>
 <schedule>normal</schedule>
 <depth>infinity</depth>
@@ -412,8 +419,10 @@ mod tests {
 <info>
 <entry path="/repo" kind="dir" revision="50">
 <url>https://svn.example.com/svn/repo</url>
+<repository>
 <root>https://svn.example.com/svn/repo</root>
 <uuid>abc-123</uuid>
+</repository>
 <commit revision="49">
 <author>bot</author>
 <date>2024-01-01T00:00:00.000000Z</date>
