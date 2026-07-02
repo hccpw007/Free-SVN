@@ -122,8 +122,10 @@ export const useSvnStore = defineStore('svn', () => {
         : (typeof err === 'object' && err && (err as Record<string, unknown>).message as string) || 'Unknown error'
       // 认证失败（SVN_AUTH_FAILED）→ 保存失败上下文供 AuthDialog 自动弹出
       // E170013 = Unable to connect（连接失败，不一定是认证问题）
+      // E175013 = Access forbidden（无访问权限，需重新认证）
       // E215004/E170001 = 无凭据/认证失败（需弹窗让用户输入凭据）
       if (rawMsg.includes('SVN_AUTH_FAILED') || rawMsg.includes('E215004') || rawMsg.includes('E170001')
+        || rawMsg.includes('E175013')
         || rawMsg.includes('Authentication failed') || rawMsg.includes('认证失败')
         || rawMsg.includes('authorization failed') || rawMsg.includes('No credentials')) {
         authContext.value = { command: command || '', args: args || {}, errorMessage: rawMsg }

@@ -66,9 +66,10 @@ function validateAuth(): boolean {
   return valid
 }
 
-/** 判断错误是否为认证相关（E170013 = 连接失败，非认证错误） */
+/** 判断错误是否为认证相关（E170013 = 连接失败，非认证错误；E175013 = 无访问权限，需重新认证） */
 function isAuthError(msg: string): boolean {
   return msg.includes('E215004') || msg.includes('E170001')
+    || msg.includes('E175013')
     || msg.includes('Authentication failed') || msg.includes('认证失败')
     || msg.includes('No credentials') || msg.includes('authorization failed')
 }
