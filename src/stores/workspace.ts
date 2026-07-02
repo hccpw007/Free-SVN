@@ -33,24 +33,31 @@ export const useWorkspaceStore = defineStore('workspace', () => {
   }
 
   async function switchWorkspace(path: string) {
+    // 先异步检测是否为 SVN 工作副本（在修改 currentPath 之前完成检测，
+    // 避免 HomePage watch 在检测结果未确定时提前触发 refreshWorkspaceInfo）
+    let info: Awaited<ReturnType<typeof getInfo>> | null = null
+    if (path) {
+      try {
+        info = await getInfo(path)
+      } catch {
+        // 非 SVN 工作副本，info 保持 null
+      }
+    }
+
+    // 检测完成后统一更新状态
     reset()
     currentPath.value = path
     addRecent(path)
 
-    // 当路径非空时，自动检测是否为 SVN 工作副本并填充仓库信息
-    if (path) {
-      try {
-        const info = await getInfo(path)
-        lastCommitTime.value = info.lastChangedDate ?? ''
-        currentRevision.value = info.revision ?? 0
-        url.value = info.url ?? ''
-        sourceUrl.value = info.url ?? ''
-        branchName.value = info.branchName ?? ''
-        isWorkingCopy.value = true
-      } catch {
-        // getInfo 失败 → 不是有效的 SVN 工作副本（reset 已将 isWorkingCopy 设为 false）
-      }
+    if (info) {
+      lastCommitTime.value = info.lastChangedDate ?? ''
+      currentRevision.value = info.revision ?? 0
+      url.value = info.url ?? ''
+      sourceUrl.value = info.url ?? ''
+      branchName.value = info.branchName ?? ''
+      isWorkingCopy.value = true
     }
+    // else: isWorkingCopy 保持 reset 后的 false
   }
 
   function addRecent(path: string) {

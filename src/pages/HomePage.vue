@@ -96,7 +96,7 @@ watch(() => workspaceStore.showCheckoutDialog, (val) => {
   }
 })
 
-// 切换工作副本后自动刷新 workspace 信息
+// 切换工作副本后自动刷新 workspace 信息（isWorkingCopy 由 workspaceStore.switchWorkspace 负责检测）
 async function refreshWorkspaceInfo() {
   if (!workspaceStore.currentPath) return
   try {
@@ -106,10 +106,8 @@ async function refreshWorkspaceInfo() {
     workspaceStore.url = info.url ?? ''
     workspaceStore.sourceUrl = info.url ?? ''
     workspaceStore.branchName = info.branchName ?? ''
-    workspaceStore.isWorkingCopy = true
   } catch (e: unknown) {
     console.warn('[HomePage] refreshWorkspaceInfo 失败:', e)
-    workspaceStore.isWorkingCopy = false
   }
 }
 </script>
