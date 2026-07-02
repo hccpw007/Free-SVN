@@ -130,9 +130,9 @@ pub fn get_svn_path() -> PathBuf {
 /// 需要设置 `LD_LIBRARY_PATH` 指向 `{svn_dir}/lib/`。
 /// macOS 和 Windows 不需要额外环境变量（分别使用 @executable_path 和同目录查找）。
 pub fn get_svn_env() -> Vec<(String, String)> {
-    let env = Vec::new();
+    let mut env = Vec::new();
     #[cfg(target_os = "linux")]
-    if let Some(_resource_dir) = SVN_RESOURCE_DIR.get() {
+    if let Some(resource_dir) = SVN_RESOURCE_DIR.get() {
         let lib_dir = resource_dir.join("svn/linux/lib");
         if lib_dir.exists() {
             env.push(("LD_LIBRARY_PATH".to_string(), lib_dir.to_string_lossy().to_string()));
