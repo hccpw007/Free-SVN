@@ -5,7 +5,6 @@ use tauri::AppHandle;
 use tauri::Emitter;
 
 #[derive(Debug, Deserialize)]
-#[serde(rename_all = "camelCase")]
 pub struct ExportParams {
     pub path: String,
     pub target_dir: String,

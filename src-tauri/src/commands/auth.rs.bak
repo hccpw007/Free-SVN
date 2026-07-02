@@ -13,7 +13,6 @@ pub struct AuthCredentials {
 
 /// 连接测试参数
 #[derive(Debug, Deserialize)]
-#[serde(rename_all = "camelCase")]
 pub struct TestConnectionParams {
     pub url: String,
     pub credentials: AuthCredentials,
@@ -21,7 +20,6 @@ pub struct TestConnectionParams {
 
 /// 保存凭据参数
 #[derive(Debug, Deserialize)]
-#[serde(rename_all = "camelCase")]
 pub struct SaveCredentialsParams {
     pub url: String,
     pub credentials: AuthCredentials,
@@ -29,7 +27,6 @@ pub struct SaveCredentialsParams {
 
 /// 清除凭据参数
 #[derive(Debug, Deserialize)]
-#[serde(rename_all = "camelCase")]
 pub struct ClearCredentialsParams {
     pub url: String,
 }

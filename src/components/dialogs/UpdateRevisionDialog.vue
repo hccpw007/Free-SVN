@@ -3,6 +3,7 @@ import { ref } from 'vue'
 import { useSvnStore } from '@/stores/svn'
 import { useWorkspaceStore } from '@/stores/workspace'
 import { useI18n } from 'vue-i18n'
+import { ElMessage } from 'element-plus'
 
 const { t } = useI18n()
 const svnStore = useSvnStore()
@@ -34,6 +35,9 @@ async function handleUpdate() {
       depth: updateDepth.value || undefined,
     })
     emit('close')
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err)
+    ElMessage.error(msg)
   } finally {
     isUpdating.value = false
   }

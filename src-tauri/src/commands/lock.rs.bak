@@ -3,7 +3,6 @@ use crate::models::error::AppError;
 use crate::svn;
 
 #[derive(Debug, Deserialize)]
-#[serde(rename_all = "camelCase")]
 pub struct LockParams {
     pub paths: Vec<String>,
     pub message: Option<String>,

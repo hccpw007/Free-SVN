@@ -111,15 +111,17 @@ export const useSvnStore = defineStore('svn', () => {
   async function call<T>(commandFn: () => Promise<T>, command?: string, args?: Record<string, unknown>): Promise<T> {
     try { return await commandFn() }
     catch (err) {
+      // err 可能是 i18n key 字符串（来自 wrappedInvoke/translateError）、
+      // Error 对象、或其他类型。统一提取可读消息。
       const errorCode = typeof err === 'string' ? err : ''
       const msg = errorCode || (typeof err === 'object' ? getErrorMessage(err) : 'Unknown error')
       // SVN_AUTH_FAILED → 保存失败上下文供 AuthDialog 自动弹出
-      if (errorCode === 'error.authenticationFailed') {
+      if (errorCode === 'error.SVN_AUTH_FAILED' || errorCode === 'SVN_AUTH_FAILED') {
         authContext.value = { command: command || '', args: args || {}, errorMessage: msg }
         authFailed.value = true
       }
       // SVN_OPERATION_IN_PROGRESS → 队列冲突
-      if (errorCode === 'error.operationInProgress') {
+      if (errorCode === 'error.operationInProgress' || errorCode === 'SVN_OPERATION_IN_PROGRESS') {
         throw new Error('SVN_OPERATION_IN_PROGRESS')
       }
       throw new Error(msg)

@@ -5,13 +5,11 @@ use crate::models::repo::RepoInfo;
 use crate::svn;
 
 #[derive(Debug, Deserialize)]
-#[serde(rename_all = "camelCase")]
 pub struct StatusParams {
     pub path: String,
 }
 
 #[derive(Debug, Deserialize)]
-#[serde(rename_all = "camelCase")]
 pub struct InfoParams {
     pub path: String,
 }

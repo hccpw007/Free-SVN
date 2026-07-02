@@ -4,6 +4,7 @@ import { useFileListStore } from '@/stores/fileList'
 import { useSvnStore } from '@/stores/svn'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
+import { ElMessage } from 'element-plus'
 
 const { t } = useI18n()
 const router = useRouter()
@@ -25,6 +26,9 @@ async function handleResolve(method: 'mine-full' | 'theirs-full' | 'working') {
     await svnStore.resolveConflict({ path: selectedFile.value, resolution: method })
     await fileListStore.refresh()
     emit('close')
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err)
+    ElMessage.error(msg)
   } finally {
     isResolving.value = false
   }
@@ -39,6 +43,9 @@ async function handleBatchResolve(method: 'mine-full' | 'theirs-full') {
     )
     await fileListStore.refresh()
     emit('close')
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err)
+    ElMessage.error(msg)
   } finally {
     isResolving.value = false
   }

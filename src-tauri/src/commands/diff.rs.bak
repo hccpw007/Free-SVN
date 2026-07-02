@@ -4,7 +4,6 @@ use crate::svn;
 use std::path::Path;
 
 #[derive(Debug, Deserialize)]
-#[serde(rename_all = "camelCase")]
 pub struct DiffParams {
     pub path: String,
     pub revision1: Option<u64>,

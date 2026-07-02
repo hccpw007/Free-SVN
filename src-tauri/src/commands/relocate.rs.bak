@@ -4,7 +4,6 @@ use crate::svn;
 use super::checkout::is_valid_svn_url;
 
 #[derive(Debug, Deserialize)]
-#[serde(rename_all = "camelCase")]
 pub struct RelocateParams {
     pub path: String,
     pub from_url: String,

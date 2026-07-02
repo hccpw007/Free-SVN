@@ -5,6 +5,7 @@ import { useWorkspaceStore } from '@/stores/workspace'
 import { useI18n } from 'vue-i18n'
 import { open } from '@tauri-apps/plugin-dialog'
 import { Eye, EyeOff } from 'lucide-vue-next'
+import {ElMessage} from "element-plus";
 
 const { t } = useI18n()
 const svnStore = useSvnStore()
@@ -79,6 +80,9 @@ async function handleCheckout() {
       await workspaceStore.switchWorkspace(targetPath.value)
       emit('close')
     }
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err)
+    ElMessage.error(msg)
   } finally {
     isCheckingOut.value = false
   }

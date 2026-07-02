@@ -3,14 +3,12 @@ use crate::models::error::AppError;
 use crate::svn;
 
 #[derive(Debug, Deserialize)]
-#[serde(rename_all = "camelCase")]
 pub struct FileOpsParams {
     pub paths: Vec<String>,
     pub keep_local: Option<bool>,
 }
 
 #[derive(Debug, Deserialize)]
-#[serde(rename_all = "camelCase")]
 pub struct ResolveParams {
     pub path: String,
     pub resolution: String,

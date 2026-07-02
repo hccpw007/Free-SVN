@@ -2,6 +2,7 @@
 import { invoke } from '@tauri-apps/api/core'
 import { listen } from '@tauri-apps/api/event'
 // ── 类型导入（编译时类型，与值导入分离避免 lint 警告） ──
+// ── 类型导入（编译时类型，与值导入分离避免 lint 警告） ──
 import type {
   FileItem, RepoInfo, DiffResult, LogEntry, BlameLine,
   MergeResult, OperationProgress, OperationResult, AppSettings, SvnCredentials,
@@ -11,19 +12,7 @@ import type {
 export async function wrappedInvoke<T>(cmd: string, args?: Record<string, unknown>): Promise<T> {
   try { return await invoke<T>(cmd, args) }
   catch (e) {
-    // Tauri 2 可能抛出 Error、字符串、或普通对象 { error, message }（后端 AppError 序列化结果）
-    let msg: string
-    if (typeof e === 'string') {
-      msg = e
-    } else if (e instanceof Error) {
-      msg = e.message
-    } else if (e && typeof e === 'object') {
-      // Tauri 2 IPC 错误为 { error: "SVN_EXEC_FAILED", message: "svn: ..." }
-      const obj = e as Record<string, unknown>
-      msg = (typeof obj.message === 'string' ? obj.message : '') || (typeof obj.error === 'string' ? obj.error : '')
-    } else {
-      msg = '未知错误'
-    }
+    const msg = typeof e === 'string' ? e : e instanceof Error ? e.message : '未知错误'
     // translateError 返回 i18n key；如果无法匹配已知前缀（即返回 ErrorCode.Unknown），
     // 直接返回后端原始消息，避免 store/组件收到无法翻译的 i18n key。
     const translated = translateError(msg)
@@ -125,66 +114,64 @@ function translateError(msg: string): string {
   if (msg.includes('E165001') || msg.includes('E195020')) return ErrorCode.ConflictDetected
   if (msg.includes('E200012') || msg.includes('E200014')) return ErrorCode.PathAlreadyVersioned
   if (msg.includes('E155036')) return ErrorCode.EntryNotFound
-  if (msg.includes('E170013')) return ErrorCode.SvnCommandFailed  // 无法连接到仓库
-  if (msg.includes('E230001')) return ErrorCode.SvnCommandFailed  // SSL 证书验证失败
   if (msg.includes('timeout') || msg.includes('超时')) return ErrorCode.OperationTimeout
   return ErrorCode.Unknown
 }
 
 // ── 只读操作（5个） ──────────────────────────
 export async function getStatus(path: string): Promise<FileItem[]> {
-  return invokeWithParams<FileItem[]>('get_status', { path })
+  return wrappedInvoke<FileItem[]>('get_status', { path })
 }
 export async function getInfo(path: string): Promise<RepoInfo> {
-  return invokeWithParams<RepoInfo>('get_info', { path })
+  return wrappedInvoke<RepoInfo>('get_info', { path })
 }
 export async function getDiff(params: { path: string; revision1?: number; revision2?: number }): Promise<DiffResult> {
-  return invokeWithParams<DiffResult>('get_diff', params)
+  return wrappedInvoke<DiffResult>('get_diff', params)
 }
 export async function getLog(params: { path: string; limit?: number; revision?: number; search?: string }): Promise<LogEntry[]> {
-  return invokeWithParams<LogEntry[]>('get_log', params)
+  return wrappedInvoke<LogEntry[]>('get_log', params)
 }
 export async function getBlame(params: { path: string; revision?: number }): Promise<BlameLine[]> {
-  return invokeWithParams<BlameLine[]>('get_blame', params)
+  return wrappedInvoke<BlameLine[]>('get_blame', params)
 }
 
 // ── 写操作（6个） ──────────────────────────
 export async function checkoutRepo(params: { url: string; targetPath: string; depth?: string; ignoreExternals?: boolean; credentials?: SvnCredentials }): Promise<{ revision: number }> {
-  return invokeWithParams('checkout_repo', params)
+  return wrappedInvoke('checkout_repo', params)
 }
 export async function updateWorkspace(params: { path: string; revision?: number; depth?: string; ignoreExternals?: boolean; credentials?: SvnCredentials }): Promise<{ revision: number; conflicts: number }> {
-  return invokeWithParams('update_workspace', params)
+  return wrappedInvoke('update_workspace', params)
 }
 export async function createCommit(params: { paths: string[]; message: string; keepLocks?: boolean }): Promise<number> {
-  return invokeWithParams<number>('create_commit', params)
+  return wrappedInvoke<number>('create_commit', params)
 }
 export async function addFiles(paths: string[]): Promise<string> {
-  return invokeWithParams<string>('add_files', { paths })
+  return wrappedInvoke<string>('add_files', { paths })
 }
 export async function deleteFiles(params: { paths: string[]; keepLocal?: boolean }): Promise<string> {
-  return invokeWithParams<string>('delete_files', params)
+  return wrappedInvoke<string>('delete_files', params)
 }
 export async function revertFiles(paths: string[]): Promise<string> {
-  return invokeWithParams<string>('revert_files', { paths })
+  return wrappedInvoke<string>('revert_files', { paths })
 }
 
 // ── 冲突/忽略（2个） ──────────────────────────
 export async function resolveConflict(params: { path: string; resolution: 'mine-full' | 'theirs-full' | 'working' }): Promise<string> {
-  return invokeWithParams<string>('resolve_conflict', params)
+  return wrappedInvoke<string>('resolve_conflict', params)
 }
 export async function setIgnore(params: { path: string; pattern: string }): Promise<string> {
-  return invokeWithParams<string>('set_ignore', params)
+  return wrappedInvoke<string>('set_ignore', params)
 }
 
 // ── 分支操作（3个） ──────────────────────────
 export async function switchBranch(params: { path: string; targetUrl: string; ignoreAncestry?: boolean; credentials?: SvnCredentials }): Promise<OperationResult> {
-  return invokeWithParams('switch_branch', params)
+  return wrappedInvoke('switch_branch', params)
 }
 export async function copyBranchTag(params: { srcUrl: string; dstUrl: string; message: string; revision?: number; credentials?: SvnCredentials }): Promise<OperationResult> {
-  return invokeWithParams('copy_branch_tag', params)
+  return wrappedInvoke('copy_branch_tag', params)
 }
 export async function mergeBranch(params: { srcUrl: string; revStart?: number; revEnd?: number; targetPath: string; credentials?: SvnCredentials }): Promise<MergeResult> {
-  return invokeWithParams('merge_branch', params)
+  return wrappedInvoke('merge_branch', params)
 }
 
 // ── 系统操作（5个） ──────────────────────────
@@ -192,21 +179,21 @@ export async function cleanupWorkspace(path: string): Promise<string> {
   return wrappedInvoke<string>('cleanup_workspace', { path })
 }
 export async function exportWorkspace(params: { path: string; targetDir: string; revision?: number; ignoreExternals?: boolean; credentials?: SvnCredentials }): Promise<string> {
-  return invokeWithParams<string>('export_workspace', params)
+  return wrappedInvoke<string>('export_workspace', params)
 }
 export async function lockFiles(params: { paths: string[]; message?: string }): Promise<string> {
-  return invokeWithParams<string>('lock_files', params)
+  return wrappedInvoke<string>('lock_files', params)
 }
 export async function unlockFiles(paths: string[]): Promise<string> {
-  return invokeWithParams<string>('unlock_files', { paths })
+  return wrappedInvoke<string>('unlock_files', { paths })
 }
 export async function relocateRepo(params: { path: string; fromUrl: string; toUrl: string }): Promise<string> {
-  return invokeWithParams<string>('relocate_repo', params)
+  return wrappedInvoke<string>('relocate_repo', params)
 }
 
 // ── 属性/取消/网络/日志（5个） ──────────────────
 export async function propertyOps(params: { path: string; propName?: string; action?: string }): Promise<string> {
-  return invokeWithParams<string>('property_ops', params)
+  return wrappedInvoke<string>('property_ops', params)
 }
 export async function cancelOperation(): Promise<void> {
   return wrappedInvoke('cancel_operation')
@@ -231,13 +218,13 @@ export async function saveSettings(settings: AppSettings): Promise<void> {
 
 // ── 认证（3个，v5 新增） ──────────────────
 export async function testConnection(params: { url: string; username: string; password: string }): Promise<string> {
-  return invokeWithParams<string>('test_connection', params)
+  return wrappedInvoke<string>('test_connection', params)
 }
 export async function saveCredentials(params: { url: string; username: string; password: string }): Promise<void> {
-  return invokeWithParams('save_credentials', params)
+  return wrappedInvoke('save_credentials', params)
 }
 export async function clearCredentials(url: string): Promise<string> {
-  return invokeWithParams<string>('clear_credentials', { url })
+  return wrappedInvoke<string>('clear_credentials', { url })
 }
 
 // ── 分支查询（1个，7.4 新增） ──────────

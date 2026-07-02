@@ -4,7 +4,6 @@ use crate::svn;
 use crate::svn::parser::{BlameLine, LogEntry};
 
 #[derive(Debug, Deserialize)]
-#[serde(rename_all = "camelCase")]
 pub struct LogParams {
     pub path: String,
     pub limit: Option<u64>,
@@ -15,7 +14,6 @@ pub struct LogParams {
 }
 
 #[derive(Debug, Deserialize)]
-#[serde(rename_all = "camelCase")]
 pub struct BlameParams {
     pub path: String,
     pub revision: Option<u64>,

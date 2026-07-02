@@ -6,7 +6,6 @@ use tauri::AppHandle;
 use tauri::Emitter;
 
 #[derive(Debug, Deserialize)]
-#[serde(rename_all = "camelCase")]
 pub struct SwitchParams {
     pub path: String,
     pub target_url: String,
@@ -15,7 +14,6 @@ pub struct SwitchParams {
 }
 
 #[derive(Debug, Deserialize)]
-#[serde(rename_all = "camelCase")]
 pub struct CopyParams {
     pub src_url: String,
     pub dst_url: String,
@@ -25,7 +23,6 @@ pub struct CopyParams {
 }
 
 #[derive(Debug, Deserialize)]
-#[serde(rename_all = "camelCase")]
 pub struct MergeParams {
     pub src_url: String,
     pub rev_start: Option<u64>,
