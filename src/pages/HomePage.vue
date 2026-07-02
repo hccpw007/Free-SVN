@@ -140,7 +140,7 @@ async function refreshWorkspaceInfo() {
         @click="router.push('/workspace/commit')"
       >
         <GitCommit class="w-4 h-4" /><span>{{ t('toolbar.commit') }}</span>
-        <span v-if="selectedCommitCount > 0" class="ml-0.5 tabular-nums">({{ selectedCommitCount }})</span>
+        <span class="ml-0.5 tabular-nums">({{ selectedCommitCount }})</span>
       </button>
       <!-- 批量还原 -->
       <button
@@ -154,7 +154,7 @@ async function refreshWorkspaceInfo() {
         @click="fileListStore.batchRevertFiles()"
       >
         <RotateCcw class="w-4 h-4" /><span>{{ t('file.batchRevert') }}</span>
-        <span v-if="fileListStore.selectedPaths.size > 0" class="ml-0.5 tabular-nums">({{ fileListStore.selectedPaths.size }})</span>
+        <span class="ml-0.5 tabular-nums">({{ fileListStore.selectedPaths.size }})</span>
       </button>
 
       <div class="flex-1" />
