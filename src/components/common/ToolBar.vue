@@ -24,6 +24,7 @@ const emit = defineEmits<{
 
 const toolbarRef = ref<HTMLElement | null>(null)
 const overflowCount = ref(0)
+let resizeObserver: ResizeObserver | undefined
 
 // 严格索引类型
 type IconKey = 'GitCommit' | 'FileDiff' | 'RefreshCw' | 'ArrowUpCircle' | 'History'
@@ -48,6 +49,10 @@ interface ToolbarButton {
 
 const wpUnavailable = computed(() => !workspaceStore.currentPath)
 const globallyDisabled = computed(() => fileListStore.isOperationRunning)
+// 提取为独立 computed：过滤 unversioned 后判断是否有已版本化的变更，减少 buttons computed 的响应式依赖粒度
+const hasVersionedChanges = computed(() =>
+  fileListStore.files.filter(f => f.status !== 'unversioned').length > 0
+)
 
 const buttons = computed<ToolbarButton[]>(() => [
   {
@@ -56,9 +61,8 @@ const buttons = computed<ToolbarButton[]>(() => [
     getDisabledTooltip: () => {
       if (globallyDisabled.value) return t('toolbar.operationInProgress')
       if (wpUnavailable.value) return t('toolbar.noWorkingCopy')
-      // 过滤掉 unversioned 状态的文件判断是否有真实变更
-      const versionedFiles = fileListStore.files.filter(f => f.status !== 'unversioned')
-      if (versionedFiles.length === 0) return t('toolbar.noChanges')
+      // 引用独立 computed hasVersionedChanges，避免每次重复过滤整个 files 数组
+      if (!hasVersionedChanges.value) return t('toolbar.noChanges')
       return ''
     },
   },
@@ -124,15 +128,15 @@ const overflowButtons = computed(() => buttons.value.slice(visibleButtons.value.
 
 onMounted(() => {
   if (!toolbarRef.value) return
-  const observer = new ResizeObserver(([entry]) => {
+  resizeObserver = new ResizeObserver(([entry]) => {
     const avail = entry.contentRect.width - 80
     overflowCount.value = Math.max(0, buttons.value.length - Math.max(1, Math.floor(avail / 88)))
   })
-  observer.observe(toolbarRef.value)
+  resizeObserver.observe(toolbarRef.value)
 })
 
 onUnmounted(() => {
-  // ResizeObserver 在组件卸载时自动断开
+  resizeObserver?.disconnect()
 })
 </script>
 
