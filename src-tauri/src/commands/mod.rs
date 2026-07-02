@@ -17,3 +17,5 @@ pub mod network;      // check_network
 pub mod settings;     // load_settings / save_settings
 pub mod branches;     // list_branches
 pub mod auth;         // v5 新增：test_connection / save_credentials / clear_credentials（⚠️ auth.rs 在步骤 3.5 创建，本步骤编译会因找不到 auth.rs 报错，属预期行为）
+pub mod tray;         // 系统托盘徽章命令
+pub mod auto_start;   // 开机自启动命令

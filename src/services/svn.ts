@@ -1,79 +1,226 @@
+// ── 值导入（运行时依赖） ──
 import { invoke } from '@tauri-apps/api/core'
-import type { FileItem, RepoInfo, DiffResult, LogEntry, BlameLine, AppSettings } from '@/types/svn'
+import { listen } from '@tauri-apps/api/event'
+// ── 类型导入（编译时类型，与值导入分离避免 lint 警告） ──
+import type {
+  FileItem, RepoInfo, DiffResult, LogEntry, BlameLine,
+  MergeResult, OperationProgress, OperationResult, AppSettings, SvnCredentials,
+} from '@/types/svn'
 
-export async function fetchStatus(path: string): Promise<FileItem[]> {
-  return invoke('get_status', { path })
-}
-export async function fetchInfo(path: string): Promise<RepoInfo> {
-  return invoke('get_info', { path })
-}
-export async function fetchDiff(path: string, r1?: number, r2?: number): Promise<DiffResult> {
-  return invoke('get_diff', { path, revision1: r1, revision2: r2 })
-}
-export async function fetchLog(path: string, limit?: number, rev?: number, search?: string): Promise<LogEntry[]> {
-  return invoke('get_log', { path, limit, revision: rev, search })
-}
-export async function fetchBlame(path: string, rev?: number): Promise<BlameLine[]> {
-  return invoke('get_blame', { path, revision: rev })
-}
-export async function cancelOperation(): Promise<string> {
-  return invoke('cancel_operation')
+/** 统一 invoke 包装：自动 try-catch + 错误码翻译 */
+async function wrappedInvoke<T>(cmd: string, args?: Record<string, unknown>): Promise<T> {
+  try { return await invoke<T>(cmd, args) }
+  catch (e) {
+    const msg = typeof e === 'string' ? e : e instanceof Error ? e.message : '未知错误'
+    throw translateError(msg)
+  }
 }
 
-/** 添加文件到版本控制 */
-export async function addFiles(paths: string[]): Promise<void> {
-  return invoke('add_files', { paths })
+/**
+ * 错误码 → i18n key
+ *
+ * 本函数返回的是 i18n key 字符串，不是用户可见的翻译文本。
+ * 调用方（通常是 store 或页面）需要在拿到返回值后通过
+ * `t(translatedError)` 转换为最终用户文本。
+ * 这样做是为了保持 services 层的纯净（不依赖 vue-i18n 实例），
+ * 让调用方自行决定如何处理国际化。
+ */
+
+// ErrorCode 枚举定义 — 集中所有错误码，避免字符串散落各处
+export enum ErrorCode {
+  OperationTimeout = 'error.operationTimeout',
+  OperationCancelled = 'error.operationCancelled',
+  SvnNotFound = 'error.svnNotFound',
+  NetworkUnreachable = 'error.networkUnreachable',
+  OperationInProgress = 'error.operationInProgress',
+  SvnCommandFailed = 'error.svnCommandFailed',
+  AuthenticationFailed = 'error.authenticationFailed',
+  InvalidInput = 'error.invalidInput',
+  IoError = 'error.ioError',
+  RepoError = 'error.repoError',
+  ParseFailed = 'error.parseFailed',
+  WorkingCopyClean = 'error.workingCopyClean',
+  PathNotFound = 'error.pathNotFound',
+  NotWorkingCopy = 'error.notWorkingCopy',
+  UrlNotFound = 'error.urlNotFound',
+  WorkingCopyLocked = 'error.workingCopyLocked',
+  InvalidRevision = 'error.invalidRevision',
+  ConflictDetected = 'error.conflictDetected',
+  PathAlreadyVersioned = 'error.pathAlreadyVersioned',
+  EntryNotFound = 'error.entryNotFound',
+  Unknown = 'error.unknown',
 }
 
-/** 从版本控制删除文件 */
-export async function deleteFiles(params: { paths: string[]; keepLocal?: boolean }): Promise<void> {
-  return invoke('delete_files', params)
+/** ErrorCode 对应的英文回退文本（当语言包中未定义该 key 时使用） */
+export const ErrorFallbackMap: Record<ErrorCode, string> = {
+  [ErrorCode.OperationTimeout]: 'Operation timed out',
+  [ErrorCode.OperationCancelled]: 'Operation cancelled',
+  [ErrorCode.SvnNotFound]: 'SVN not found, please check installation',
+  [ErrorCode.NetworkUnreachable]: 'Network unreachable',
+  [ErrorCode.OperationInProgress]: 'Another operation is in progress',
+  [ErrorCode.SvnCommandFailed]: 'SVN command failed',
+  [ErrorCode.AuthenticationFailed]: 'Authentication failed',
+  [ErrorCode.InvalidInput]: 'Invalid input',
+  [ErrorCode.IoError]: 'File system error',
+  [ErrorCode.RepoError]: 'Repository error',
+  [ErrorCode.ParseFailed]: 'Failed to parse SVN output',
+  [ErrorCode.WorkingCopyClean]: 'Working copy is clean',
+  [ErrorCode.PathNotFound]: 'Path not found',
+  [ErrorCode.NotWorkingCopy]: 'Not a working copy',
+  [ErrorCode.UrlNotFound]: 'URL not found',
+  [ErrorCode.WorkingCopyLocked]: 'Working copy is locked',
+  [ErrorCode.InvalidRevision]: 'Invalid revision',
+  [ErrorCode.ConflictDetected]: 'Conflict detected',
+  [ErrorCode.PathAlreadyVersioned]: 'Path is already versioned',
+  [ErrorCode.EntryNotFound]: 'Entry not found in working copy',
+  [ErrorCode.Unknown]: 'An unknown error occurred',
 }
 
-/** 还原文件修改 */
-export async function revertFiles(paths: string[]): Promise<void> {
-  return invoke('revert_files', { paths })
+function translateError(msg: string): string {
+  // 1. 优先匹配后端 AppError 错误码前缀
+  if (msg.startsWith('SVN_TIMEOUT')) return ErrorCode.OperationTimeout
+  if (msg.startsWith('SVN_CANCELLED')) return ErrorCode.OperationCancelled
+  if (msg.startsWith('SVN_NOT_FOUND')) return ErrorCode.SvnNotFound
+  if (msg.startsWith('NETWORK_UNREACHABLE')) return ErrorCode.NetworkUnreachable
+  if (msg.startsWith('SVN_OPERATION_IN_PROGRESS')) return ErrorCode.OperationInProgress
+  if (msg.startsWith('SVN_EXEC_FAILED')) return ErrorCode.SvnCommandFailed
+  if (msg.startsWith('SVN_AUTH_FAILED')) return ErrorCode.AuthenticationFailed
+  if (msg.startsWith('INVALID_INPUT')) return ErrorCode.InvalidInput
+  if (msg.startsWith('IO_ERROR')) return ErrorCode.IoError
+  if (msg.startsWith('REPO_ERROR')) return ErrorCode.RepoError
+  if (msg.startsWith('SVN_PARSE_FAILED')) return ErrorCode.ParseFailed
+
+  // 2. 匹配命令执行错误中的 SVN CLI E- 码
+  if (msg.includes('E155037')) return ErrorCode.WorkingCopyClean
+  if (msg.includes('E155010') || msg.includes('E200009')) return ErrorCode.PathNotFound
+  if (msg.includes('E204899')) return ErrorCode.NotWorkingCopy
+  if (msg.includes('E170001') || msg.includes('认证')) return ErrorCode.AuthenticationFailed
+  if (msg.includes('E160013') || msg.includes('E731001') || msg.includes('404')) return ErrorCode.UrlNotFound
+  if (msg.includes('E155035') || msg.includes('locked')) return ErrorCode.WorkingCopyLocked
+  if (msg.includes('E205007') || msg.includes('E155024')) return ErrorCode.InvalidRevision
+  if (msg.includes('E165001') || msg.includes('E195020')) return ErrorCode.ConflictDetected
+  if (msg.includes('E200012') || msg.includes('E200014')) return ErrorCode.PathAlreadyVersioned
+  if (msg.includes('E155036')) return ErrorCode.EntryNotFound
+  if (msg.includes('timeout') || msg.includes('超时')) return ErrorCode.OperationTimeout
+  return ErrorCode.Unknown
 }
 
-/** 标记冲突已解决 */
-export async function resolveConflict(params: { path: string; resolution: string }): Promise<void> {
-  return invoke('resolve_conflict', params)
+// ── 只读操作（5个） ──────────────────────────
+export async function getStatus(path: string): Promise<FileItem[]> {
+  return wrappedInvoke<FileItem[]>('get_status', { path })
+}
+export async function getInfo(path: string): Promise<RepoInfo> {
+  return wrappedInvoke<RepoInfo>('get_info', { path })
+}
+export async function getDiff(params: { path: string; revision1?: number; revision2?: number }): Promise<DiffResult> {
+  return wrappedInvoke<DiffResult>('get_diff', params)
+}
+export async function getLog(params: { path: string; limit?: number; revision?: number; search?: string }): Promise<LogEntry[]> {
+  return wrappedInvoke<LogEntry[]>('get_log', params)
+}
+export async function getBlame(params: { path: string; revision?: number }): Promise<BlameLine[]> {
+  return wrappedInvoke<BlameLine[]>('get_blame', params)
 }
 
-/** 设置 svn:ignore 忽略模式 */
-export async function setIgnore(params: { path: string; pattern: string }): Promise<void> {
-  return invoke('set_ignore', params)
+// ── 写操作（6个） ──────────────────────────
+export async function checkoutRepo(params: { url: string; targetPath: string; depth?: string; ignoreExternals?: boolean; credentials?: SvnCredentials }): Promise<{ revision: number }> {
+  return wrappedInvoke('checkout_repo', params)
+}
+export async function updateWorkspace(params: { path: string; revision?: number; depth?: string; ignoreExternals?: boolean; credentials?: SvnCredentials }): Promise<{ revision: number; conflicts: number }> {
+  return wrappedInvoke('update_workspace', params)
+}
+export async function createCommit(params: { paths: string[]; message: string; keepLocks?: boolean }): Promise<number> {
+  return wrappedInvoke<number>('create_commit', params)
+}
+export async function addFiles(paths: string[]): Promise<string> {
+  return wrappedInvoke<string>('add_files', { paths })
+}
+export async function deleteFiles(params: { paths: string[]; keepLocal?: boolean }): Promise<string> {
+  return wrappedInvoke<string>('delete_files', params)
+}
+export async function revertFiles(paths: string[]): Promise<string> {
+  return wrappedInvoke<string>('revert_files', { paths })
 }
 
-/** 锁定文件 */
-export async function lockFiles(params: { paths: string[]; message?: string }): Promise<void> {
-  return invoke('lock_files', params)
+// ── 冲突/忽略（2个） ──────────────────────────
+export async function resolveConflict(params: { path: string; resolution: 'mine-full' | 'theirs-full' | 'working' }): Promise<string> {
+  return wrappedInvoke<string>('resolve_conflict', params)
+}
+export async function setIgnore(params: { path: string; pattern: string }): Promise<string> {
+  return wrappedInvoke<string>('set_ignore', params)
 }
 
-/** 解锁文件 */
-export async function unlockFiles(paths: string[]): Promise<void> {
-  return invoke('unlock_files', { paths })
+// ── 分支操作（3个） ──────────────────────────
+export async function switchBranch(params: { path: string; targetUrl: string; ignoreAncestry?: boolean; credentials?: SvnCredentials }): Promise<OperationResult> {
+  return wrappedInvoke('switch_branch', params)
+}
+export async function copyBranchTag(params: { srcUrl: string; dstUrl: string; message: string; revision?: number; credentials?: SvnCredentials }): Promise<OperationResult> {
+  return wrappedInvoke('copy_branch_tag', params)
+}
+export async function mergeBranch(params: { srcUrl: string; revStart?: number; revEnd?: number; targetPath: string; credentials?: SvnCredentials }): Promise<MergeResult> {
+  return wrappedInvoke('merge_branch', params)
 }
 
-/** 测试 SVN 连接（验证凭据） */
-export async function testConnection(url: string, username: string, password: string): Promise<string> {
-  return invoke('test_connection', {
-    url,
-    credentials: { username, password, saveToCache: false },
-  })
+// ── 系统操作（5个） ──────────────────────────
+export async function cleanupWorkspace(path: string): Promise<string> {
+  return wrappedInvoke<string>('cleanup_workspace', { path })
+}
+export async function exportWorkspace(params: { path: string; targetDir: string; revision?: number; ignoreExternals?: boolean; credentials?: SvnCredentials }): Promise<string> {
+  return wrappedInvoke<string>('export_workspace', params)
+}
+export async function lockFiles(params: { paths: string[]; message?: string }): Promise<string> {
+  return wrappedInvoke<string>('lock_files', params)
+}
+export async function unlockFiles(paths: string[]): Promise<string> {
+  return wrappedInvoke<string>('unlock_files', { paths })
+}
+export async function relocateRepo(params: { path: string; fromUrl: string; toUrl: string }): Promise<string> {
+  return wrappedInvoke<string>('relocate_repo', params)
 }
 
-/** 清除缓存的凭据 */
-export async function clearCredentials(url: string): Promise<string> {
-  return invoke('clear_credentials', { url })
+// ── 属性/取消/网络/日志（5个） ──────────────────
+export async function propertyOps(params: { path: string; propName?: string; action?: string }): Promise<string> {
+  return wrappedInvoke<string>('property_ops', params)
+}
+export async function cancelOperation(): Promise<void> {
+  return wrappedInvoke('cancel_operation')
+}
+export async function checkNetwork(): Promise<boolean> {
+  return wrappedInvoke<boolean>('check_network')
+}
+export async function getLogs(): Promise<string> {
+  return wrappedInvoke<string>('get_logs')
+}
+export async function exportLogs(targetPath: string): Promise<void> {
+  return wrappedInvoke('export_logs', { target_path: targetPath })
 }
 
-/** 加载设置（供 settings store 使用） */
+// ── 设置（2个） ──────────────────────────
 export async function loadSettings(): Promise<AppSettings> {
-  return invoke<AppSettings>('load_settings')
+  return wrappedInvoke<AppSettings>('load_settings')
+}
+export async function saveSettings(settings: AppSettings): Promise<void> {
+  return wrappedInvoke('save_settings', { settings })
 }
 
-/** 保存设置（供 settings store 使用） */
-export async function saveSettings(settings: AppSettings): Promise<void> {
-  return invoke('save_settings', { settings })
+// ── 认证（3个，v5 新增） ──────────────────
+export async function testConnection(params: { url: string; username: string; password: string }): Promise<string> {
+  return wrappedInvoke<string>('test_connection', params)
+}
+export async function saveCredentials(params: { url: string; username: string; password: string }): Promise<void> {
+  return wrappedInvoke('save_credentials', params)
+}
+export async function clearCredentials(url: string): Promise<string> {
+  return wrappedInvoke<string>('clear_credentials', { url })
+}
+
+// ── Event Listeners（3个） ──────────────────
+export function onOperationProgress(cb: (p: OperationProgress) => void) {
+  return listen<OperationProgress>('operation:progress', (e) => cb(e.payload))
+}
+export function onOperationCompleted(cb: (r: OperationResult) => void) {
+  return listen<OperationResult>('operation:completed', (e) => cb(e.payload))
+}
+export function onOperationError(cb: (e: { errorCode: string; message: string }) => void) {
+  return listen<{ errorCode: string; message: string }>('operation:error', (e) => cb(e.payload))
 }
