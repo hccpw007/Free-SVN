@@ -59,6 +59,10 @@ function formatSize(bytes?: number): string {
 }
 
 function handleRowClick(row: FileItem, _column: unknown, event: MouseEvent) {
+  // 点击 checkbox 区域时由 checkbox 自身处理，避免 @row-click 干扰
+  const target = event.target as HTMLElement
+  if (target.closest('.el-checkbox')) return
+
   const allFiles = fileListStore.filteredFiles
   const idx = allFiles.findIndex(f => f.path === row.path)
   if (idx >= 0) {
