@@ -8,6 +8,7 @@ use tauri_plugin_store::StoreExt;
 
 /// 应用设置（11 个字段，对应业务设计 §5.7 + 前端 AppSettings）
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct Settings {
     pub default_checkout_dir: String,
     pub global_ignore_pattern: String,

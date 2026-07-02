@@ -5,6 +5,7 @@ use std::fs;
 
 /// 认证凭据参数
 #[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct AuthCredentials {
     pub username: String,
     pub password: String,
@@ -188,7 +189,7 @@ mod tests {
             "credentials": {
                 "username": "user1",
                 "password": "pass1",
-                "save_to_cache": true
+                "saveToCache": true
             }
         }"#;
         let params: TestConnectionParams = serde_json::from_str(json).unwrap();
@@ -204,7 +205,7 @@ mod tests {
             "credentials": {
                 "username": "user1",
                 "password": "pass1",
-                "save_to_cache": true
+                "saveToCache": true
             }
         }"#;
         let params: SaveCredentialsParams = serde_json::from_str(json).unwrap();
