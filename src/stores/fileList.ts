@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import type { FileItem } from '@/types/svn'
+import { fetchStatus, revertFiles as svnRevertFiles, deleteFiles as svnDeleteFiles, setIgnore as svnSetIgnore, unlockFiles as svnUnlockFiles } from '@/services/svn'
 
 export const useFileListStore = defineStore('fileList', () => {
   const files = ref<FileItem[]>([])
@@ -33,17 +34,27 @@ export const useFileListStore = defineStore('fileList', () => {
 
   const selectedCount = computed(() => selectedPaths.value.size)
 
-  /** 刷新（写操作期间返回缓存） */
-  async function refresh(fetchFn: () => Promise<FileItem[]>) {
+  /** 刷新（写操作期间返回缓存）。若不传 fetchFn，自动使用 fetchStatus + workspace.currentPath */
+  async function refresh(fetchFn?: () => Promise<FileItem[]>) {
     if (isOperationRunning.value) return lastCachedFiles.value
     try {
-      const newFiles = await fetchFn()
+      const newFiles = fetchFn
+        ? await fetchFn()
+        : await fetchCurrentStatus()
       files.value = newFiles
       lastCachedFiles.value = newFiles
       return newFiles
     } catch {
       return files.value
     }
+  }
+
+  /** 获取当前工作副本的状态 */
+  async function fetchCurrentStatus(): Promise<FileItem[]> {
+    const { useWorkspaceStore } = await import('./workspace')
+    const ws = useWorkspaceStore()
+    if (!ws.currentPath) return []
+    return fetchStatus(ws.currentPath)
   }
 
   function reset() {
@@ -85,11 +96,45 @@ export const useFileListStore = defineStore('fileList', () => {
     filterStatus.value = 'all'
   }
 
+  /** 还原文件修改 */
+  async function revertFile(path: string) {
+    try {
+      await svnRevertFiles([path])
+      await refresh()
+    } catch { /* 错误由 services/svn.ts 统一处理 */ }
+  }
+
+  /** 忽略文件 */
+  async function ignoreFile(path: string) {
+    try {
+      const { useWorkspaceStore } = await import('./workspace')
+      const ws = useWorkspaceStore()
+      await svnSetIgnore({ path: ws.currentPath, pattern: path })
+      await refresh()
+    } catch { /* 静默 */ }
+  }
+
+  /** 删除文件 */
+  async function deleteFile(path: string) {
+    try {
+      await svnDeleteFiles({ paths: [path] })
+      await refresh()
+    } catch { /* 静默 */ }
+  }
+
+  /** 解锁文件 */
+  async function unlockFile(path: string) {
+    try {
+      await svnUnlockFiles([path])
+      await refresh()
+    } catch { /* 静默 */ }
+  }
+
   return {
     files, selectedPaths, searchQuery, filterStatus,
     sortField, sortOrder, isLoading, isOperationRunning, lastCachedFiles,
     filteredFiles, selectedCount,
     refresh, reset, clearSelection, toggleSelect, toggleSelectAll,
-    applyFilter, clearFilter,
+    applyFilter, clearFilter, revertFile, ignoreFile, deleteFile, unlockFile,
   }
 })
