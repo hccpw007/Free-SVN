@@ -34,17 +34,32 @@ pub fn set_tray_badge(app: AppHandle, visible: bool) -> Result<(), String> {
     Ok(())
 }
 
-/// macOS Dock badge 设置（使用 osascript）
+/// macOS Dock badge 设置（使用 objc crate 直接调用 AppKit API）
+///
+/// # 安全性
+/// 1. NSApp 全局指针在应用启动后初始化，setup() 之后调用保证非空
+/// 2. dockTile / setBadgeLabel 消息发送不持有返回值 —— 不涉及 Rust 所有权跨语言传递
+/// 3. NSString 通过 Class::get 获取，stringWithUTF8String 创建临时的 autoreleased 字符串
+/// 4. setBadgeLabel: nil 在 AppKit 中被定义为"清除 badge"
+/// 5. 所有 objc 调用在 #[cfg(target_os = "macos")] 保护下仅对 macOS 编译
 #[cfg(target_os = "macos")]
 pub fn set_dock_badge(visible: bool) {
-    let label = if visible { "●" } else { "" };
-    let _ = std::process::Command::new("osascript")
-        .args([
-            "-e",
-            &format!(
-                "tell application \"System Events\" to set badge of (first process whose bundle identifier is \"com.free-svn.app\") to \"{}\"",
-                label
-            ),
-        ])
-        .output();
+    use objc::{msg_send, sel, sel_impl};
+    use objc::runtime::{Object, Class};
+    #[link(name = "AppKit", kind = "framework")]
+    extern "C" {
+        static NSApp: *mut Object;
+    }
+    unsafe {
+        let dock_tile: *mut Object = msg_send![NSApp, dockTile];
+        if visible {
+            let cls = Class::get("NSString").unwrap();
+            let s: *const i8 = "\u{25CF}\0".as_ptr() as *const i8;
+            let label: *mut Object = msg_send![cls, stringWithUTF8String: s];
+            let _: () = msg_send![dock_tile, setBadgeLabel: label];
+        } else {
+            let nil_obj: *mut Object = std::ptr::null_mut();
+            let _: () = msg_send![dock_tile, setBadgeLabel: nil_obj];
+        }
+    }
 }

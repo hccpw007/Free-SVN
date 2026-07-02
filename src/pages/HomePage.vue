@@ -2,6 +2,7 @@
 import { useRouter } from 'vue-router'
 import { useWorkspaceStore } from '@/stores/workspace'
 import { useFileListStore } from '@/stores/fileList'
+import { useSvnStore } from '@/stores/svn'
 import { useNetworkStatus } from '@/composables/useNetworkStatus'
 import { ref, computed, onMounted, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
@@ -12,11 +13,13 @@ import { open } from '@tauri-apps/plugin-dialog'
 import { getInfo as fetchInfo } from '@/services/svn'
 import FileListTable from '@/components/svn/FileListTable.vue'
 import CheckoutDialog from '@/components/dialogs/CheckoutDialog.vue'
+import UpdateRevisionDialog from '@/components/dialogs/UpdateRevisionDialog.vue'
 
 const router = useRouter()
 const { t } = useI18n()
 const workspaceStore = useWorkspaceStore()
 const fileListStore = useFileListStore()
+const svnStore = useSvnStore()
 
 // 网络可达性检测：更新 workspaceStore.isOffline
 const { checkNetwork } = useNetworkStatus()
@@ -68,6 +71,14 @@ onMounted(async () => {
     }
     await fileListStore.refresh()
   }
+})
+
+const showUpdateRevisionDialog = ref(false)
+
+// 监听 svnStore.showUpdateRevisionDialog（由 App.vue handleShellCommand 触发）
+watch(() => svnStore.showUpdateRevisionDialog, (val) => {
+  showUpdateRevisionDialog.value = val
+  if (val) svnStore.showUpdateRevisionDialog = false // 消费后重置
 })
 
 function handleCheckout() {
@@ -152,6 +163,8 @@ async function handleOpenWorkspace() {
 
   <!-- 检出对话框 -->
   <CheckoutDialog v-if="showCheckoutDialog" @close="showCheckoutDialog = false" />
+  <!-- 更新到版本对话框（由右键菜单 --svn-cmd update-rev 触发） -->
+  <UpdateRevisionDialog v-if="showUpdateRevisionDialog" @close="showUpdateRevisionDialog = false" />
 
   <!-- 有工作副本：变更列表视图 -->
   <div v-else class="h-full flex flex-col">

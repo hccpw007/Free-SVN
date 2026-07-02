@@ -1,6 +1,5 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
-import { invoke } from '@tauri-apps/api/core'
 import { listen } from '@tauri-apps/api/event'
 import { getErrorMessage } from '@/types/error-codes'
 import type {
@@ -9,8 +8,9 @@ import type {
 } from '@/types/svn'
 import type { AppSettings } from '@/types/settings'
 import { useFileListStore } from './fileList'
-// ── 统一从 services/svn.ts 导入具体业务方法（唯一 invoke 入口） ──
+// ── 统一从 services/svn.ts 导入（唯一 invoke 入口） ──
 import {
+  wrappedInvoke,
   getStatus as servicesGetStatus,
   getInfo as servicesGetInfo,
   getDiff as servicesGetDiff,
@@ -65,9 +65,9 @@ export const useSvnStore = defineStore('svn', () => {
     if (!authContext.value) return false
     const ctx = authContext.value
     try {
-      // 使用 invoke 直接重试（服务端错误码由 services 层统一翻译）
+      // 通过 services/svn.ts 的 wrappedInvoke 重试（经由唯一 invoke 入口）
       const retryArgs = { ...(ctx.args || {}), credentials: { username, password, saveToCache } }
-      await invoke(ctx.command, retryArgs)
+      await wrappedInvoke(ctx.command, retryArgs)
       authFailed.value = false
       authContext.value = null
       return true
