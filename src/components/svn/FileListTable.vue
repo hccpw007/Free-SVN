@@ -122,6 +122,13 @@ function unlockFile(path: string) { fileListStore.unlockFile(path).catch(e => co
         <template #default="{ row }">
           <ElCheckbox :model-value="fileListStore.selectedPaths.has(row.path)" @change="() => fileListStore.toggleSelect(row.path)" />
         </template>
+        <template #header>
+          <ElCheckbox
+            :model-value="fileListStore.selectedPaths.size === fileListStore.filteredFiles.length && fileListStore.filteredFiles.length > 0"
+            :indeterminate="fileListStore.selectedPaths.size > 0 && fileListStore.selectedPaths.size < fileListStore.filteredFiles.length"
+            @change="(v: boolean) => fileListStore.toggleSelectAll(v)"
+          />
+        </template>
       </el-table-column>
       <el-table-column :label="t('file.status')" width="80" sortable="custom" prop="status">
         <template #default="{ row }">
