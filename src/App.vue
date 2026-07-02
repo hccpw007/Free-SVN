@@ -24,8 +24,18 @@ watch(() => svnStore.authFailed, (val) => {
 })
 
 async function handleAuthRetry(username: string, password: string, saveToCache: boolean): Promise<boolean> {
+  // 在 retryAuth 清除 authContext 前捕获上下文
+  const ctx = svnStore.authContext
   const ok = await svnStore.retryAuth(username, password, saveToCache)
-  if (ok) showAuthDialog.value = false
+  if (ok) {
+    showAuthDialog.value = false
+    // 重试成功且为检出操作 → 切换到工作区（同时会关闭 CheckoutDialog）
+    if (ctx?.command === 'checkout_repo' && ctx?.args?.targetPath) {
+      const { useWorkspaceStore } = await import('@/stores/workspace')
+      const ws = useWorkspaceStore()
+      await ws.switchWorkspace(ctx.args.targetPath as string)
+    }
+  }
   return ok
 }
 
