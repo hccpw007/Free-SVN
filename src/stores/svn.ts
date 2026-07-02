@@ -66,8 +66,9 @@ export const useSvnStore = defineStore('svn', () => {
     const ctx = authContext.value
     try {
       // 通过 services/svn.ts 的 wrappedInvoke 重试（经由唯一 invoke 入口）
+      // 注意：Tauri 2 要求参数 key 匹配 Rust 参数名（params:），因此需要 { params: ... } 包裹
       const retryArgs = { ...(ctx.args || {}), credentials: { username, password, saveToCache } }
-      await wrappedInvoke(ctx.command, retryArgs)
+      await wrappedInvoke(ctx.command, { params: retryArgs })
       authFailed.value = false
       authContext.value = null
       return true
