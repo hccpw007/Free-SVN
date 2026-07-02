@@ -25,7 +25,7 @@ pub async fn create_commit(
     svn::executor::validate_path(&params.paths[0])?;
     state.try_lock()?;
 
-    let mut args = vec!["commit".to_string(), "--xml".to_string()];
+    let mut args = vec!["commit".to_string()];
     args.push("-m".to_string()); args.push(params.message.clone());
     if params.keep_locks.unwrap_or(false) {
         args.push("--no-unlock".to_string());
@@ -66,12 +66,11 @@ fn get_working_copy_root(path: &str) -> String {
     }
 }
 
-fn extract_commit_revision(xml: &str) -> u64 {
-    xml.lines()
-        .find(|l| l.contains("revision=\""))
-        .and_then(|l| l.split("revision=\"").nth(1))
-        .and_then(|s| s.split('"').next())
-        .and_then(|s| s.parse::<u64>().ok())
+fn extract_commit_revision(output: &str) -> u64 {
+    output.lines()
+        .find(|l| l.contains("Committed revision"))
+        .and_then(|l| l.rsplit(' ').nth(0))
+        .and_then(|s| s.trim_end_matches('.').parse::<u64>().ok())
         .unwrap_or(0)
 }
 
@@ -94,14 +93,12 @@ mod tests {
 
     #[test]
     fn test_extract_commit_revision_from_xml() {
-        let xml = r#"<?xml version="1.0"?>
-<commit revision="123">
-</commit>"#;
-        assert_eq!(extract_commit_revision(xml), 123);
+        let output = "Committed revision 123.\n";
+        assert_eq!(extract_commit_revision(output), 123);
     }
 
     #[test]
     fn test_extract_commit_revision_no_match() {
-        assert_eq!(extract_commit_revision("<foo></foo>"), 0);
+        assert_eq!(extract_commit_revision("nothing here"), 0);
     }
 }
