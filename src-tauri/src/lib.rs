@@ -185,6 +185,11 @@ pub fn run() {
             // ── 5. 注册 Shell 右键菜单 ──
             let _ = crate::shell_integration::register();
 
+            // ── 6. 注入内置 SVN 资源路径（生产模式用） ──
+            if let Ok(dir) = app.path().resource_dir() {
+                crate::svn::executor::set_svn_resource_dir(dir);
+            }
+
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![

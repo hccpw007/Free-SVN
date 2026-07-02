@@ -29,7 +29,9 @@
     "active": true,
     "targets": "all",
     "resources": {
-      "../public/fonts/*": "fonts/"
+      "../public/fonts/*": "fonts/",
+      "svn-resources/macos/bin/*": "svn/macos/",
+      "svn-resources/macos/lib/*.dylib": "svn/macos/lib/"
     },
     "icon": [
       "icons/32x32.png",

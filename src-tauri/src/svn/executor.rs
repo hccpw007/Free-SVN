@@ -4,6 +4,7 @@ use std::path::PathBuf;
 use std::process::{Command, Stdio};
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Mutex;
+use std::sync::OnceLock;
 use std::time::Instant;
 use tokio::task::spawn_blocking;
 use tokio::time::{timeout, Duration};
@@ -86,11 +87,40 @@ const AUTH_ERROR_KEYWORDS: &[&str] = &[
     "E175002",
 ];
 
-// ── 路径与版本 ──────────────────────────────────────────
+// ── 内置 SVN 资源路径 ─────────────────────────────
 
+/// 全局存储 Tauri 的资源目录路径（用于定位内置 SVN 二进制）。
+/// 在 lib.rs::setup() 中通过 `set_svn_resource_dir()` 注入。
+static SVN_RESOURCE_DIR: OnceLock<PathBuf> = OnceLock::new();
+
+/// 设置内置 SVN 资源目录（在 app setup 时调用）。
+pub fn set_svn_resource_dir(dir: PathBuf) {
+    let _ = SVN_RESOURCE_DIR.set(dir);
+}
+
+/// 获取 SVN 可执行文件路径。
+///
+/// ## 生产模式
+/// 如果 `SVN_RESOURCE_DIR` 已设置且对应平台的 SVN 二进制文件存在，
+/// 返回内置路径（如 `{resource_dir}/svn/macos/svn`）。
+///
+/// ## 开发模式
+/// 回退到系统 PATH 中的 `svn` 命令。
 pub fn get_svn_path() -> PathBuf {
+    if let Some(resource_dir) = SVN_RESOURCE_DIR.get() {
+        #[cfg(target_os = "macos")]
+        let svn_relative = PathBuf::from("svn/macos/svn");
+        #[cfg(target_os = "windows")]
+        let svn_relative = PathBuf::from("svn/windows/svn.exe");
+        #[cfg(target_os = "linux")]
+        let svn_relative = PathBuf::from("svn/linux/svn");
+
+        let bundled = resource_dir.join(&svn_relative);
+        if bundled.exists() {
+            return bundled;
+        }
+    }
     // 开发阶段统一使用系统 svn（PATH 中的 svn 命令）
-    // 阶段七打包时改为内置路径（通过全局 OnceCell 注入 resources/ 路径）
     PathBuf::from("svn")
 }
 
