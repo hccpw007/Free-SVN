@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@custom-variant dark (&:where(.dark, .dark *));
 @import "diff2html/bundles/css/diff2html.min.css";
 @import "highlight.js/styles/github.css";
 
