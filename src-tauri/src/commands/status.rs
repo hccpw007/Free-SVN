@@ -21,7 +21,19 @@ pub struct InfoParams {
 pub async fn get_status(params: StatusParams) -> Result<Vec<FileItem>, AppError> {
     svn::executor::validate_path(&params.path)?;
     let xml = svn::executor::run_svn(&["status", "--xml"], &params.path, None).await?;
-    svn::parser::parse_status(&xml)
+    let mut items = svn::parser::parse_status(&xml)?;
+    // svn status --xml 不包含文件大小，通过文件系统 stat 获取
+    let base = std::path::Path::new(&params.path);
+    for item in items.iter_mut() {
+        let full = base.join(&item.path);
+        // 目录和已删除的文件无法 stat，保持 size=None
+        if let Ok(meta) = std::fs::metadata(&full) {
+            if meta.is_file() {
+                item.size = Some(meta.len());
+            }
+        }
+    }
+    Ok(items)
 }
 
 /// 获取工作副本信息
