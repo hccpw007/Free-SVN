@@ -7,7 +7,6 @@ import { useWorkspaceStore } from '@/stores/workspace'
 import { open } from '@tauri-apps/plugin-shell'
 import { join } from '@tauri-apps/api/path'
 import { ElCheckbox, ElButton } from 'element-plus'
-import FileStatusIcon from './FileStatusIcon.vue'
 import FileActionButtons from './FileActionButtons.vue'
 import type { FileItem } from '@/types/svn'
 
@@ -26,10 +25,27 @@ function rowClassName({ row }: { row: { status: string } }): string {
   return row.status === 'conflicted' ? 'border-l-[3px] border-red-500' : ''
 }
 
-// 状态文字映射
+// 状态 tag 配置：文字、标签颜色、悬停说明 i18n key
+const statusCfg: Record<string, { labelKey: string; tagCls: string; descKey: string }> = {
+  modified:     { labelKey: 'file.statusModified',     tagCls: 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300',     descKey: 'file.descModified' },
+  added:        { labelKey: 'file.statusAdded',        tagCls: 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300',  descKey: 'file.descAdded' },
+  conflicted:   { labelKey: 'file.statusConflicted',   tagCls: 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300',        descKey: 'file.descConflicted' },
+  deleted:      { labelKey: 'file.statusDeleted',      tagCls: 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300', descKey: 'file.descDeleted' },
+  unversioned:  { labelKey: 'file.statusUnversioned',  tagCls: 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400',    descKey: 'file.descUnversioned' },
+  ignored:      { labelKey: 'file.statusIgnored',      tagCls: 'bg-slate-100 text-slate-400 dark:bg-slate-800 dark:text-slate-500 italic', descKey: 'file.descIgnored' },
+  missing:      { labelKey: 'file.statusMissing',      tagCls: 'bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-300', descKey: 'file.descMissing' },
+  replaced:     { labelKey: 'file.statusReplaced',     tagCls: 'bg-cyan-100 text-cyan-700 dark:bg-cyan-900/40 dark:text-cyan-300',     descKey: 'file.descReplaced' },
+  obstructed:   { labelKey: 'file.statusObstructed',   tagCls: 'bg-orange-100 text-orange-600 dark:bg-orange-900/30 dark:text-orange-300', descKey: 'file.descObstructed' },
+  external:     { labelKey: 'file.statusExternal',     tagCls: 'bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-300', descKey: 'file.descExternal' },
+  incomplete:   { labelKey: 'file.statusIncomplete',   tagCls: 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-300',        descKey: 'file.descIncomplete' },
+}
+
 function statusLabel(status: string): string {
-  const key = `file.status${status.charAt(0).toUpperCase() + status.slice(1)}`
-  return t(key)
+  return t(statusCfg[status]?.labelKey || status)
+}
+
+function statusDesc(status: string): string {
+  return t(statusCfg[status]?.descKey || '')
 }
 
 function handleRowClick(row: FileItem, _column: unknown, event: MouseEvent) {
@@ -99,10 +115,11 @@ function unlockFile(path: string) { fileListStore.unlockFile(path).catch(e => co
       </el-table-column>
       <el-table-column :label="t('file.status')" width="140" sortable="custom" prop="status">
         <template #default="{ row }">
-          <div class="flex items-center gap-1.5">
-            <FileStatusIcon :status="row.status" />
-            <span class="text-xs text-slate-500 dark:text-slate-400">{{ statusLabel(row.status) }}</span>
-          </div>
+          <el-tooltip :content="statusDesc(row.status)" placement="top" :show-after="300" effect="dark">
+            <span class="inline-block px-2 py-0.5 rounded text-xs font-medium cursor-default leading-5" :class="statusCfg[row.status]?.tagCls || 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400'">
+              {{ statusLabel(row.status) }}
+            </span>
+          </el-tooltip>
         </template>
       </el-table-column>
       <el-table-column :label="t('file.fileName')" min-width="200" sortable="custom" prop="path">
