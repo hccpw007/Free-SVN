@@ -357,14 +357,16 @@ pub async fn run_svn(
         }
         all_args.push("--username".to_string());
         all_args.push(creds.username.clone());
+        // --password-from-stdin：让 SVN 从 stdin 管道读取密码而非交互式提示
+        all_args.push("--password-from-stdin".to_string());
     } else {
         // 无凭据：保持 --non-interactive
         all_args.extend(BASE_SVN_ARGS.iter().map(|s| s.to_string()));
     }
 
     // 追加操作特定参数
-    // 注意：--password-from-stdin 不在此处添加，由 run_svn_sync 在检测到
-    // credentials 时通过 stdin 管道直接写入密码
+    // 有凭据时 --password-from-stdin 已在上面添加，run_svn_sync
+    // 通过 stdin 管道写入密码
     for arg in args.iter() {
 		if credentials.is_some() && *arg == "--non-interactive" {
 			continue;
