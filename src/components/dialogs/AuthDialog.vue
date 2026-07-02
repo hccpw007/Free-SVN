@@ -57,8 +57,8 @@ async function handleRetry() {
       statusMessage.value = t('auth.authFailedMessage')
       statusType.value = 'error'
     }
-  } catch (err: any) {
-    statusMessage.value = err?.message || t('auth.operationFailed')
+  } catch (err: unknown) {
+    statusMessage.value = err instanceof Error ? err.message : String(err)
     statusType.value = 'error'
   } finally {
     isProcessing.value = false
@@ -76,8 +76,8 @@ async function handleTestConnection() {
     const msg = await testConnection({ url: props.repoUrl || '', username: username.value, password: password.value })
     statusMessage.value = msg
     statusType.value = 'success'
-  } catch (err: any) {
-    statusMessage.value = err?.message || t('auth.connectionFailed')
+  } catch (err: unknown) {
+    statusMessage.value = err instanceof Error ? err.message : String(err)
     statusType.value = 'error'
   } finally {
     isProcessing.value = false
@@ -94,8 +94,8 @@ async function handleClearCache() {
     const msg = await clearCredentials(props.repoUrl || '')
     statusMessage.value = msg
     statusType.value = 'success'
-  } catch (err: any) {
-    statusMessage.value = err?.message || t('auth.clearFailed')
+  } catch (err: unknown) {
+    statusMessage.value = err instanceof Error ? err.message : String(err)
     statusType.value = 'error'
   } finally {
     isProcessing.value = false

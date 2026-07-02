@@ -64,8 +64,9 @@ async function handleCommit() {
     const revision = result.detail?.replace(/[^0-9]/g, '')
     ElMessage.success(t('file.commitSuccess', { rev: revision || '' }))
     router.push('/workspace')
-  } catch (e: any) {
-    const errorCode = e?.errorCode || e?.code || ''
+  } catch (e: unknown) {
+    const error = e as { errorCode?: string; code?: string }
+    const errorCode = error?.errorCode || error?.code || ''
     const errorMap: Record<string, string> = {
       'SVN_EXEC_FAILED': 'error.SVN_EXEC_FAILED',
       'SVN_NOT_WORKING_COPY': 'error.notWorkingCopy',

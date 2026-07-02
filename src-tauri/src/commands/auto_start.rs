@@ -8,7 +8,7 @@ use std::fs;
 /// Windows：写入 HKEY_CURRENT_USER\\Software\\Microsoft\\Windows\\CurrentVersion\\Run
 /// Linux：创建/删除 ~/.config/autostart/ 下的 .desktop 文件
 #[tauri::command]
-pub fn set_auto_start(app: AppHandle, enabled: bool) -> Result<(), String> {
+pub async fn set_auto_start(app: AppHandle, enabled: bool) -> Result<(), String> {
     let app_name = "com.free-svn.app";
     let app_exe = app.path().app_local_data_dir()
         .map_err(|e| format!("Failed to get app data dir: {}", e))?

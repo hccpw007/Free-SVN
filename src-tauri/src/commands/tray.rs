@@ -2,7 +2,7 @@ use tauri::AppHandle;
 
 /// 设置系统托盘徽章（操作进行中/完成）
 #[tauri::command]
-pub fn set_tray_badge(app: AppHandle, visible: bool) -> Result<(), String> {
+pub async fn set_tray_badge(app: AppHandle, visible: bool) -> Result<(), String> {
     // 通过 app.tray_by_id 获取系统托盘
     if let Some(tray) = app.tray_by_id("main") {
         if visible {

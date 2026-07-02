@@ -18,7 +18,7 @@ const disabled = computed(() => fileListStore.isOperationRunning)
 const isOp = (s: string) => props.file.status === s
 
 const btn = (labelKey: string, cls: string, action: string) => ({
-  labelKey, cls, handler: () => emit(action as any, props.file.path)
+  labelKey, cls, handler: () => (emit as any)(action, props.file.path)
 })
 </script>
 

@@ -67,9 +67,10 @@ async function handleMerge() {
       resultStatus.value = 'success'
       resultMessage.value = t('workspace.mergeSuccessResult')
     }
-  } catch (e: any) {
+  } catch (e: unknown) {
+    const msg = e instanceof Error ? e.message : String(e)
     resultStatus.value = 'error'
-    resultMessage.value = e.message || t('workspace.mergeFailed')
+    resultMessage.value = msg || t('workspace.mergeFailed')
   }
   finally { isMerging.value = false }
 }
