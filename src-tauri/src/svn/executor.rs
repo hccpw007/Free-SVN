@@ -235,7 +235,8 @@ fn extract_realm(stderr: &str) -> String {
             return line.trim().to_string();
         }
     }
-    stderr.lines().next().unwrap_or("unknown auth error").to_string()
+    // 未找到 realm 行时返回完整 stderr，避免丢失 E215004 等后续行
+    stderr.to_string()
 }
 
 // ── 核心执行（v5 增加 credentials 支持） ────────────

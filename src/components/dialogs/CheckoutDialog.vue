@@ -64,6 +64,7 @@ function validateAuth(): boolean {
 
 /** 判断错误是否为认证相关（E170013 = 连接失败，非认证错误） */
 function isAuthError(msg: string): boolean {
+  console.log(msg)
   return msg.includes('E215004') || msg.includes('E170001')
     || msg.includes('Authentication failed') || msg.includes('认证失败')
     || msg.includes('No credentials') || msg.includes('authorization failed')
@@ -91,6 +92,7 @@ async function handleCheckout() {
       emit('close')
     }
   } catch (err: unknown) {
+    console.error('[checkout dialog] Error in checkout:', err)
     const msg = err instanceof Error ? err.message : String(err)
     // 如果是认证错误，展开认证区域引导用户输入凭据
     if (isAuthError(msg)) {
