@@ -28,12 +28,12 @@ function rowClassName({ row }: { row: { status: string } }): string {
 // 状态 tag 配置：文字、标签颜色、悬停说明 i18n key
 const statusCfg: Record<string, { labelKey: string; tagCls: string; descKey: string }> = {
   modified:     { labelKey: 'file.statusModified',     tagCls: 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300',     descKey: 'file.descModified' },
-  added:        { labelKey: 'file.statusAdded',        tagCls: 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300',  descKey: 'file.descAdded' },
+  added:        { labelKey: 'file.statusPendingAdd',    tagCls: 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300',  descKey: 'file.descPendingAdd' },
   conflicted:   { labelKey: 'file.statusConflicted',   tagCls: 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300',        descKey: 'file.descConflicted' },
-  deleted:      { labelKey: 'file.statusDeleted',      tagCls: 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300', descKey: 'file.descDeleted' },
-  unversioned:  { labelKey: 'file.statusUnversioned',  tagCls: 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300',  descKey: 'file.descUnversioned' },
+  deleted:      { labelKey: 'file.statusPendingDelete', tagCls: 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300', descKey: 'file.descPendingDelete' },
+  unversioned:  { labelKey: 'file.statusPendingAdd',    tagCls: 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300',  descKey: 'file.descPendingAdd' },
   ignored:      { labelKey: 'file.statusIgnored',      tagCls: 'bg-slate-100 text-slate-400 dark:bg-slate-800 dark:text-slate-500 italic', descKey: 'file.descIgnored' },
-  missing:      { labelKey: 'file.statusMissing',      tagCls: 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300', descKey: 'file.descMissing' },
+  missing:      { labelKey: 'file.statusPendingDelete', tagCls: 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300', descKey: 'file.descPendingDelete' },
   replaced:     { labelKey: 'file.statusReplaced',     tagCls: 'bg-cyan-100 text-cyan-700 dark:bg-cyan-900/40 dark:text-cyan-300',     descKey: 'file.descReplaced' },
   obstructed:   { labelKey: 'file.statusObstructed',   tagCls: 'bg-orange-100 text-orange-600 dark:bg-orange-900/30 dark:text-orange-300', descKey: 'file.descObstructed' },
   external:     { labelKey: 'file.statusExternal',     tagCls: 'bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-300', descKey: 'file.descExternal' },
@@ -97,7 +97,6 @@ async function openWithEditor(p: string) {
 // 事件冒泡架构: FileActionButtons → FileListTable(转发) → HomePage
 const emit = defineEmits<{ diff: [path: string]; merge: [path: string] }>()
 function diffFile(path: string) { emit('diff', path) }
-function addFile(path: string) { fileListStore.addFile(path).catch(e => console.error('[FileListTable] addFile 失败:', e)) }
 function revertFile(path: string) { fileListStore.revertFile(path).catch(e => console.error('[FileListTable] revertFile 失败:', e)) }
 function ignoreFile(path: string) { fileListStore.ignoreFile(path).catch(e => console.error('[FileListTable] ignoreFile 失败:', e)) }
 function deleteFile(path: string) { fileListStore.deleteFile(path).catch(e => console.error('[FileListTable] deleteFile 失败:', e)) }
@@ -152,7 +151,7 @@ function unlockFile(path: string) { fileListStore.unlockFile(path).catch(e => co
       </el-table-column>
       <el-table-column :label="t('file.actions')" width="180" fixed="right">
         <template #default="{ row }">
-          <FileActionButtons :file="row" @diff="diffFile" @add="addFile" @revert="revertFile" @ignore="ignoreFile" @delete="deleteFile" @merge="mergeFile" @unlock="unlockFile" />
+          <FileActionButtons :file="row" @diff="diffFile" @revert="revertFile" @ignore="ignoreFile" @delete="deleteFile" @merge="mergeFile" @unlock="unlockFile" />
         </template>
       </el-table-column>
     </el-table>

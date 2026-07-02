@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import type { FileItem } from '@/types/svn'
-import { getStatus as fetchStatus, addFiles as svnAddFiles, revertFiles as svnRevertFiles, deleteFiles as svnDeleteFiles, setIgnore as svnSetIgnore, unlockFiles as svnUnlockFiles } from '@/services/svn'
+import { getStatus as fetchStatus, revertFiles as svnRevertFiles, deleteFiles as svnDeleteFiles, setIgnore as svnSetIgnore, unlockFiles as svnUnlockFiles } from '@/services/svn'
 
 export const useFileListStore = defineStore('fileList', () => {
   const files = ref<FileItem[]>([])
@@ -22,12 +22,15 @@ export const useFileListStore = defineStore('fileList', () => {
     }
     if (filterStatus.value !== 'all') {
       const statusMap: Record<string, string[]> = {
-        modified: ['modified'], added: ['added'],
-        conflicted: ['conflicted'], deleted: ['deleted'],
-        unversioned: ['unversioned'], ignored: ['ignored'],
-        missing: ['missing'], replaced: ['replaced'],
+        modified: ['modified'],
+        pendingAdd: ['added', 'unversioned'],
+        conflicted: ['conflicted'],
+        pendingDelete: ['deleted', 'missing'],
+        ignored: ['ignored'], replaced: ['replaced'],
         obstructed: ['obstructed'], external: ['external'],
         incomplete: ['incomplete'],
+        added: ['added'], unversioned: ['unversioned'],
+        deleted: ['deleted'], missing: ['missing'],
       }
       const ss = statusMap[filterStatus.value]
       if (ss) result = result.filter(f => ss.includes(f.status))
@@ -100,16 +103,6 @@ export const useFileListStore = defineStore('fileList', () => {
     filterStatus.value = 'all'
   }
 
-  /** 新增文件到版本控制 */
-  async function addFile(path: string) {
-    try {
-      await svnAddFiles([path])
-      await refresh()
-    } catch (e: unknown) {
-      console.error('[fileList store] addFile 失败:', e)
-    }
-  }
-
   /** 还原文件修改 */
   async function revertFile(path: string) {
     try {
@@ -170,6 +163,6 @@ export const useFileListStore = defineStore('fileList', () => {
     sortField, sortOrder, isLoading, isOperationRunning, lastCachedFiles,
     filteredFiles, selectedCount,
     refresh, reset, clearSelection, toggleSelect, toggleSelectAll,
-    applyFilter, clearFilter, addFile, revertFile, batchRevertFiles, ignoreFile, deleteFile, unlockFile,
+    applyFilter, clearFilter, revertFile, batchRevertFiles, ignoreFile, deleteFile, unlockFile,
   }
 })
