@@ -91,7 +91,7 @@ function unlockFile(path: string) { fileListStore.unlockFile(path).catch(e => co
           <ElCheckbox :model-value="fileListStore.selectedPaths.has(row.path)" @change="() => fileListStore.toggleSelect(row.path)" />
         </template>
       </el-table-column>
-      <el-table-column :label="t('file.status')" width="48" sortable="custom" prop="status">
+      <el-table-column :label="t('file.status')" width="80" sortable="custom" prop="status">
         <template #default="{ row }"><FileStatusIcon :status="row.status" /></template>
       </el-table-column>
       <el-table-column :label="t('file.fileName')" min-width="200" sortable="custom" prop="path">
