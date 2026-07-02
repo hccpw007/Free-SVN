@@ -30,6 +30,10 @@ const isSearchEmpty = computed(() => {
     && fileListStore.files.length > 0
     && fileListStore.filteredFiles.length === 0
 })
+/** 是否有已版本化的变更（排除了未加入文件） */
+const hasVersionedChanges = computed(() =>
+  fileListStore.files.some(f => f.status !== 'unversioned')
+)
 
 const showCheckoutDialog = ref(false)
 const showUpdateRevisionDialog = ref(false)
@@ -122,8 +126,38 @@ async function refreshWorkspaceInfo() {
 
   <!-- 工作副本：变更列表视图 -->
   <div class="h-full flex flex-col">
-    <!-- 搜索栏 + 筛选 + 刷新 -->
+    <!-- 操作栏：左（提交 + 批量还原）右（搜索 + 筛选 + 刷新） -->
     <div class="px-4 py-2 flex items-center gap-3 bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
+      <!-- 提交 -->
+      <button
+        class="inline-flex items-center gap-1 px-2.5 py-1 text-xs rounded-md whitespace-nowrap focus:ring-2 focus:ring-offset-2 focus:ring-blue-400 focus:outline-none"
+        :class="!hasVersionedChanges || !workspaceStore.currentPath
+          ? 'opacity-50 cursor-not-allowed text-slate-400 dark:text-slate-500'
+          : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-green-600 dark:hover:text-green-400'"
+        :disabled="!hasVersionedChanges || !workspaceStore.currentPath"
+        :title="!hasVersionedChanges ? t('toolbar.noChanges') : t('toolbar.descCommit')"
+        :aria-label="t('toolbar.commit')"
+        @click="router.push('/workspace/commit')"
+      >
+        <GitCommit class="w-4 h-4" /><span>{{ t('toolbar.commit') }}</span>
+      </button>
+      <!-- 批量还原 -->
+      <button
+        class="inline-flex items-center gap-1 px-2.5 py-1 text-xs rounded-md whitespace-nowrap focus:ring-2 focus:ring-offset-2 focus:ring-blue-400 focus:outline-none"
+        :class="fileListStore.selectedPaths.size === 0
+          ? 'opacity-50 cursor-not-allowed text-slate-400 dark:text-slate-500'
+          : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-orange-600 dark:hover:text-orange-400'"
+        :disabled="fileListStore.selectedPaths.size === 0"
+        :title="fileListStore.selectedPaths.size === 0 ? t('toolbar.noSelection') : t('file.batchRevert')"
+        :aria-label="t('file.batchRevert')"
+        @click="fileListStore.batchRevertFiles()"
+      >
+        <RotateCcw class="w-4 h-4" /><span>{{ t('file.batchRevert') }}</span>
+      </button>
+
+      <div class="flex-1" />
+
+      <!-- 右侧筛选/搜索 -->
       <el-input
         v-model="fileListStore.searchQuery"
         :placeholder="t('workspace.searchPlaceholder')"
@@ -158,6 +192,7 @@ async function refreshWorkspaceInfo() {
       >
         <RefreshCw class="w-4 h-4" />
       </button>
+    </div>
     </div>
 
     <!-- 空变更状态 -->

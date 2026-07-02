@@ -6,7 +6,7 @@ import { useI18n } from 'vue-i18n'
 import { useWorkspaceStore } from '@/stores/workspace'
 import { open } from '@tauri-apps/plugin-shell'
 import { join } from '@tauri-apps/api/path'
-import { ElCheckbox, ElButton } from 'element-plus'
+import { ElCheckbox } from 'element-plus'
 import FileActionButtons from './FileActionButtons.vue'
 import type { FileItem } from '@/types/svn'
 
@@ -158,15 +158,7 @@ function unlockFile(path: string) { fileListStore.unlockFile(path).catch(e => co
 
     <!-- 固定底栏 -->
     <div class="shrink-0 h-9 px-4 flex items-center gap-3 text-xs border-t border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800">
-      <ElCheckbox
-        :model-value="fileListStore.selectedPaths.size === fileListStore.filteredFiles.length && fileListStore.filteredFiles.length > 0"
-        :indeterminate="fileListStore.selectedPaths.size > 0 && fileListStore.selectedPaths.size < fileListStore.filteredFiles.length"
-        @change="(v: boolean) => fileListStore.toggleSelectAll(v)"
-      />
       <span class="text-slate-500 dark:text-slate-400">{{ t('workspace.selectedCount', { count: fileListStore.selectedPaths.size }) }}</span>
-      <ElButton v-if="fileListStore.selectedPaths.size > 0" size="small" class="focus:ring-2 focus:ring-offset-2 focus:ring-blue-400 focus:outline-none" @click="fileListStore.batchRevertFiles()">
-        {{ t('file.batchRevert') }}
-      </ElButton>
     </div>
 
     <!-- 右键菜单 -->

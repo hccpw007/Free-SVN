@@ -2,7 +2,7 @@
 import { ref, computed, onMounted, onUnmounted, type Component } from 'vue'
 import { useRouter } from 'vue-router'
 import {
-  GitCommit, FileDiff, RefreshCw, ArrowUpCircle, History,
+  FileDiff, RefreshCw, ArrowUpCircle, History,
   GitBranch, Layers, GitMerge, Eraser, Package,
   Download, MoreHorizontal,
 } from 'lucide-vue-next'
@@ -27,13 +27,13 @@ const overflowCount = ref(0)
 let resizeObserver: ResizeObserver | undefined
 
 // 严格索引类型
-type IconKey = 'GitCommit' | 'FileDiff' | 'RefreshCw' | 'ArrowUpCircle' | 'History'
+type IconKey = 'FileDiff' | 'RefreshCw' | 'ArrowUpCircle' | 'History'
   | 'GitBranch' | 'Layers' | 'GitMerge' | 'Eraser' | 'Package'
   | 'Download' | 'MoreHorizontal'
 
 // lucide-vue-next 图标组件映射
 const iconMap: Record<IconKey, Component> = {
-  GitCommit, FileDiff, RefreshCw, ArrowUpCircle, History,
+  FileDiff, RefreshCw, ArrowUpCircle, History,
   GitBranch, Layers, GitMerge, Eraser, Package,
   Download, MoreHorizontal,
 }
@@ -50,23 +50,8 @@ interface ToolbarButton {
 
 const wpUnavailable = computed(() => !workspaceStore.currentPath)
 const globallyDisabled = computed(() => fileListStore.isOperationRunning)
-// 提取为独立 computed：过滤 unversioned 后判断是否有已版本化的变更，减少 buttons computed 的响应式依赖粒度
-const hasVersionedChanges = computed(() =>
-  fileListStore.files.filter(f => f.status !== 'unversioned').length > 0
-)
 
 const buttons = computed<ToolbarButton[]>(() => [
-  {
-    key: 'commit', label: 'toolbar.commit', desc: 'toolbar.descCommit', iconKey: 'GitCommit',
-    action: () => router.push('/workspace/commit'), priority: 8,
-    getDisabledTooltip: () => {
-      if (globallyDisabled.value) return t('toolbar.operationInProgress')
-      if (wpUnavailable.value) return t('toolbar.noWorkingCopy')
-      // 引用独立 computed hasVersionedChanges，避免每次重复过滤整个 files 数组
-      if (!hasVersionedChanges.value) return t('toolbar.noChanges')
-      return ''
-    },
-  },
   {
     key: 'diff', label: 'toolbar.diff', desc: 'toolbar.descDiff', iconKey: 'FileDiff',
     action: () => router.push('/workspace/diff'), priority: 8,
