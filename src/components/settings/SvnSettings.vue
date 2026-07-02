@@ -5,7 +5,6 @@ import { open } from '@tauri-apps/plugin-dialog'
 const { t } = useI18n()
 
 const defaultCheckoutDir = defineModel<string>('defaultCheckoutDir', { required: true })
-const globalIgnorePattern = defineModel<string>('globalIgnorePattern', { required: true })
 const emit = defineEmits<{ changed: [] }>()
 
 function markChanged() {
@@ -31,10 +30,6 @@ async function browseDir() {
           <el-input v-model="defaultCheckoutDir" size="default" @input="markChanged" />
           <el-button size="default" class="focus:ring-2 focus:ring-offset-2 focus:ring-blue-400 focus:outline-none" @click="browseDir">{{ t('dialog.browse') }}</el-button>
         </div>
-      </div>
-      <div>
-        <label class="text-xs text-slate-500 dark:text-slate-400">{{ t('settings.globalIgnorePattern') }}</label>
-        <el-input v-model="globalIgnorePattern" size="default" class="mt-1" @input="markChanged" />
       </div>
     </div>
   </div>
