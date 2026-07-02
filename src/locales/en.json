@@ -154,6 +154,14 @@
     "changedFiles": "Changed Files",
     "viewDiff": "View Diff"
   },
+  "topbar": {
+    "credentials": "Credential Management",
+    "toggleDarkMode": "Switch to dark mode",
+    "toggleLightMode": "Switch to light mode"
+  },
+  "home": {
+    "checkout": "Checkout"
+  },
   "toolbar": {
     "commit": "Commit", "diff": "Diff",
     "update": "Update", "updateToRevision": "Update to Revision",
@@ -286,6 +294,7 @@
   },
   "settings": {
     "title": "Settings",
+    "darkMode": "Dark Mode",
     "svn": "SVN",
     "defaultCheckoutDir": "Default Checkout Directory",
     "globalIgnorePattern": "Global Ignore Pattern",

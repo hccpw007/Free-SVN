@@ -154,6 +154,14 @@
     "changedFiles": "变更文件",
     "viewDiff": "查看差异"
   },
+  "topbar": {
+    "credentials": "凭据管理",
+    "toggleDarkMode": "切换到暗色模式",
+    "toggleLightMode": "切换到亮色模式"
+  },
+  "home": {
+    "checkout": "检出"
+  },
   "toolbar": {
     "commit": "提交", "diff": "差异比较",
     "update": "更新", "updateToRevision": "更新到版本",
@@ -286,6 +294,7 @@
   },
   "settings": {
     "title": "设置",
+    "darkMode": "暗色模式",
     "svn": "SVN",
     "defaultCheckoutDir": "默认检出目录",
     "globalIgnorePattern": "全局忽略模式",

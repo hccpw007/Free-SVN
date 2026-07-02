@@ -95,7 +95,7 @@ pub fn get_svn_path() -> PathBuf {
 }
 
 pub fn get_timeout_secs(args: &[&str]) -> u64 {
-    if args.iter().any(|a| *a == "blame") {
+    if args.contains(&"blame") {
         BLAME_TIMEOUT_SECS
     } else {
         DEFAULT_TIMEOUT_SECS

@@ -79,9 +79,6 @@ export const useSvnStore = defineStore('svn', () => {
     authContext.value = null
   }
 
-  const AUTH_CANCELLED_MSG = 'operation cancelled'
-  const AUTH_RETRY_FAILED_MSG = 'auth retry failed'
-
   function initEventListeners() {
     if (initialized) return
     initialized = true

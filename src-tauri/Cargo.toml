@@ -44,6 +44,13 @@ winreg = "0.52"
 [target.'cfg(target_os = "macos")'.dependencies]
 objc = "0.2"
 
+[lints.rust]
+# 跨平台条件编译产生的不可避免的死代码警告
+dead_code = "allow"
+unused_imports = "allow"
+# objc crate 宏展开产生的非预期 cfg 条件
+unexpected_cfgs = "allow"
+
 [dev-dependencies]
 tempfile = "3.14.0"
 

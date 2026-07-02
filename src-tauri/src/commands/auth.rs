@@ -131,12 +131,11 @@ pub async fn clear_credentials(params: ClearCredentialsParams) -> Result<String,
             if path.is_file() {
                 // 读取文件内容，检查是否包含目标 URL 或主机名
                 if let Ok(content) = fs::read_to_string(&path) {
-                    if content.contains(&host) || content.contains(&params.url) {
-                        if fs::remove_file(&path).is_ok() {
+                    if (content.contains(&host) || content.contains(&params.url))
+                        && fs::remove_file(&path).is_ok() {
                             removed += 1;
                             log::info!("已删除凭据缓存文件: {:?}", path);
                         }
-                    }
                 }
             }
         }

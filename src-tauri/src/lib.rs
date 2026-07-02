@@ -101,6 +101,8 @@ pub fn run() {
                             }
                         }
                         "update" => {
+                            #[cfg(target_os = "macos")]
+                            crate::commands::tray::set_dock_badge(true);
                             let cwd = crate::config::store::current_workspace()
                                 .unwrap_or_default();
                             if !cwd.is_empty() {
@@ -116,13 +118,22 @@ pub fn run() {
                                         handle.state::<crate::svn::queue::SvnQueue>(),
                                     ).await;
                                     match result {
-                                        Ok(rev) => send_os_notification(&handle, "SVN Update", &format!("完成，版本 {}", rev)),
+                                        Ok(rev) => {
+                                            send_os_notification(&handle, "SVN Update", &format!("完成，版本 {}", rev));
+                                        }
                                         Err(_) => send_os_notification(&handle, "SVN Update", "失败"),
                                     }
+                                    #[cfg(target_os = "macos")]
+                                    crate::commands::tray::set_dock_badge(false);
                                 });
+                            } else {
+                                #[cfg(target_os = "macos")]
+                                crate::commands::tray::set_dock_badge(false);
                             }
                         }
                         "cleanup" => {
+                            #[cfg(target_os = "macos")]
+                            crate::commands::tray::set_dock_badge(true);
                             let cwd = crate::config::store::current_workspace()
                                 .unwrap_or_default();
                             if !cwd.is_empty() {
@@ -135,7 +146,12 @@ pub fn run() {
                                         Ok(_) => send_os_notification(&handle, "SVN Cleanup", "完成"),
                                         Err(_) => send_os_notification(&handle, "SVN Cleanup", "失败"),
                                     }
+                                    #[cfg(target_os = "macos")]
+                                    crate::commands::tray::set_dock_badge(false);
                                 });
+                            } else {
+                                #[cfg(target_os = "macos")]
+                                crate::commands::tray::set_dock_badge(false);
                             }
                         }
                         "about" => {
