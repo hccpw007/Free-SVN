@@ -35,6 +35,9 @@ async function handleExport() {
       ignoreExternals: ignoreExternals.value,
     })
     emit('close')
+  } catch (e: unknown) {
+    const msg = e instanceof Error ? e.message : String(e)
+    console.error('[ExportDialog] 导出失败:', msg)
   } finally {
     isExporting.value = false
   }

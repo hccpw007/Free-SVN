@@ -19,6 +19,7 @@ pub struct OperationResult {
 /// 认证凭据（v5 新增）
 /// 通过 --password-from-stdin 安全传递，不进入命令行参数
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct SvnCredentials {
     pub username: String,
     pub password: String,

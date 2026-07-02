@@ -13,6 +13,10 @@ const isRunning = computed(() => svnStore.isOperationRunning)
 async function handleCancel() {
   isCancelling.value = true
   try { await svnStore.cancelOperation() }
+  catch (e: unknown) {
+    const msg = e instanceof Error ? e.message : String(e)
+    console.error('[ProgressOverlay] 取消失败:', msg)
+  }
   finally { isCancelling.value = false }
 }
 </script>

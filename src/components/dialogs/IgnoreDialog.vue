@@ -33,6 +33,9 @@ async function handleAddIgnore() {
     await svnStore.setIgnore({ path: props.filePath, pattern: computedPattern.value })
     await fileListStore.refresh()
     emit('close')
+  } catch (e: unknown) {
+    const msg = e instanceof Error ? e.message : String(e)
+    console.error('[IgnoreDialog] 添加忽略规则失败:', msg)
   } finally {
     isAdding.value = false
   }
