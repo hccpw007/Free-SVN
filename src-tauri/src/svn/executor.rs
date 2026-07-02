@@ -401,4 +401,53 @@ mod tests {
         assert!(is_auth_error("E170001: authentication"));
         assert!(!is_auth_error("normal stderr"));
     }
+
+    #[test]
+    fn test_get_svn_path_not_empty() {
+        let path = get_svn_path();
+        assert!(!path.as_os_str().is_empty(), "SVN 路径不应为空");
+    }
+
+    #[test]
+    fn test_cancelled_flag_roundtrip() {
+        // 初始状态应为 false
+        set_cancelled(false);
+        assert!(!is_cancelled());
+        // 设置为 true
+        set_cancelled(true);
+        assert!(is_cancelled());
+        // 重置为 false
+        set_cancelled(false);
+        assert!(!is_cancelled());
+    }
+
+    #[test]
+    fn test_kill_current_process_no_child() {
+        // 无子进程时调用不应 panic
+        kill_current_process();
+        // 验证清理后 CURRENT_CHILD 为空
+        assert!(CURRENT_CHILD.lock().unwrap().is_none());
+    }
+
+    #[test]
+    fn test_extract_host_valid() {
+        assert_eq!(extract_host("svn://example.com/repo").unwrap(), "example.com");
+        assert_eq!(extract_host("https://svn.example.com:443/path").unwrap(), "svn.example.com:443");
+        assert_eq!(extract_host("svn+ssh://192.168.1.1/project").unwrap(), "192.168.1.1");
+        assert_eq!(extract_host("http://host").unwrap(), "host");
+        assert!(extract_host("invalid-url").is_err());
+        assert!(extract_host("ftp://host/path").is_err());
+    }
+
+    #[test]
+    fn test_extract_realm_various() {
+        let with_realm = "Warning: some output\nAuthentication realm: <svn://example.com> SVN Repository\nmore output";
+        assert!(extract_realm(with_realm).contains("Authentication realm"));
+
+        let no_realm = "some error output";
+        assert_eq!(extract_realm(no_realm), "some error output");
+
+        let empty = "";
+        assert_eq!(extract_realm(empty), "unknown auth error");
+    }
 }
