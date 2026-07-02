@@ -124,6 +124,23 @@ pub fn get_svn_path() -> PathBuf {
     PathBuf::from("svn")
 }
 
+/// 获取运行 SVN 进程所需的环境变量（如 Linux 的 LD_LIBRARY_PATH）。
+///
+/// 对于 Linux 平台，由于内置 svn 使用 musl 编译且依赖库在 `lib/` 子目录，
+/// 需要设置 `LD_LIBRARY_PATH` 指向 `{svn_dir}/lib/`。
+/// macOS 和 Windows 不需要额外环境变量（分别使用 @executable_path 和同目录查找）。
+pub fn get_svn_env() -> Vec<(String, String)> {
+    let env = Vec::new();
+    #[cfg(target_os = "linux")]
+    if let Some(_resource_dir) = SVN_RESOURCE_DIR.get() {
+        let lib_dir = resource_dir.join("svn/linux/lib");
+        if lib_dir.exists() {
+            env.push(("LD_LIBRARY_PATH".to_string(), lib_dir.to_string_lossy().to_string()));
+        }
+    }
+    env
+}
+
 pub fn get_timeout_secs(args: &[&str]) -> u64 {
     if args.contains(&"blame") {
         BLAME_TIMEOUT_SECS
@@ -248,7 +265,7 @@ fn run_svn_sync(
     log::info!("svn {} (cwd: {})", log_args, cwd);
 
     let mut cmd = Command::new(svn_path);
-    cmd.args(args).current_dir(cwd);
+    cmd.args(args).current_dir(cwd).envs(get_svn_env());
 
     let child = if let Some(creds) = credentials {
         // 有凭据：通过 stdin 传递密码
