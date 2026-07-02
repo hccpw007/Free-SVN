@@ -231,6 +231,9 @@ pub fn run() {
             commands::auth::test_connection,
             commands::auth::save_credentials,
             commands::auth::clear_credentials,
+            commands::auth::list_cached_credentials,
+            commands::auth::delete_cached_credential,
+            commands::auth::update_cached_credential_password,
             // 3F — 系统托盘 badge 命令
             commands::tray::set_tray_badge,
             // 3G — 开机自启动命令

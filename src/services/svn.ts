@@ -228,7 +228,7 @@ export async function saveSettings(settings: AppSettings): Promise<void> {
   return wrappedInvoke('save_settings', { settings })
 }
 
-// ── 认证（3个，v5 新增） ──────────────────
+// ── 认证（6个） ──────────────────
 export async function testConnection(params: { url: string; username: string; password: string }): Promise<string> {
   return invokeWithParams<string>('test_connection', params)
 }
@@ -237,6 +237,15 @@ export async function saveCredentials(params: { url: string; username: string; p
 }
 export async function clearCredentials(url: string): Promise<string> {
   return invokeWithParams<string>('clear_credentials', { url })
+}
+export async function listCachedCredentials(): Promise<import('@/types/svn').CachedCredential[]> {
+  return wrappedInvoke<import('@/types/svn').CachedCredential[]>('list_cached_credentials')
+}
+export async function deleteCachedCredential(id: string): Promise<string> {
+  return invokeWithParams<string>('delete_cached_credential', { id })
+}
+export async function updateCachedCredentialPassword(id: string, newPassword: string): Promise<string> {
+  return invokeWithParams<string>('update_cached_credential_password', { id, newPassword })
 }
 
 // ── 分支查询（1个，7.4 新增） ──────────

@@ -5,6 +5,13 @@ export interface SvnCredentials {
   saveToCache: boolean
 }
 
+/** 缓存的凭据条目 */
+export interface CachedCredential {
+  id: string
+  username: string
+  realm: string
+}
+
 export interface FileItem {
   path: string
   status: string
