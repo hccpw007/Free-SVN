@@ -306,6 +306,86 @@ export enum RepoStatus {
 
 ---
 
+# 03.1-错误处理规范
+
+## 核心原则：永不吞错误
+
+所有 `try` 块**必须**有 `catch` 块，`catch` 块**必须**输出错误日志。
+
+```ts
+// ✅ 正确
+try {
+  await someOperation()
+} catch (e: unknown) {
+  console.error('[ComponentName] 操作描述失败:', e)
+  // 可选的用户提示（ElMessage.error 等）
+}
+
+// ❌ 错误：无 catch
+try {
+  await someOperation()
+} finally { /* ... */ }
+
+// ❌ 错误：空 catch 吞错误
+try {
+  await someOperation()
+} catch { /* 静默 */ }
+
+// ❌ 错误：无日志
+try {
+  await someOperation()
+} catch (e: unknown) {
+  ElMessage.error('操作失败')   // 只有 UI 提示，无控制台日志
+}
+```
+
+## 日志级别选择
+
+| 级别 | 使用场景 | 示例 |
+|------|---------|------|
+| `console.error` | 操作失败、预期外的异常、后端返回错误 | `console.error('[CheckoutDialog] 检出失败:', e)` |
+| `console.warn` | 非关键性失败、有 fallback 路径的错误 | `console.warn('[App] Tauri 环境不可用:', e)` |
+| `console.info` | 预期中的异常分支（非错误，仅信息） | 极少使用 |
+
+## 日志格式
+
+`[组件/文件名] 操作描述: <错误对象>`
+
+- 使用 `[]` 前缀标识日志来源组件
+- 中文描述当前操作
+- 将原始错误对象作为第二个参数传入，不丢失调用栈信息
+
+```ts
+// 格式规范
+console.error('[ComponentName] 操作描述:', e)
+```
+
+## 允许静默的场景（需注释说明原因）
+
+部分 UI 辅助操作（如剪贴板复制、外部工具打开）在浏览器环境或特定平台可能失败，这些场景允许使用空 catch，**但必须加注释说明**：
+
+```ts
+// ✅ 允许：剪贴板 API 在非安全上下文可能失败，有 fallback
+try { await navigator.clipboard.writeText(path) } catch { /* fallback */ }
+
+// ✅ 允许：用户取消确认对话框
+try { await ElMessageBox.confirm(...) } catch { return }
+```
+
+## `.catch()` 链式调用
+
+禁止 `.catch(() => {})`，必须输出日志：
+
+```ts
+// ❌ 错误
+somePromise().catch(() => {})
+
+// ✅ 正确
+somePromise().catch(e => console.error('[Component] 操作失败:', e))
+```
+
+---
+
 # 04-Tailwind 样式规范
 
 ## 核心规则

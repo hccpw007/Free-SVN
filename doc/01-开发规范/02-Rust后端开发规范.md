@@ -819,7 +819,7 @@ SVN 导出...              → 选择目录后导出
 
 # 06-编码规范
 
-## 代码风格
+## 错误处理与日志规范
 
 | 规则 | 约束 |
 |------|------|
@@ -827,7 +827,68 @@ SVN 导出...              → 选择目录后导出
 | 命名 | 结构体/枚举 PascalCase，函数/变量 snake_case |
 | 不可变性 | 优先使用 `let`，仅在必要时用 `let mut` |
 | 错误处理 | 使用 `Result<T, E>`，禁止 `unwrap()` 和 `expect()`（仅测试可用） |
+| 错误日志 | 每个 `map_err` 的错误消息必须包含可诊断的描述信息，禁止空字符串或固定消息 |
 | 可见性 | 优先 `pub(crate)`，不暴露不必要的外部 API |
+
+### 错误日志规则
+
+所有 `Err` 变体必须包含可诊断的信息，禁止无上下文错误：
+
+```rust
+// ✅ 正确：map_err 包含描述信息
+cmd.spawn().map_err(|e| {
+    if e.kind() == std::io::ErrorKind::NotFound {
+        AppError::SvnNotFound
+    } else {
+        AppError::Io(e)
+    }
+})?;
+
+inner.map_err(|e| AppError::Repo(format!("spawn_blocking error: {}", e)))?;
+
+// ✅ 正确：使用 log::warn! / log::error! 记录诊断信息
+if output.status.success() {
+    Ok(String::from_utf8_lossy(&output.stdout).to_string())
+} else {
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    log::warn!("svn stderr: {}", stderr);
+    Err(AppError::SvnCommand(stderr.to_string()))
+}
+
+// ❌ 错误：无上下文信息
+cmd.spawn().map_err(|_| AppError::Io)?;   // 丢失了原始错误类型
+
+// ❌ 错误：固定字符串不传递上下文
+.map_err(|_| AppError::Repo("执行失败".into()))?;  // 没有传递原始错误
+```
+
+### `let _ =` 的合理使用
+
+`let _ =` 仅在以下场景允许使用，且必须加注释说明原因：
+
+```rust
+// ✅ 允许：清理操作失败不影响主流程
+let _ = child.kill();   // 终止子进程，失败不必处理
+let _ = child.wait();   // 等待回收，失败不必处理
+
+// ❌ 错误：业务操作不应使用 let _ =
+let _ = some_business_operation();  // 可能掩盖逻辑错误
+```
+
+### `ok()` / `unwrap_or()` / `unwrap_or_else()` 的合理使用
+
+`ok()` 仅在明确不关心错误值的场景允许，`unwrap_or()` 和 `unwrap_or_else()` 用于有默认值的场景：
+
+```rust
+// ✅ 允许：有默认值回退
+let dir = app_handle.path().app_log_dir()
+    .unwrap_or_else(|_| PathBuf::from("."));
+
+// ✅ 允许：在 setup 阶段，只关心 Option 是否为空不关心错误
+let tray_icon = app.default_window_icon()
+    .cloned()
+    .unwrap_or_else(|| tauri::image::Image::new(&[0u8; 256], 16, 16));
+```
 
 ## 文件拆分时机
 
