@@ -33,12 +33,12 @@ pub fn parse_status(xml: &str) -> Result<Vec<FileItem>, AppError> {
         #[serde(rename = "@props", default)]
         props: Option<String>,
         #[serde(rename = "@revision", default)]
-        revision: Option<u64>,
+        revision: Option<String>,
     }
     #[derive(Debug, serde::Deserialize)]
     struct CommitInfo {
         #[serde(rename = "@revision")]
-        revision: u64,
+        revision: String,
         #[serde(rename = "author", default)]
         author: Option<String>,
         #[serde(rename = "date", default)]
@@ -66,7 +66,8 @@ pub fn parse_status(xml: &str) -> Result<Vec<FileItem>, AppError> {
                 status: entry.wc_status.item,
                 wc_status: entry.wc_status.props,
                 commit_revision: entry.wc_status.revision
-                    .or_else(|| entry.commit.as_ref().map(|c| c.revision)),
+                    .and_then(|r| r.parse::<u64>().ok())
+                    .or_else(|| entry.commit.as_ref().and_then(|c| c.revision.parse::<u64>().ok())),
                 commit_author: entry.commit.as_ref().and_then(|c| c.author.clone()),
                 commit_date: entry.commit.as_ref().and_then(|c| c.date.clone()),
                 is_binary: false, // 由 diff command 检测后设置
