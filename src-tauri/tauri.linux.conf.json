@@ -1,0 +1,8 @@
+{
+  "bundle": {
+    "resources": {
+      "svn-resources/linux/bin/*": "svn/linux/",
+      "svn-resources/linux/lib/*": "svn/linux/lib/"
+    }
+  }
+}

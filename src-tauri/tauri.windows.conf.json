@@ -1,0 +1,8 @@
+{
+  "bundle": {
+    "resources": {
+      "svn-resources/windows/bin/*": "svn/windows/",
+      "svn-resources/windows/*.dll": "svn/windows/"
+    }
+  }
+}

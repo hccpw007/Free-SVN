@@ -1,0 +1,8 @@
+{
+  "bundle": {
+    "resources": {
+      "svn-resources/macos/bin/*": "svn/macos/",
+      "svn-resources/macos/lib/*.dylib": "svn/macos/lib/"
+    }
+  }
+}
