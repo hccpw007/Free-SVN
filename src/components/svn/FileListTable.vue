@@ -48,6 +48,16 @@ function statusDesc(status: string): string {
   return t(statusCfg[status]?.descKey || '')
 }
 
+/** 格式化文件大小（保留一位小数） */
+function formatSize(bytes?: number): string {
+  if (bytes === undefined || bytes === null) return '-'
+  if (bytes === 0) return '0 B'
+  const units = ['B', 'KB', 'MB', 'GB', 'TB']
+  const i = Math.min(Math.floor(Math.log(bytes) / Math.log(1024)), units.length - 1)
+  const val = bytes / Math.pow(1024, i)
+  return val.toFixed(1) + ' ' + units[i]
+}
+
 function handleRowClick(row: FileItem, _column: unknown, event: MouseEvent) {
   const allFiles = fileListStore.filteredFiles
   const idx = allFiles.findIndex(f => f.path === row.path)
@@ -125,6 +135,11 @@ function unlockFile(path: string) { fileListStore.unlockFile(path).catch(e => co
       <el-table-column :label="t('file.fileName')" min-width="200" sortable="custom" prop="path">
         <template #default="{ row }">
           <span class="truncate block text-sm font-mono text-slate-700 dark:text-slate-300" :title="row.path">{{ row.path }}</span>
+        </template>
+      </el-table-column>
+      <el-table-column :label="t('file.fileSize')" width="100" sortable="custom" prop="size" align="right">
+        <template #default="{ row }">
+          <span class="text-sm text-slate-600 dark:text-slate-400 tabular-nums">{{ formatSize(row.size) }}</span>
         </template>
       </el-table-column>
       <el-table-column :label="t('file.actions')" width="180" fixed="right">
