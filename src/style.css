@@ -6,6 +6,7 @@
   --color-primary: #22C55E;
   --color-danger: #EF4444;
   --color-warning: #F59E0B;
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
 }
 
 @font-face {
@@ -17,9 +18,23 @@
 
 @font-face {
   font-family: 'JetBrains Mono';
-  src: url('/fonts/JetBrainsMono-Medium.woff2') format('woff2');
-  font-weight: 500;
+  src: url('/fonts/JetBrainsMono-Bold.woff2') format('woff2');
+  font-weight: 700;
   font-style: normal;
+}
+
+@font-face {
+  font-family: 'JetBrains Mono';
+  src: url('/fonts/JetBrainsMono-Italic.woff2') format('woff2');
+  font-weight: 400;
+  font-style: italic;
+}
+
+@font-face {
+  font-family: 'JetBrains Mono';
+  src: url('/fonts/JetBrainsMono-BoldItalic.woff2') format('woff2');
+  font-weight: 700;
+  font-style: italic;
 }
 
 /* 尊重系统减少动画偏好 */

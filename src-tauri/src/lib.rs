@@ -132,6 +132,7 @@ pub fn run() {
                                         cwd,
                                         handle.state::<crate::svn::queue::SvnQueue>(),
                                     ).await;
+                                    send_os_notification(&handle, "SVN Cleanup", "完成");
                                 });
                             }
                         }

@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
-import { invoke } from '@tauri-apps/api/core'
+import { wrappedInvoke } from '@/services/svn'
 import { listen } from '@tauri-apps/api/event'
 import { getErrorMessage } from '@/types/error-codes'
 import type {
@@ -38,7 +38,7 @@ export const useSvnStore = defineStore('svn', () => {
     try {
       // 将 credentials 注入到原 args 中
       const retryArgs = { ...(ctx.args || {}), credentials: { username, password, saveToCache } }
-      await invoke(ctx.command, retryArgs)
+      await wrappedInvoke(ctx.command, retryArgs)
       authFailed.value = false
       authContext.value = null
       return true
@@ -87,21 +87,19 @@ export const useSvnStore = defineStore('svn', () => {
   }
 
   async function call<T>(command: string, args?: Record<string, unknown>): Promise<T> {
-    try { return await invoke<T>(command, args) }
+    try { return await wrappedInvoke<T>(command, args) }
     catch (err) {
-      const msg = getErrorMessage(err)
-      // 提取原始错误码，绕过错码翻译层，避免 locale 依赖导致检测失效
-      const rawError: string = err && typeof err === 'object'
-        ? String((err as Record<string, unknown>).error ?? '')
-        : ''
+      // wrappedInvoke 已将原始错误翻译为 ErrorCode 字符串（如 'error.authenticationFailed'）
+      const errorCode = typeof err === 'string' ? err : ''
+      // 非 string 类型时降级使用 getErrorMessage
+      const msg = errorCode || (typeof err === 'object' ? getErrorMessage(err) : 'Unknown error')
       // SVN_AUTH_FAILED(E170001) → 保存失败上下文供 AuthDialog 自动弹出
-      if (rawError === 'SVN_AUTH_FAILED' || rawError.includes('E170001')) {
+      if (errorCode === 'error.authenticationFailed') {
         authContext.value = { command, args, errorMessage: msg }
         authFailed.value = true
       }
       // SVN_OPERATION_IN_PROGRESS → 队列冲突，抛出携带错误码的异常供前端 toast 展示
-      // 前端组件应 catch 此错误并通过 ElMessage.warning(t('error.SVN_OPERATION_IN_PROGRESS')) 显示提示
-      if (rawError === 'SVN_OPERATION_IN_PROGRESS') {
+      if (errorCode === 'error.operationInProgress') {
         throw new Error('SVN_OPERATION_IN_PROGRESS')
       }
       throw new Error(msg)

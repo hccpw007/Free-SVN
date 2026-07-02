@@ -8,7 +8,7 @@ import type {
 } from '@/types/svn'
 
 /** 统一 invoke 包装：自动 try-catch + 错误码翻译 */
-async function wrappedInvoke<T>(cmd: string, args?: Record<string, unknown>): Promise<T> {
+export async function wrappedInvoke<T>(cmd: string, args?: Record<string, unknown>): Promise<T> {
   try { return await invoke<T>(cmd, args) }
   catch (e) {
     const msg = typeof e === 'string' ? e : e instanceof Error ? e.message : '未知错误'

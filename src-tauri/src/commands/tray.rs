@@ -1,11 +1,40 @@
 use tauri::AppHandle;
+use once_cell::sync::Lazy;
+use std::sync::Mutex;
+
+// 缓存默认图标，避免重复创建
+static DEFAULT_ICON: Lazy<Mutex<Option<tauri::image::Image<'static>>>> = Lazy::new(|| Mutex::new(None));
 
 /// 设置系统托盘徽章（操作进行中/完成）
 #[tauri::command]
-pub fn set_tray_badge(_app: AppHandle, _visible: bool) -> Result<(), String> {
-    // 使用 tooltip 文字提示操作状态
-    // Tauri 2 中各平台的托盘图标动态切换需要使用底层 tray_icon crate 的 API，
-    // 此处保留命令签名供前端调用，后续可扩展实现图标切换
+pub fn set_tray_badge(app: AppHandle, visible: bool) -> Result<(), String> {
+    // 通过 app.tray_by_id 获取系统托盘
+    if let Some(tray) = app.tray_by_id("main") {
+        if visible {
+            // 设置操作进行中状态的 tooltip
+            let _ = tray.set_tooltip(Some("SVN 操作进行中..."));
+            // 将默认图标转为 'static 生命周期的 owned Image 再缓存
+            let mut guard = DEFAULT_ICON.lock().map_err(|e| e.to_string())?;
+            if guard.is_none() {
+                if let Some(img) = app.default_window_icon() {
+                    let rgba = img.as_raw().to_vec();
+                    let owned = tauri::image::Image::new(rgba, img.width(), img.height());
+                    *guard = Some(owned);
+                }
+            }
+            if let Some(icon) = guard.as_ref() {
+                let _ = tray.set_icon(Some(icon.clone()));
+            }
+        } else {
+            // 恢复默认图标和 tooltip
+            let _ = tray.set_tooltip(Some("Free-SVN"));
+            if let Some(img) = app.default_window_icon() {
+                let rgba = img.as_raw().to_vec();
+                let owned = tauri::image::Image::new(rgba, img.width(), img.height());
+                let _ = tray.set_icon(Some(owned));
+            }
+        }
+    }
     Ok(())
 }
 
