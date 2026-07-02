@@ -365,7 +365,12 @@ pub async fn run_svn(
     // 追加操作特定参数
     // 注意：--password-from-stdin 不在此处添加，由 run_svn_sync 在检测到
     // credentials 时通过 stdin 管道直接写入密码
-    all_args.extend(args.iter().map(|s| s.to_string()));
+    for arg in args.iter() {
+		if credentials.is_some() && *arg == "--non-interactive" {
+			continue;
+		}
+		all_args.push(arg.to_string());
+	}
 
     let cwd = cwd.to_string();
     // v5 修复：克隆 credentials 后传入 spawn_blocking（引用无法跨 'static 边界）
