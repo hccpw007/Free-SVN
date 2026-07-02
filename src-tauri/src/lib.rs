@@ -116,7 +116,7 @@ pub fn run() {
                                         handle.state::<crate::svn::queue::SvnQueue>(),
                                     ).await;
                                     match result {
-                                        Ok(_) => send_os_notification(&handle, "SVN Update", "完成"),
+                                        Ok(rev) => send_os_notification(&handle, "SVN Update", &format!("完成，版本 {}", rev)),
                                         Err(_) => send_os_notification(&handle, "SVN Update", "失败"),
                                     }
                                 });
