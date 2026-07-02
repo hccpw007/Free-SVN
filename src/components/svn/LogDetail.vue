@@ -24,7 +24,7 @@ const files = computed(() => props.log.paths || [])
       <div><span class="text-slate-400">{{ t('log.date') }}:</span> <span class="text-slate-700 dark:text-slate-300 font-mono">{{ log.date }}</span></div>
       <div><span class="text-slate-400">{{ t('log.revision') }}:</span> <span class="text-slate-700 dark:text-slate-300 font-mono">r{{ log.revision }}</span></div>
     </div>
-    <div class="text-xs text-slate-600 dark:text-slate-400 mb-3 whitespace-pre-wrap">{{ log.msg }}</div>
+    <div class="text-xs text-slate-600 dark:text-slate-400 mb-3 whitespace-pre-wrap">{{ log.msg || log.message }}</div>
     <div>
       <p class="text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">{{ t('log.changedFiles') }}:</p>
       <div :class="files.length > 30 ? 'max-h-40 overflow-y-auto' : ''">

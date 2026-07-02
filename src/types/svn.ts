@@ -58,6 +58,8 @@ export interface DiffResult {
   revision1?: number
   /** 前端展示用修订版本号（同 revision1 说明） */
   revision2?: number
+  /** 差异作者信息（如可用） */
+  author?: string
 }
 
 export interface OperationProgress {

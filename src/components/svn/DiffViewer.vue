@@ -52,7 +52,7 @@ async function openDiff(path: string) {
   isLoading.value = true
   try {
     const r = await svnStore.getDiff({ path })
-    diffFile.value = { path, content: r.content, isBinary: r.isBinary, rev1: r.revision1, rev2: r.revision2, author: (r as any).author }
+    diffFile.value = { path, content: r.content, isBinary: r.isBinary, rev1: r.revision1, rev2: r.revision2, author: r.author }
   } catch {
     diffFile.value = { path, content: '', isBinary: false }
   }
