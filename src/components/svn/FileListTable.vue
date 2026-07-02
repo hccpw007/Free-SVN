@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useFileListStore } from '@/stores/fileList'
-import { useFileSelection } from '@/composables/useFileSelection'
 import { useI18n } from 'vue-i18n'
 import { useWorkspaceStore } from '@/stores/workspace'
 import { open } from '@tauri-apps/plugin-shell'
@@ -13,9 +12,6 @@ import type { FileItem } from '@/types/svn'
 const { t } = useI18n()
 const fileListStore = useFileListStore()
 const workspaceStore = useWorkspaceStore()
-
-// Shift+Click / Ctrl+Click 范围选择
-const { handleClick: selectionHandleClick } = useFileSelection()
 
 // 右键菜单状态
 const ctxMenu = ref<{ show: boolean; x: number; y: number; file: FileItem | null }>({ show: false, x: 0, y: 0, file: null })
@@ -58,17 +54,7 @@ function formatSize(bytes?: number): string {
   return val.toFixed(1) + ' ' + units[i]
 }
 
-function handleRowClick(row: FileItem, _column: unknown, event: MouseEvent) {
-  // 点击 checkbox 区域时由 checkbox 自身处理，避免 @row-click 干扰
-  const target = event.target as HTMLElement
-  if (target.closest('.el-checkbox')) return
 
-  const allFiles = fileListStore.filteredFiles
-  const idx = allFiles.findIndex(f => f.path === row.path)
-  if (idx >= 0) {
-    selectionHandleClick(idx, event, allFiles, fileListStore.selectedPaths, (s) => { fileListStore.selectedPaths = s })
-  }
-}
 
 function handleContextMenu(e: MouseEvent, row: FileItem) {
   e.preventDefault()
@@ -114,7 +100,6 @@ function unlockFile(path: string) { fileListStore.unlockFile(path).catch(e => co
       :data="fileListStore.filteredFiles"
       size="small" style="width:100%;height:100%" row-key="path"
       :row-class-name="rowClassName"
-      @row-click="handleRowClick"
       @cell-contextmenu="(r: FileItem) => handleContextMenu($event, r)"
       @sort-change="({ prop, order }: { prop: string | null; order: string | null }) => {
         fileListStore.sortField = prop || 'status'
