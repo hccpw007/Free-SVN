@@ -3,8 +3,15 @@ import { ref } from 'vue'
 import { MAX_RECENT_WORKSPACES } from '@/types/workspace'
 import { getInfo } from '@/services/svn'
 
+const STORAGE_KEY_PATH = 'free-svn:currentPath'
+const STORAGE_KEY_WC = 'free-svn:isWorkingCopy'
+
 export const useWorkspaceStore = defineStore('workspace', () => {
-  const currentPath = ref('')
+  // 尝试从 sessionStorage 恢复 path 和 isWorkingCopy（页面刷新时保留）
+  const savedPath = sessionStorage.getItem(STORAGE_KEY_PATH) || ''
+  const savedWC = savedPath ? sessionStorage.getItem(STORAGE_KEY_WC) === 'true' : false
+
+  const currentPath = ref(savedPath)
   const recentWorkspaces = ref<string[]>([])
   const url = ref('')           /* 仓库 URL，通过 getInfo 填充 */
   const sourceUrl = ref('')     /* 来源 URL（getInfo.url），用于 BranchTagDialog */
@@ -15,7 +22,7 @@ export const useWorkspaceStore = defineStore('workspace', () => {
   const isOffline = ref(false)
   const isLoading = ref(false)
   // 当前路径是否为有效 SVN 工作副本（switchWorkspace 时自动检测）
-  const isWorkingCopy = ref(false)
+  const isWorkingCopy = ref(savedWC)
   // TopBar 触发检出弹窗的信号（HomePage/WelcomePage watch 消费后重置）
   const showCheckoutDialog = ref(false)
 
@@ -30,6 +37,8 @@ export const useWorkspaceStore = defineStore('workspace', () => {
     isLoading.value = false
     isWorkingCopy.value = false
     showCheckoutDialog.value = false
+    sessionStorage.removeItem(STORAGE_KEY_PATH)
+    sessionStorage.removeItem(STORAGE_KEY_WC)
   }
 
   async function switchWorkspace(path: string) {
@@ -58,6 +67,12 @@ export const useWorkspaceStore = defineStore('workspace', () => {
       isWorkingCopy.value = true
     }
     // else: isWorkingCopy 保持 reset 后的 false
+
+    // 持久化到 sessionStorage（页面刷新时保留状态）
+    if (path) {
+      sessionStorage.setItem(STORAGE_KEY_PATH, path)
+      sessionStorage.setItem(STORAGE_KEY_WC, String(isWorkingCopy.value))
+    }
   }
 
   function addRecent(path: string) {
