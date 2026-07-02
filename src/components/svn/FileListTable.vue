@@ -123,7 +123,7 @@ function unlockFile(path: string) { fileListStore.unlockFile(path).catch(e => co
           <ElCheckbox :model-value="fileListStore.selectedPaths.has(row.path)" @change="() => fileListStore.toggleSelect(row.path)" />
         </template>
       </el-table-column>
-      <el-table-column :label="t('file.status')" width="140" sortable="custom" prop="status">
+      <el-table-column :label="t('file.status')" width="80" sortable="custom" prop="status">
         <template #default="{ row }">
           <el-tooltip :content="statusDesc(row.status)" placement="top" :show-after="300" effect="dark">
             <span class="inline-block px-2 py-0.5 rounded text-xs font-medium cursor-default leading-5" :class="statusCfg[row.status]?.tagCls || 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400'">
