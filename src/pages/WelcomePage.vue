@@ -1,0 +1,98 @@
+<script setup lang="ts">
+import { useRouter } from 'vue-router'
+import { useWorkspaceStore } from '@/stores/workspace'
+import { useI18n } from 'vue-i18n'
+import { ref, watch } from 'vue'
+import { open } from '@tauri-apps/plugin-dialog'
+import { X } from 'lucide-vue-next'
+import CheckoutDialog from '@/components/dialogs/CheckoutDialog.vue'
+
+const router = useRouter()
+const { t } = useI18n()
+const workspaceStore = useWorkspaceStore()
+
+const showCheckoutDialog = ref(false)
+
+// 监听 workspaceStore.showCheckoutDialog（由外部触发检出弹窗）
+watch(() => workspaceStore.showCheckoutDialog, (val) => {
+  if (val) {
+    showCheckoutDialog.value = true
+    workspaceStore.showCheckoutDialog = false // 消费后重置
+  }
+})
+
+function handleCheckout() {
+  showCheckoutDialog.value = true
+}
+
+async function handleOpenWorkspace() {
+  try {
+    const selected = await open({ directory: true })
+    if (selected && typeof selected === 'string') {
+      await workspaceStore.switchWorkspace(selected)
+      await router.push('/workspace')
+    }
+  } catch (e: unknown) {
+    console.warn('[WelcomePage] 打开工作副本失败:', e)
+  }
+}
+
+async function handleRecentWorkspaceClick(wp: string) {
+  await workspaceStore.switchWorkspace(wp)
+  await router.push('/workspace')
+}
+</script>
+
+<template>
+  <div class="h-full flex items-center justify-center">
+    <div class="text-center max-w-md px-8">
+      <h1 class="text-3xl font-bold text-slate-800 dark:text-slate-100">
+        {{ t('app.welcomeTitle') }}
+      </h1>
+      <p class="mt-2 text-sm text-slate-500 dark:text-slate-400">
+        {{ t('app.welcomeSubtitle') }}
+      </p>
+      <div class="mt-8 flex flex-col items-center gap-3">
+        <button
+          class="w-56 px-4 py-2.5 rounded-md bg-green-500 hover:bg-green-600 text-white text-sm font-medium transition-colors duration-150 focus:ring-2 focus:ring-offset-2 focus:ring-blue-400 focus:outline-none"
+          @click="handleCheckout"
+        >
+          {{ t('common.checkout') }}...
+        </button>
+        <button
+          class="w-56 px-4 py-2 rounded-md border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 text-sm hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors duration-150 focus:ring-2 focus:ring-offset-2 focus:ring-blue-400 focus:outline-none"
+          @click="handleOpenWorkspace"
+        >
+          {{ t('workspace.openExisting') }}
+        </button>
+      </div>
+      <div class="mt-8 text-left">
+        <p class="text-xs font-medium text-slate-400 dark:text-slate-500 mb-2 uppercase tracking-wider">
+          {{ t('workspace.recentWorkspaces') }}
+        </p>
+        <div v-if="workspaceStore.recentWorkspaces.length === 0" class="text-xs text-slate-400 dark:text-slate-500 italic">
+          {{ t('workspace.noRecentWorkspaces') }}
+        </div>
+        <div v-else class="space-y-1">
+          <div
+            v-for="wp in workspaceStore.recentWorkspaces" :key="wp"
+            class="flex items-center justify-between px-3 py-1.5 rounded-md text-xs text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer group transition-colors duration-150 font-mono"
+            @click="handleRecentWorkspaceClick(wp)"
+          >
+            <span class="truncate">{{ wp }}</span>
+            <button
+              class="opacity-0 group-hover:opacity-100 text-slate-400 hover:text-red-500 transition-opacity duration-150 focus:ring-2 focus:ring-offset-2 focus:ring-blue-400 focus:outline-none rounded"
+              :title="t('common.remove')"
+              @click.stop="workspaceStore.removeRecent(wp)"
+            >
+              <X class="w-3.5 h-3.5" />
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 检出对话框 -->
+  <CheckoutDialog v-if="showCheckoutDialog" :initialPath="workspaceStore.currentPath" @close="showCheckoutDialog = false" />
+</template>

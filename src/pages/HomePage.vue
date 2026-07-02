@@ -7,9 +7,8 @@ import { useNetworkStatus } from '@/composables/useNetworkStatus'
 import { ref, computed, onMounted, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { ElMessage } from 'element-plus'
-import { RefreshCw, X, CheckCircle, Search } from 'lucide-vue-next'
+import { RefreshCw, CheckCircle, Search } from 'lucide-vue-next'
 import { exists } from '@tauri-apps/plugin-fs'
-import { open } from '@tauri-apps/plugin-dialog'
 import { getInfo as fetchInfo } from '@/services/svn'
 import FileListTable from '@/components/svn/FileListTable.vue'
 import CheckoutDialog from '@/components/dialogs/CheckoutDialog.vue'
@@ -25,7 +24,6 @@ const svnStore = useSvnStore()
 // 网络可达性检测：更新 workspaceStore.isOffline
 const { checkNetwork } = useNetworkStatus()
 
-const isWelcomePage = computed(() => !workspaceStore.currentPath)
 const isEmptyChanges = computed(() => !!workspaceStore.currentPath && fileListStore.files.length === 0)
 const isSearchEmpty = computed(() => {
   return !!workspaceStore.currentPath
@@ -34,6 +32,8 @@ const isSearchEmpty = computed(() => {
 })
 
 const showCheckoutDialog = ref(false)
+const showUpdateRevisionDialog = ref(false)
+const showSwitchDialog = ref(false)
 
 // 搜索框 300ms 防抖
 let searchTimer: ReturnType<typeof setTimeout>
@@ -49,8 +49,11 @@ watch(() => workspaceStore.currentPath, async (newPath) => {
   if (newPath) {
     await refreshWorkspaceInfo()
     await fileListStore.refresh()
+  } else {
+    // currentPath 被清空 → 跳转到欢迎页
+    router.replace('/workspace/welcome')
+    return
   }
-  // 工作副本变化时同步检测网络
   checkNetwork()
 })
 
@@ -73,11 +76,11 @@ onMounted(async () => {
     // 挂载时刷新工作副本信息（包括 isWorkingCopy 状态）
     await refreshWorkspaceInfo()
     await fileListStore.refresh()
+  } else {
+    // 没有当前工作副本 → 跳转到欢迎页
+    router.replace('/workspace/welcome')
   }
 })
-
-const showUpdateRevisionDialog = ref(false)
-const showSwitchDialog = ref(false)
 
 // 监听 svnStore.showUpdateRevisionDialog（由 App.vue handleShellCommand 触发）
 watch(() => svnStore.showUpdateRevisionDialog, (val) => {
@@ -85,17 +88,13 @@ watch(() => svnStore.showUpdateRevisionDialog, (val) => {
   if (val) svnStore.showUpdateRevisionDialog = false // 消费后重置
 })
 
-// 监听 workspaceStore.showCheckoutDialog（由 TopBar 非工作副本"检出"按钮触发）
+// 监听 workspaceStore.showCheckoutDialog（由 ToolBar 非工作副本"检出"按钮触发）
 watch(() => workspaceStore.showCheckoutDialog, (val) => {
   if (val) {
     showCheckoutDialog.value = true
     workspaceStore.showCheckoutDialog = false // 消费后重置
   }
 })
-
-function handleCheckout() {
-  showCheckoutDialog.value = true
-}
 
 // 切换工作副本后自动刷新 workspace 信息
 async function refreshWorkspaceInfo() {
@@ -113,79 +112,18 @@ async function refreshWorkspaceInfo() {
     workspaceStore.isWorkingCopy = false
   }
 }
-
-async function handleOpenWorkspace() {
-  try {
-    const selected = await open({ directory: true })
-    if (selected && typeof selected === 'string') {
-      await workspaceStore.switchWorkspace(selected)
-    }
-  } catch (e: unknown) {
-    console.warn('[HomePage] 打开工作副本失败:', e)
-  }
-}
 </script>
 
 <template>
-  <!-- 欢迎页（无工作副本） -->
-  <div v-if="isWelcomePage" class="h-full flex items-center justify-center">
-    <div class="text-center max-w-md px-8">
-      <h1 class="text-3xl font-bold text-slate-800 dark:text-slate-100">
-        {{ t('app.welcomeTitle') }}
-      </h1>
-      <p class="mt-2 text-sm text-slate-500 dark:text-slate-400">
-        {{ t('app.welcomeSubtitle') }}
-      </p>
-      <div class="mt-8 flex flex-col items-center gap-3">
-        <button
-          class="w-56 px-4 py-2.5 rounded-md bg-green-500 hover:bg-green-600 text-white text-sm font-medium transition-colors duration-150 focus:ring-2 focus:ring-offset-2 focus:ring-blue-400 focus:outline-none"
-          @click="handleCheckout"
-        >
-          {{ t('common.checkout') }}...
-        </button>
-        <button
-          class="w-56 px-4 py-2 rounded-md border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 text-sm hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors duration-150 focus:ring-2 focus:ring-offset-2 focus:ring-blue-400 focus:outline-none"
-          @click="handleOpenWorkspace"
-        >
-          {{ t('workspace.openExisting') }}
-        </button>
-      </div>
-      <div class="mt-8 text-left">
-        <p class="text-xs font-medium text-slate-400 dark:text-slate-500 mb-2 uppercase tracking-wider">
-          {{ t('workspace.recentWorkspaces') }}
-        </p>
-        <div v-if="workspaceStore.recentWorkspaces.length === 0" class="text-xs text-slate-400 dark:text-slate-500 italic">
-          {{ t('workspace.noRecentWorkspaces') }}
-        </div>
-        <div v-else class="space-y-1">
-          <div
-            v-for="wp in workspaceStore.recentWorkspaces" :key="wp"
-            class="flex items-center justify-between px-3 py-1.5 rounded-md text-xs text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer group transition-colors duration-150 font-mono"
-            @click="workspaceStore.switchWorkspace(wp)"
-          >
-            <span class="truncate">{{ wp }}</span>
-            <button
-              class="opacity-0 group-hover:opacity-100 text-slate-400 hover:text-red-500 transition-opacity duration-150 focus:ring-2 focus:ring-offset-2 focus:ring-blue-400 focus:outline-none rounded"
-              :title="t('common.remove')"
-              @click.stop="workspaceStore.removeRecent(wp)"
-            >
-              <X class="w-3.5 h-3.5" />
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- 检出对话框 -->
+  <!-- 检出对话框（由 ToolBar 非工作副本按钮触发） -->
   <CheckoutDialog v-if="showCheckoutDialog" :initialPath="workspaceStore.currentPath" @close="showCheckoutDialog = false" />
   <!-- 更新到版本对话框（由右键菜单 --svn-cmd update-rev 触发） -->
   <UpdateRevisionDialog v-if="showUpdateRevisionDialog" @close="showUpdateRevisionDialog = false" />
   <!-- 切换分支对话框 -->
   <SwitchDialog v-if="showSwitchDialog" @close="showSwitchDialog = false" />
 
-  <!-- 有工作副本：变更列表视图 -->
-  <div v-else class="h-full flex flex-col">
+  <!-- 工作副本：变更列表视图 -->
+  <div class="h-full flex flex-col">
     <!-- 搜索栏 + 筛选 + 刷新 -->
     <div class="px-4 py-2 flex items-center gap-3 bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
       <el-input
@@ -221,7 +159,7 @@ async function handleOpenWorkspace() {
     <!-- 空变更状态 -->
     <div v-if="isEmptyChanges" class="flex-1 flex items-center justify-center">
       <div class="text-center">
-        <CircleCheck class="w-8 h-8 mx-auto text-green-500" />
+        <CheckCircle class="w-8 h-8 mx-auto text-green-500" />
         <p class="text-sm text-slate-500 dark:text-slate-400 mt-2">{{ t('workspace.noChanges') }}</p>
         <p class="text-xs text-slate-400 dark:text-slate-500 mt-1 font-mono">{{ t('workspace.latestVersion') }}: {{ workspaceStore.currentRevision }}</p>
         <p class="text-xs text-slate-400 dark:text-slate-500 font-mono">{{ t('workspace.lastCommit') }}: {{ workspaceStore.lastCommitTime }}</p>
