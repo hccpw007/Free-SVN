@@ -68,11 +68,11 @@ async function handleUpdate() {
     </div>
 
     <template #footer>
-      <el-button size="default" class="focus:ring-2 focus:ring-blue-400 focus:outline-none" @click="emit('close')" :disabled="isUpdating">
+      <el-button size="default" class="focus:ring-2 focus:ring-offset-2 focus:ring-blue-400 focus:outline-none" @click="emit('close')" :disabled="isUpdating">
         {{ t('dialog.cancel') }}
       </el-button>
       <el-button size="default" type="primary" :loading="isUpdating"
-        class="focus:ring-2 focus:ring-blue-400 focus:outline-none" @click="handleUpdate">
+        class="focus:ring-2 focus:ring-offset-2 focus:ring-blue-400 focus:outline-none" @click="handleUpdate">
         {{ t('dialog.update') }}
       </el-button>
     </template>

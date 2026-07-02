@@ -31,7 +31,7 @@ const files = computed(() => props.log.paths || [])
         <div v-for="f in files" :key="f.path" class="flex items-center gap-2 py-0.5 hover:bg-slate-100 dark:hover:bg-slate-700/50 rounded px-1 group">
           <span class="w-5 text-xs font-mono text-center shrink-0">{{ f.action }}</span>
           <span class="text-xs font-mono text-slate-600 dark:text-slate-400 truncate flex-1">{{ f.path }}</span>
-          <button class="text-xs text-blue-600 hover:underline shrink-0 opacity-0 group-hover:opacity-100 focus:ring-2 focus:ring-blue-400 focus:outline-none rounded" @click="emit('viewDiff', f.path, log.revision)">{{ t('log.viewDiff') }}</button>
+          <button class="text-xs text-blue-600 hover:underline shrink-0 opacity-0 group-hover:opacity-100 focus:ring-2 focus:ring-offset-2 focus:ring-blue-400 focus:outline-none rounded" @click="emit('viewDiff', f.path, log.revision)">{{ t('log.viewDiff') }}</button>
         </div>
       </div>
     </div>

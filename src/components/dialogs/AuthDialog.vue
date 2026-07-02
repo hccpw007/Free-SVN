@@ -144,7 +144,7 @@ async function handleClearCache() {
             @keyup.enter="mode === 'retry' ? handleRetry() : emit('close')"
           />
           <button
-            class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 focus:ring-2 focus:ring-blue-400 focus:outline-none rounded"
+            class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 focus:ring-2 focus:ring-offset-2 focus:ring-blue-400 focus:outline-none rounded"
             @click="showPassword = !showPassword"
             :aria-label="showPassword ? t('auth.hidePassword') : t('auth.showPassword')"
           >
@@ -174,17 +174,17 @@ async function handleClearCache() {
     <template #footer>
       <div class="flex items-center gap-2" :class="mode === 'manage' ? 'justify-between' : 'justify-end'">
         <div v-if="mode === 'manage'" class="flex items-center gap-2">
-          <el-button size="small" :disabled="isProcessing || !canRetry" class="focus:ring-2 focus:ring-blue-400 focus:outline-none" @click="handleTestConnection">
+          <el-button size="small" :disabled="isProcessing || !canRetry" class="focus:ring-2 focus:ring-offset-2 focus:ring-blue-400 focus:outline-none" @click="handleTestConnection">
             <Loader2 v-if="isProcessing" class="w-4 h-4 mr-1 animate-spin" />
             {{ t('auth.testConnection') }}
           </el-button>
-          <el-button size="small" :disabled="isProcessing" class="focus:ring-2 focus:ring-blue-400 focus:outline-none" @click="handleClearCache">
+          <el-button size="small" :disabled="isProcessing" class="focus:ring-2 focus:ring-offset-2 focus:ring-blue-400 focus:outline-none" @click="handleClearCache">
             {{ t('auth.clearCache') }}
           </el-button>
         </div>
 
         <div class="flex items-center gap-2">
-          <el-button class="focus:ring-2 focus:ring-blue-400 focus:outline-none" @click="emit('close')" :disabled="isProcessing">
+          <el-button class="focus:ring-2 focus:ring-offset-2 focus:ring-blue-400 focus:outline-none" @click="emit('close')" :disabled="isProcessing">
             {{ mode === 'retry' ? t('auth.cancelOperation') : t('common.close') }}
           </el-button>
           <el-button
@@ -192,7 +192,7 @@ async function handleClearCache() {
             type="primary"
             :loading="isProcessing"
             :disabled="!canRetry"
-            class="focus:ring-2 focus:ring-blue-400 focus:outline-none"
+            class="focus:ring-2 focus:ring-offset-2 focus:ring-blue-400 focus:outline-none"
             @click="handleRetry"
           >
             {{ isProcessing ? t('auth.retrying') : t('auth.retry') }}

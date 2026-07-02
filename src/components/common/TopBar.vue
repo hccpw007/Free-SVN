@@ -111,7 +111,7 @@ function handleSwitchWorkspace(path: string) {
 
     <!-- 右边区域：凭据管理 + 暗色模式切换 -->
     <button
-      class="p-1.5 rounded-md hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors duration-150 focus:ring-2 focus:ring-blue-400 focus:outline-none"
+      class="p-1.5 rounded-md hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors duration-150 focus:ring-2 focus:ring-offset-2 focus:ring-blue-400 focus:outline-none"
       :aria-label="t('common.credentialManagement')"
       @click="showCredentialsDialog = true"
     >
@@ -119,7 +119,7 @@ function handleSwitchWorkspace(path: string) {
     </button>
     <AuthDialog v-if="showCredentialsDialog" mode="manage" :repo-url="workspaceStore.url" @close="showCredentialsDialog = false" />
     <button
-      class="p-1.5 rounded-md hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors duration-150 focus:ring-2 focus:ring-blue-400 focus:outline-none"
+      class="p-1.5 rounded-md hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors duration-150 focus:ring-2 focus:ring-offset-2 focus:ring-blue-400 focus:outline-none"
       :aria-label="isDark ? t('common.switchToLightMode') : t('common.switchToDarkMode')"
       @click="toggleDarkMode"
     >

@@ -2,6 +2,7 @@
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { useWorkspaceStore } from '@/stores/workspace'
+import { useAutoRefresh } from '@/composables/useAutoRefresh'
 import TopBar from '@/components/common/TopBar.vue'
 import ToolBar from '@/components/common/ToolBar.vue'
 import StatusBar from '@/components/common/StatusBar.vue'
@@ -9,6 +10,9 @@ import ProgressOverlay from '@/components/svn/ProgressOverlay.vue'
 
 const route = useRoute()
 const workspaceStore = useWorkspaceStore()
+
+// 窗口焦点变化时自动刷新文件列表（300ms 防抖）
+useAutoRefresh()
 
 // 欢迎页模式：route.name === 'HomePage' 且无 currentPath 时隐藏 ToolBar 和 StatusBar
 const isWelcomePage = computed(() => {

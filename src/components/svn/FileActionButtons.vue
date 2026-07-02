@@ -33,7 +33,7 @@ const btn = (labelKey: string, cls: string, action: string) => ({
         isOp('unversioned') ? [btn('file.diff','text-blue-600','diff'),btn('file.ignore','text-slate-500','ignore')] :
         isOp('locked') ? [btn('file.diff','text-blue-600','diff'),btn('file.unlock','text-violet-600','unlock')] : []
       )" :key="b.labelKey" :disabled="disabled"
-      class="text-xs underline-offset-2 hover:underline transition-colors duration-150 focus:ring-2 focus:ring-blue-400 focus:outline-none"
+      class="text-xs underline-offset-2 hover:underline transition-colors duration-150 focus:ring-2 focus:ring-offset-2 focus:ring-blue-400 focus:outline-none"
       :class="[b.cls, disabled ? 'opacity-50 cursor-not-allowed' : '']"
       @click.stop="b.handler"
     >{{ t(b.labelKey) }}</button>

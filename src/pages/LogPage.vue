@@ -69,7 +69,7 @@ const isLogEmpty = computed(() => logs.value.length === 0 && !searchQuery.value 
   <div class="h-full flex flex-col">
     <!-- 顶部导航 -->
     <div class="h-10 px-4 flex items-center gap-2 border-b border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shrink-0">
-      <button class="flex items-center gap-1 text-xs text-slate-500 hover:text-slate-700 focus:ring-2 focus:ring-blue-400 focus:outline-none rounded" @click="router.push('/workspace')">
+      <button class="flex items-center gap-1 text-xs text-slate-500 hover:text-slate-700 focus:ring-2 focus:ring-offset-2 focus:ring-blue-400 focus:outline-none rounded" @click="router.push('/workspace')">
         <ArrowLeft class="w-4 h-4" />{{ t('common.back') }}
       </button>
     </div>
@@ -130,9 +130,9 @@ const isLogEmpty = computed(() => logs.value.length === 0 && !searchQuery.value 
     <div class="h-9 px-4 flex items-center justify-between shrink-0 border-t border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs">
       <span class="text-slate-400">{{ t('workspace.pageInfo', { page: currentPage, total: totalPages() }) }}</span>
       <div class="flex items-center gap-2">
-        <button :disabled="currentPage <= 1" :aria-label="t('workspace.previousPage')" class="p-1 rounded text-slate-400 hover:text-slate-600 disabled:opacity-30 focus:ring-2 focus:ring-blue-400 focus:outline-none" @click="prevPage"><ChevronLeft class="w-4 h-4" /></button>
+        <button :disabled="currentPage <= 1" :aria-label="t('workspace.previousPage')" class="p-1 rounded text-slate-400 hover:text-slate-600 disabled:opacity-30 focus:ring-2 focus:ring-offset-2 focus:ring-blue-400 focus:outline-none" @click="prevPage"><ChevronLeft class="w-4 h-4" /></button>
         <span class="text-slate-500">{{ currentPage }} / {{ totalPages() }}</span>
-        <button :aria-label="t('workspace.nextPage')" class="p-1 rounded text-slate-400 hover:text-slate-600 disabled:opacity-30 focus:ring-2 focus:ring-blue-400 focus:outline-none" @click="nextPage"><ChevronRight class="w-4 h-4" /></button>
+        <button :aria-label="t('workspace.nextPage')" class="p-1 rounded text-slate-400 hover:text-slate-600 disabled:opacity-30 focus:ring-2 focus:ring-offset-2 focus:ring-blue-400 focus:outline-none" @click="nextPage"><ChevronRight class="w-4 h-4" /></button>
       </div>
     </div>
   </div>

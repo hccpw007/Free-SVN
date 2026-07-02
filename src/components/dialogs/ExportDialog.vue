@@ -56,7 +56,7 @@ async function handleExport() {
         <label class="text-xs font-medium text-slate-700 dark:text-slate-300 mb-1 block">{{ t('dialog.exportTargetPath') }}</label>
         <div class="flex gap-2">
           <el-input v-model="targetDir" size="small" :placeholder="t('dialog.selectExportDir')" />
-          <el-button size="small" class="focus:ring-2 focus:ring-blue-400 focus:outline-none" @click="browseTarget">{{ t('dialog.browse') }}</el-button>
+          <el-button size="small" class="focus:ring-2 focus:ring-offset-2 focus:ring-blue-400 focus:outline-none" @click="browseTarget">{{ t('dialog.browse') }}</el-button>
         </div>
       </div>
 
@@ -72,11 +72,11 @@ async function handleExport() {
     </div>
 
     <template #footer>
-      <el-button size="default" class="focus:ring-2 focus:ring-blue-400 focus:outline-none" @click="emit('close')" :disabled="isExporting">
+      <el-button size="default" class="focus:ring-2 focus:ring-offset-2 focus:ring-blue-400 focus:outline-none" @click="emit('close')" :disabled="isExporting">
         {{ t('dialog.cancel') }}
       </el-button>
       <el-button size="default" type="primary" :loading="isExporting"
-        :disabled="!canExport" class="focus:ring-2 focus:ring-blue-400 focus:outline-none" @click="handleExport">
+        :disabled="!canExport" class="focus:ring-2 focus:ring-offset-2 focus:ring-blue-400 focus:outline-none" @click="handleExport">
         {{ t('dialog.export') }}
       </el-button>
     </template>

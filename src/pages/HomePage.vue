@@ -2,6 +2,7 @@
 import { useRouter } from 'vue-router'
 import { useWorkspaceStore } from '@/stores/workspace'
 import { useFileListStore } from '@/stores/fileList'
+import { useNetworkStatus } from '@/composables/useNetworkStatus'
 import { ref, computed, onMounted, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { ElMessage } from 'element-plus'
@@ -16,6 +17,9 @@ const router = useRouter()
 const { t } = useI18n()
 const workspaceStore = useWorkspaceStore()
 const fileListStore = useFileListStore()
+
+// 网络可达性检测：更新 workspaceStore.isOffline
+const { checkNetwork } = useNetworkStatus()
 
 const isWelcomePage = computed(() => !workspaceStore.currentPath)
 const isEmptyChanges = computed(() => !!workspaceStore.currentPath && fileListStore.files.length === 0)
@@ -42,9 +46,14 @@ watch(() => workspaceStore.currentPath, async (newPath) => {
     await refreshWorkspaceInfo()
     await fileListStore.refresh()
   }
+  // 工作副本变化时同步检测网络
+  checkNetwork()
 })
 
 onMounted(async () => {
+  // 挂载时检测网络状态
+  checkNetwork()
+
   if (workspaceStore.currentPath) {
     // 检查工作副本路径是否存在
     try {
@@ -102,13 +111,13 @@ async function handleOpenWorkspace() {
       </p>
       <div class="mt-8 flex flex-col items-center gap-3">
         <button
-          class="w-56 px-4 py-2.5 rounded-md bg-green-500 hover:bg-green-600 text-white text-sm font-medium transition-colors duration-150 focus:ring-2 focus:ring-blue-400 focus:outline-none"
+          class="w-56 px-4 py-2.5 rounded-md bg-green-500 hover:bg-green-600 text-white text-sm font-medium transition-colors duration-150 focus:ring-2 focus:ring-offset-2 focus:ring-blue-400 focus:outline-none"
           @click="handleCheckout"
         >
           {{ t('common.checkout') }}...
         </button>
         <button
-          class="w-56 px-4 py-2 rounded-md border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 text-sm hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors duration-150 focus:ring-2 focus:ring-blue-400 focus:outline-none"
+          class="w-56 px-4 py-2 rounded-md border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 text-sm hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors duration-150 focus:ring-2 focus:ring-offset-2 focus:ring-blue-400 focus:outline-none"
           @click="handleOpenWorkspace"
         >
           {{ t('workspace.openExisting') }}
@@ -129,7 +138,7 @@ async function handleOpenWorkspace() {
           >
             <span class="truncate">{{ wp }}</span>
             <button
-              class="opacity-0 group-hover:opacity-100 text-slate-400 hover:text-red-500 transition-opacity duration-150 focus:ring-2 focus:ring-blue-400 focus:outline-none rounded"
+              class="opacity-0 group-hover:opacity-100 text-slate-400 hover:text-red-500 transition-opacity duration-150 focus:ring-2 focus:ring-offset-2 focus:ring-blue-400 focus:outline-none rounded"
               :title="t('common.remove')"
               @click.stop="workspaceStore.removeRecent(wp)"
             >
@@ -169,7 +178,7 @@ async function handleOpenWorkspace() {
         <el-option :label="t('file.statusUnversioned')" value="unversioned" />
       </el-select>
       <button
-        class="p-1.5 rounded-md text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors duration-150 focus:ring-2 focus:ring-blue-400 focus:outline-none"
+        class="p-1.5 rounded-md text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors duration-150 focus:ring-2 focus:ring-offset-2 focus:ring-blue-400 focus:outline-none"
         :title="t('common.refresh')"
         :aria-label="t('common.refresh')"
         @click="fileListStore.refresh()"
@@ -186,8 +195,8 @@ async function handleOpenWorkspace() {
         <p class="text-xs text-slate-400 dark:text-slate-500 mt-1 font-mono">{{ t('workspace.latestVersion') }}: {{ workspaceStore.currentRevision }}</p>
         <p class="text-xs text-slate-400 dark:text-slate-500 font-mono">{{ t('workspace.lastCommit') }}: {{ workspaceStore.lastCommitTime }}</p>
         <div class="mt-4 flex gap-3 justify-center">
-          <button class="text-xs text-blue-600 hover:underline focus:ring-2 focus:ring-blue-400 focus:outline-none rounded" @click="fileListStore.refresh()">{{ t('common.refresh') }}</button>
-          <button class="text-xs text-blue-600 hover:underline focus:ring-2 focus:ring-blue-400 focus:outline-none rounded" @click="router.push('/workspace/log')">{{ t('workspace.viewLog') }}</button>
+          <button class="text-xs text-blue-600 hover:underline focus:ring-2 focus:ring-offset-2 focus:ring-blue-400 focus:outline-none rounded" @click="fileListStore.refresh()">{{ t('common.refresh') }}</button>
+          <button class="text-xs text-blue-600 hover:underline focus:ring-2 focus:ring-offset-2 focus:ring-blue-400 focus:outline-none rounded" @click="router.push('/workspace/log')">{{ t('workspace.viewLog') }}</button>
         </div>
       </div>
     </div>
@@ -198,7 +207,7 @@ async function handleOpenWorkspace() {
         <Search class="w-8 h-8 mx-auto text-slate-400" />
         <p class="text-sm text-slate-500 dark:text-slate-400 mt-2">{{ t('workspace.noSearchResult') }}</p>
         <p class="text-xs text-slate-400 dark:text-slate-500 mt-1">{{ t('workspace.searchFilterHint') }}</p>
-        <button class="mt-2 text-xs text-blue-600 hover:underline focus:ring-2 focus:ring-blue-400 focus:outline-none rounded" @click="fileListStore.clearFilter()">{{ t('workspace.clearFilter') }}</button>
+        <button class="mt-2 text-xs text-blue-600 hover:underline focus:ring-2 focus:ring-offset-2 focus:ring-blue-400 focus:outline-none rounded" @click="fileListStore.clearFilter()">{{ t('workspace.clearFilter') }}</button>
       </div>
     </div>
 

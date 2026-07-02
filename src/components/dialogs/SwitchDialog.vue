@@ -59,8 +59,8 @@ async function handleSwitch() {
       <el-checkbox v-model="ignoreAncestry"><span class="text-xs">{{ t('workspace.ignoreAncestry') }}</span></el-checkbox>
     </div>
     <template #footer>
-      <el-button size="default" class="focus:ring-2 focus:ring-blue-400 focus:outline-none" @click="emit('close')">{{ t('common.cancel') }}</el-button>
-      <el-button size="default" type="primary" :loading="isSwitching" :disabled="!targetUrl" class="focus:ring-2 focus:ring-blue-400 focus:outline-none" @click="handleSwitch">{{ t('workspace.switch') }}</el-button>
+      <el-button size="default" class="focus:ring-2 focus:ring-offset-2 focus:ring-blue-400 focus:outline-none" @click="emit('close')">{{ t('common.cancel') }}</el-button>
+      <el-button size="default" type="primary" :loading="isSwitching" :disabled="!targetUrl" class="focus:ring-2 focus:ring-offset-2 focus:ring-blue-400 focus:outline-none" @click="handleSwitch">{{ t('workspace.switch') }}</el-button>
     </template>
   </el-dialog>
 </template>

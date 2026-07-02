@@ -84,7 +84,7 @@ async function handleCommit() {
   <div class="h-full flex flex-col">
     <!-- 顶部导航 -->
     <div class="h-10 px-4 flex items-center gap-2 border-b border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shrink-0">
-      <button class="flex items-center gap-1 text-xs text-slate-500 hover:text-slate-700 focus:ring-2 focus:ring-blue-400 focus:outline-none rounded" @click="router.push('/workspace')">
+      <button class="flex items-center gap-1 text-xs text-slate-500 hover:text-slate-700 focus:ring-2 focus:ring-offset-2 focus:ring-blue-400 focus:outline-none rounded" @click="router.push('/workspace')">
         <ArrowLeft class="w-4 h-4" />{{ t('common.back') }}
       </button>
     </div>
@@ -113,9 +113,9 @@ async function handleCommit() {
     <div class="h-12 px-4 flex items-center justify-between shrink-0 border-t border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800">
       <span class="text-xs text-slate-500">{{ t('workspace.selectedCount', { count: selectedCount }) }}</span>
       <div class="flex items-center gap-2">
-        <button class="px-4 py-1.5 text-xs rounded-md border border-slate-300 dark:border-slate-600 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700 focus:ring-2 focus:ring-blue-400 focus:outline-none" @click="router.push('/workspace')">{{ t('common.cancel') }}</button>
+        <button class="px-4 py-1.5 text-xs rounded-md border border-slate-300 dark:border-slate-600 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700 focus:ring-2 focus:ring-offset-2 focus:ring-blue-400 focus:outline-none" @click="router.push('/workspace')">{{ t('common.cancel') }}</button>
         <el-tooltip :content="t('workspace.selectFiles')" :disabled="selectedCount > 0" effect="dark">
-          <button class="px-4 py-1.5 text-xs rounded-md font-medium text-white bg-green-500 hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors focus:ring-2 focus:ring-blue-400 focus:outline-none" :disabled="selectedCount === 0 || isSubmitting || !commitMessage.value.trim()" @click="handleCommit">
+          <button class="px-4 py-1.5 text-xs rounded-md font-medium text-white bg-green-500 hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors focus:ring-2 focus:ring-offset-2 focus:ring-blue-400 focus:outline-none" :disabled="selectedCount === 0 || isSubmitting || !commitMessage.value.trim()" @click="handleCommit">
             {{ isSubmitting ? t('common.submitting') : t('common.submit') }}
           </button>
         </el-tooltip>

@@ -63,25 +63,25 @@ function viewDiff(filePath: string) {
       {{ t('dialog.conflictType') }}: text conflict
     </p>
     <div class="flex gap-2 mb-4">
-      <el-button size="small" class="focus:ring-2 focus:ring-blue-400 focus:outline-none" @click="viewDiff(selectedFile)">
+      <el-button size="small" class="focus:ring-2 focus:ring-offset-2 focus:ring-blue-400 focus:outline-none" @click="viewDiff(selectedFile)">
         {{ t('dialog.viewDiff') }}
       </el-button>
       <el-button size="small" type="primary" :loading="isResolving"
-        class="focus:ring-2 focus:ring-blue-400 focus:outline-none" @click="handleResolve('mine-full')">
+        class="focus:ring-2 focus:ring-offset-2 focus:ring-blue-400 focus:outline-none" @click="handleResolve('mine-full')">
         {{ t('dialog.useMine') }}
       </el-button>
       <el-button size="small" type="primary" :loading="isResolving"
-        class="focus:ring-2 focus:ring-blue-400 focus:outline-none" @click="handleResolve('theirs-full')">
+        class="focus:ring-2 focus:ring-offset-2 focus:ring-blue-400 focus:outline-none" @click="handleResolve('theirs-full')">
         {{ t('dialog.useTheirs') }}
       </el-button>
     </div>
     <div class="flex gap-2 mb-4">
       <el-button size="small" type="primary" :loading="isResolving"
-        class="focus:ring-2 focus:ring-blue-400 focus:outline-none" @click="handleBatchResolve('mine-full')">
+        class="focus:ring-2 focus:ring-offset-2 focus:ring-blue-400 focus:outline-none" @click="handleBatchResolve('mine-full')">
         {{ t('dialog.useMineAll') }}
       </el-button>
       <el-button size="small" type="primary" :loading="isResolving"
-        class="focus:ring-2 focus:ring-blue-400 focus:outline-none" @click="handleBatchResolve('theirs-full')">
+        class="focus:ring-2 focus:ring-offset-2 focus:ring-blue-400 focus:outline-none" @click="handleBatchResolve('theirs-full')">
         {{ t('dialog.useTheirsAll') }}
       </el-button>
     </div>
@@ -89,9 +89,9 @@ function viewDiff(filePath: string) {
       {{ t('dialog.resolveHint') }}
     </p>
     <template #footer>
-      <el-button size="default" class="focus:ring-2 focus:ring-blue-400 focus:outline-none" @click="emit('close')">{{ t('dialog.cancel') }}</el-button>
+      <el-button size="default" class="focus:ring-2 focus:ring-offset-2 focus:ring-blue-400 focus:outline-none" @click="emit('close')">{{ t('dialog.cancel') }}</el-button>
       <el-button size="default" type="danger" :loading="isResolving"
-        class="focus:ring-2 focus:ring-blue-400 focus:outline-none" @click="handleResolve('working')">
+        class="focus:ring-2 focus:ring-offset-2 focus:ring-blue-400 focus:outline-none" @click="handleResolve('working')">
         {{ t('dialog.markResolved') }}
       </el-button>
     </template>

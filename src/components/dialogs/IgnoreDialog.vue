@@ -57,9 +57,9 @@ async function handleAddIgnore() {
       svn propset svn:ignore "{{ computedPattern }}" {{ props.filePath }}
     </p>
     <template #footer>
-      <el-button size="default" class="focus:ring-2 focus:ring-blue-400 focus:outline-none" @click="emit('close')">{{ t('dialog.cancel') }}</el-button>
+      <el-button size="default" class="focus:ring-2 focus:ring-offset-2 focus:ring-blue-400 focus:outline-none" @click="emit('close')">{{ t('dialog.cancel') }}</el-button>
       <el-button size="default" type="primary" :loading="isAdding"
-        :disabled="!computedPattern" class="focus:ring-2 focus:ring-blue-400 focus:outline-none" @click="handleAddIgnore">
+        :disabled="!computedPattern" class="focus:ring-2 focus:ring-offset-2 focus:ring-blue-400 focus:outline-none" @click="handleAddIgnore">
         {{ t('dialog.addIgnore') }}
       </el-button>
     </template>

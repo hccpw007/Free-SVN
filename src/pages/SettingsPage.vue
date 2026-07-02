@@ -6,7 +6,7 @@ import { useWorkspaceStore } from '@/stores/workspace'
 import { useI18n } from 'vue-i18n'
 import { ArrowLeft } from 'lucide-vue-next'
 import { ElMessage } from 'element-plus'
-import { invoke } from '@tauri-apps/api/core'
+import { wrappedInvoke } from '@/services/svn'
 import { open } from '@tauri-apps/plugin-dialog'
 
 const router = useRouter()
@@ -18,7 +18,7 @@ const repoUrl = ref('')
 
 onMounted(async () => {
   try {
-    svnVersion.value = await invoke<string>('get_svn_version')
+    svnVersion.value = await wrappedInvoke<string>('get_svn_version')
   } catch {
     svnVersion.value = t('common.unknown')
   }
@@ -89,7 +89,7 @@ async function handleSave() {
   await settingsStore.save()
 
   try {
-    await invoke('set_auto_start', { enabled: form.autoStart })
+    await wrappedInvoke('set_auto_start', { enabled: form.autoStart })
   } catch (e) {
     console.warn('Failed to set auto start:', e)
   }
@@ -108,7 +108,7 @@ async function handleSave() {
   <div class="h-screen flex flex-col bg-slate-50 dark:bg-slate-900">
     <!-- 顶部导航条 -->
     <div class="h-12 px-4 flex items-center gap-2 border-b border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shrink-0">
-      <button class="flex items-center gap-1 text-sm text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 transition-colors focus:ring-2 focus:ring-blue-400 focus:outline-none rounded"
+      <button class="flex items-center gap-1 text-sm text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 transition-colors focus:ring-2 focus:ring-offset-2 focus:ring-blue-400 focus:outline-none rounded"
         @click="router.push('/workspace')">
         <ArrowLeft class="w-4 h-4" />{{ t('common.back') }}
       </button>
@@ -126,7 +126,7 @@ async function handleSave() {
             <label class="text-xs text-slate-500 dark:text-slate-400">{{ t('settings.defaultCheckoutDir') }}</label>
             <div class="flex gap-2 mt-1">
               <el-input v-model="form.defaultCheckoutDir" size="default" @input="markChanged" />
-              <el-button size="default" class="focus:ring-2 focus:ring-blue-400 focus:outline-none" @click="browseDir">{{ t('dialog.browse') }}</el-button>
+              <el-button size="default" class="focus:ring-2 focus:ring-offset-2 focus:ring-blue-400 focus:outline-none" @click="browseDir">{{ t('dialog.browse') }}</el-button>
             </div>
           </div>
           <div>
@@ -200,7 +200,7 @@ async function handleSave() {
         <template #header><span class="text-sm font-medium">{{ t('settings.general') }}</span></template>
         <div class="flex items-center justify-between">
           <span class="text-xs text-slate-600 dark:text-slate-400">{{ t('settings.autoStart') }}</span>
-          <el-switch v-model="form.autoStart" @change="markChanged" class="focus:ring-2 focus:ring-blue-400 focus:outline-none rounded" />
+          <el-switch v-model="form.autoStart" @change="markChanged" class="focus:ring-2 focus:ring-offset-2 focus:ring-blue-400 focus:outline-none rounded" />
         </div>
       </el-card>
 
@@ -223,7 +223,7 @@ async function handleSave() {
 
           <p class="text-amber-500 dark:text-amber-400 mt-2">{{ t('settings.securityNotice') }}</p>
         </div>
-        <el-button size="small" class="mt-3 focus:ring-2 focus:ring-blue-400 focus:outline-none">{{ t('settings.exportLogs') }}</el-button>
+        <el-button size="small" class="mt-3 focus:ring-2 focus:ring-offset-2 focus:ring-blue-400 focus:outline-none">{{ t('settings.exportLogs') }}</el-button>
       </el-card>
 
       <!-- 校验提示 -->
@@ -233,7 +233,7 @@ async function handleSave() {
 
       <!-- 保存按钮 -->
       <div class="flex justify-end pb-6">
-        <el-button type="primary" :disabled="!hasChanges" class="focus:ring-2 focus:ring-blue-400 focus:outline-none" @click="handleSave">
+        <el-button type="primary" :disabled="!hasChanges" class="focus:ring-2 focus:ring-offset-2 focus:ring-blue-400 focus:outline-none" @click="handleSave">
           {{ t('common.save') }}
         </el-button>
       </div>

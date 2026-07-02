@@ -17,9 +17,7 @@ pub fn set_tray_badge(app: AppHandle, visible: bool) -> Result<(), String> {
             let mut guard = DEFAULT_ICON.lock().map_err(|e| e.to_string())?;
             if guard.is_none() {
                 if let Some(img) = app.default_window_icon() {
-                    let rgba = img.as_raw().to_vec();
-                    let owned = tauri::image::Image::new(rgba, img.width(), img.height());
-                    *guard = Some(owned);
+                    *guard = Some(img.clone().to_owned());
                 }
             }
             if let Some(icon) = guard.as_ref() {
@@ -29,9 +27,7 @@ pub fn set_tray_badge(app: AppHandle, visible: bool) -> Result<(), String> {
             // 恢复默认图标和 tooltip
             let _ = tray.set_tooltip(Some("Free-SVN"));
             if let Some(img) = app.default_window_icon() {
-                let rgba = img.as_raw().to_vec();
-                let owned = tauri::image::Image::new(rgba, img.width(), img.height());
-                let _ = tray.set_icon(Some(owned));
+                let _ = tray.set_icon(Some(img.clone().to_owned()));
             }
         }
     }

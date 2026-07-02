@@ -27,8 +27,8 @@ const { t } = useI18n()
     </div>
     <p v-if="type === 'danger'" class="text-xs text-red-500 mt-2">{{ t('file.irreversibleAction') }}</p>
     <template #footer>
-      <el-button size="default" class="focus:ring-2 focus:ring-blue-400 focus:outline-none" @click="emit('cancel')">{{ cancelText || t('common.cancel') }}</el-button>
-      <el-button size="default" :type="type === 'danger' ? 'danger' : 'primary'" class="focus:ring-2 focus:ring-blue-400 focus:outline-none" @click="emit('confirm')">{{ confirmText || t('common.confirm') }}</el-button>
+      <el-button size="default" class="focus:ring-2 focus:ring-offset-2 focus:ring-blue-400 focus:outline-none" @click="emit('cancel')">{{ cancelText || t('common.cancel') }}</el-button>
+      <el-button size="default" :type="type === 'danger' ? 'danger' : 'primary'" class="focus:ring-2 focus:ring-offset-2 focus:ring-blue-400 focus:outline-none" @click="emit('confirm')">{{ confirmText || t('common.confirm') }}</el-button>
     </template>
   </el-dialog>
 </template>

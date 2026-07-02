@@ -124,7 +124,7 @@ async function handleMerge() {
         <p class="text-slate-500">{{ t('workspace.mergeSourceLabel') }}: {{ sourceUrl }}</p>
       </div>
       <el-button size="default" type="primary" :loading="isMerging" :disabled="!sourceUrl"
-        class="focus:ring-2 focus:ring-blue-400 focus:outline-none" @click="handleMerge">
+        class="focus:ring-2 focus:ring-offset-2 focus:ring-blue-400 focus:outline-none" @click="handleMerge">
         {{ t('workspace.executeMerge') }}
       </el-button>
       <div v-if="resultStatus !== 'idle'"
@@ -136,11 +136,11 @@ async function handleMerge() {
 
     <template #footer>
       <div class="flex justify-between">
-        <el-button size="default" class="focus:ring-2 focus:ring-blue-400 focus:outline-none" @click="emit('close')">{{ t('common.cancel') }}</el-button>
+        <el-button size="default" class="focus:ring-2 focus:ring-offset-2 focus:ring-blue-400 focus:outline-none" @click="emit('close')">{{ t('common.cancel') }}</el-button>
         <div class="flex gap-2">
-          <el-button v-if="currentStep > 1" size="default" class="focus:ring-2 focus:ring-blue-400 focus:outline-none" @click="prevStep">{{ t('common.prev') }}</el-button>
-          <el-button v-if="currentStep < totalSteps" size="default" type="primary" class="focus:ring-2 focus:ring-blue-400 focus:outline-none" @click="nextStep">{{ t('common.next') }}</el-button>
-          <el-button v-if="currentStep === totalSteps && resultStatus !== 'idle'" size="default" type="primary" class="focus:ring-2 focus:ring-blue-400 focus:outline-none" @click="emit('close')">{{ t('common.finish') }}</el-button>
+          <el-button v-if="currentStep > 1" size="default" class="focus:ring-2 focus:ring-offset-2 focus:ring-blue-400 focus:outline-none" @click="prevStep">{{ t('common.prev') }}</el-button>
+          <el-button v-if="currentStep < totalSteps" size="default" type="primary" class="focus:ring-2 focus:ring-offset-2 focus:ring-blue-400 focus:outline-none" @click="nextStep">{{ t('common.next') }}</el-button>
+          <el-button v-if="currentStep === totalSteps && resultStatus !== 'idle'" size="default" type="primary" class="focus:ring-2 focus:ring-offset-2 focus:ring-blue-400 focus:outline-none" @click="emit('close')">{{ t('common.finish') }}</el-button>
         </div>
       </div>
     </template>

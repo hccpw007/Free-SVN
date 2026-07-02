@@ -64,8 +64,8 @@ async function handleCreate() {
       </div>
     </div>
     <template #footer>
-      <el-button size="default" class="focus:ring-2 focus:ring-blue-400 focus:outline-none" @click="emit('close')">{{ t('common.cancel') }}</el-button>
-      <el-button size="default" type="primary" :loading="isCreating" :disabled="!targetUrl" class="focus:ring-2 focus:ring-blue-400 focus:outline-none" @click="handleCreate">{{ t('common.create') }}</el-button>
+      <el-button size="default" class="focus:ring-2 focus:ring-offset-2 focus:ring-blue-400 focus:outline-none" @click="emit('close')">{{ t('common.cancel') }}</el-button>
+      <el-button size="default" type="primary" :loading="isCreating" :disabled="!targetUrl" class="focus:ring-2 focus:ring-offset-2 focus:ring-blue-400 focus:outline-none" @click="handleCreate">{{ t('common.create') }}</el-button>
     </template>
   </el-dialog>
 </template>

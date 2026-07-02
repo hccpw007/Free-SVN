@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useFileListStore } from '@/stores/fileList'
+import { useFileSelection } from '@/composables/useFileSelection'
 import { useI18n } from 'vue-i18n'
 import { useWorkspaceStore } from '@/stores/workspace'
 import { open } from '@tauri-apps/plugin-shell'
@@ -14,6 +15,9 @@ const { t } = useI18n()
 const fileListStore = useFileListStore()
 const workspaceStore = useWorkspaceStore()
 
+// Shift+Click / Ctrl+Click 范围选择
+const { handleClick: selectionHandleClick } = useFileSelection()
+
 // 右键菜单状态
 const ctxMenu = ref<{ show: boolean; x: number; y: number; file: FileItem | null }>({ show: false, x: 0, y: 0, file: null })
 
@@ -23,23 +27,11 @@ function rowClassName({ row }: { row: { status: string } }): string {
 }
 
 function handleRowClick(row: FileItem, _column: unknown, event: MouseEvent) {
-  const set = new Set(fileListStore.selectedPaths)
-  if (event.shiftKey) {
-    // Shift+Click: 范围选择
-    const allFiles = fileListStore.filteredFiles
-    const idx = allFiles.findIndex(f => f.path === row.path)
-    if (idx >= 0) {
-      for (let i = 0; i <= idx; i++) set.add(allFiles[i].path)
-    }
-  } else if (event.ctrlKey || event.metaKey) {
-    // Ctrl/Cmd+Click: 切换选择
-    set.has(row.path) ? set.delete(row.path) : set.add(row.path)
-  } else {
-    // 普通点击: 单选
-    set.clear()
-    set.add(row.path)
+  const allFiles = fileListStore.filteredFiles
+  const idx = allFiles.findIndex(f => f.path === row.path)
+  if (idx >= 0) {
+    selectionHandleClick(idx, event, allFiles, fileListStore.selectedPaths, (s) => { fileListStore.selectedPaths = s })
   }
-  fileListStore.selectedPaths = set
 }
 
 function handleContextMenu(e: MouseEvent, row: FileItem) {
@@ -122,7 +114,7 @@ function unlockFile(path: string) { fileListStore.unlockFile(path).catch(() => {
         @change="(v: boolean) => fileListStore.toggleSelectAll(v)"
       />
       <span class="text-slate-500 dark:text-slate-400">{{ t('workspace.selectedCount', { count: fileListStore.selectedPaths.size }) }}</span>
-      <ElButton v-if="fileListStore.selectedPaths.size > 0" size="small" class="focus:ring-2 focus:ring-blue-400 focus:outline-none">
+      <ElButton v-if="fileListStore.selectedPaths.size > 0" size="small" class="focus:ring-2 focus:ring-offset-2 focus:ring-blue-400 focus:outline-none">
         {{ t('file.batchRevert') }}
       </ElButton>
     </div>
@@ -134,11 +126,11 @@ function unlockFile(path: string) { fileListStore.unlockFile(path).catch(() => {
         class="fixed z-50 w-48 py-1 rounded-md bg-white dark:bg-slate-800 shadow-lg border border-slate-200 dark:border-slate-700 text-xs transition-all duration-200 ease-out"
         :style="{ left: ctxMenu.x + 'px', top: ctxMenu.y + 'px' }" @click.stop
       >
-        <button class="w-full px-3 py-1.5 text-left text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700 focus:ring-2 focus:ring-blue-400 focus:outline-none" @click="copyFullPath(ctxMenu.file.path)">{{ t('file.copyFullPath') }}</button>
-        <button class="w-full px-3 py-1.5 text-left text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700 focus:ring-2 focus:ring-blue-400 focus:outline-none" @click="copyRelativePath(ctxMenu.file.path)">{{ t('file.copyRelativePath') }}</button>
+        <button class="w-full px-3 py-1.5 text-left text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700 focus:ring-2 focus:ring-offset-2 focus:ring-blue-400 focus:outline-none" @click="copyFullPath(ctxMenu.file.path)">{{ t('file.copyFullPath') }}</button>
+        <button class="w-full px-3 py-1.5 text-left text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700 focus:ring-2 focus:ring-offset-2 focus:ring-blue-400 focus:outline-none" @click="copyRelativePath(ctxMenu.file.path)">{{ t('file.copyRelativePath') }}</button>
         <div class="border-t border-slate-200 dark:border-slate-700 my-1" />
-        <button class="w-full px-3 py-1.5 text-left text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700 focus:ring-2 focus:ring-blue-400 focus:outline-none" @click="showInExplorer(ctxMenu.file.path)">{{ t('file.showInExplorer') }}</button>
-        <button class="w-full px-3 py-1.5 text-left text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700 focus:ring-2 focus:ring-blue-400 focus:outline-none" @click="openWithEditor(ctxMenu.file.path)">{{ t('file.openWithEditor') }}</button>
+        <button class="w-full px-3 py-1.5 text-left text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700 focus:ring-2 focus:ring-offset-2 focus:ring-blue-400 focus:outline-none" @click="showInExplorer(ctxMenu.file.path)">{{ t('file.showInExplorer') }}</button>
+        <button class="w-full px-3 py-1.5 text-left text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700 focus:ring-2 focus:ring-offset-2 focus:ring-blue-400 focus:outline-none" @click="openWithEditor(ctxMenu.file.path)">{{ t('file.openWithEditor') }}</button>
       </div>
       <!-- 关闭层 -->
       <div v-if="ctxMenu.show" class="fixed inset-0 z-40" @click="ctxMenu.show = false" />

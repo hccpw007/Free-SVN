@@ -102,7 +102,7 @@ async function handleCheckout() {
         <label class="text-xs font-medium text-slate-700 dark:text-slate-300 mb-1 block">{{ t('dialog.targetPath') }}</label>
         <div class="flex gap-2">
           <el-input v-model="targetPath" size="small" :placeholder="t('dialog.selectTargetDir')" />
-          <el-button size="small" class="focus:ring-2 focus:ring-blue-400 focus:outline-none" @click="browseTarget">{{ t('dialog.browse') }}</el-button>
+          <el-button size="small" class="focus:ring-2 focus:ring-offset-2 focus:ring-blue-400 focus:outline-none" @click="browseTarget">{{ t('dialog.browse') }}</el-button>
         </div>
       </div>
 
@@ -133,7 +133,7 @@ async function handleCheckout() {
               :placeholder="t('auth.password')" />
             <button
               @click="authForm.showPassword = !authForm.showPassword"
-              class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 hover:text-slate-600 focus:ring-2 focus:ring-blue-400 focus:outline-none rounded"
+              class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 hover:text-slate-600 focus:ring-2 focus:ring-offset-2 focus:ring-blue-400 focus:outline-none rounded"
               :aria-label="t('auth.togglePassword')"
             >
               <EyeOff v-if="authForm.showPassword" class="w-4 h-4" />
@@ -146,11 +146,11 @@ async function handleCheckout() {
     </div>
 
     <template #footer>
-      <el-button size="default" class="focus:ring-2 focus:ring-blue-400 focus:outline-none" @click="emit('close')" :disabled="isCheckingOut">
+      <el-button size="default" class="focus:ring-2 focus:ring-offset-2 focus:ring-blue-400 focus:outline-none" @click="emit('close')" :disabled="isCheckingOut">
         {{ t('dialog.cancel') }}
       </el-button>
       <el-button size="default" type="primary" :loading="isCheckingOut"
-        :disabled="!urlValid || !targetPath" class="focus:ring-2 focus:ring-blue-400 focus:outline-none" @click="handleCheckout">
+        :disabled="!urlValid || !targetPath" class="focus:ring-2 focus:ring-offset-2 focus:ring-blue-400 focus:outline-none" @click="handleCheckout">
         {{ t('dialog.checkout') }}
       </el-button>
     </template>

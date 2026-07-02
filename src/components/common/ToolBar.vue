@@ -151,7 +151,7 @@ onUnmounted(() => {
           placement="bottom"
         >
           <button
-            class="inline-flex items-center gap-1 px-2.5 py-1 text-xs rounded-md whitespace-nowrap focus:ring-2 focus:ring-blue-400 focus:outline-none"
+            class="inline-flex items-center gap-1 px-2.5 py-1 text-xs rounded-md whitespace-nowrap focus:ring-2 focus:ring-offset-2 focus:ring-blue-400 focus:outline-none"
             :class="btnDisabled
               ? 'opacity-50 cursor-not-allowed text-slate-400 dark:text-slate-500'
               : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-green-600 dark:hover:text-green-400'"
@@ -164,7 +164,7 @@ onUnmounted(() => {
         </el-tooltip>
       </template>
       <el-dropdown v-if="overflowButtons.length > 0" trigger="click" placement="bottom-end">
-        <button class="px-1.5 py-1 text-xs text-slate-400 focus:ring-2 focus:ring-blue-400 focus:outline-none rounded" :aria-label="t('toolbar.moreOperations')">
+        <button class="px-1.5 py-1 text-xs text-slate-400 focus:ring-2 focus:ring-offset-2 focus:ring-blue-400 focus:outline-none rounded" :aria-label="t('toolbar.moreOperations')">
           <MoreHorizontal class="w-4 h-4" />
         </button>
         <template #dropdown>
@@ -178,7 +178,7 @@ onUnmounted(() => {
       </el-dropdown>
     </div>
     <el-tooltip :content="t('toolbar.settings')" placement="bottom">
-      <button class="p-1.5 rounded-md text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 focus:ring-2 focus:ring-blue-400 focus:outline-none" :aria-label="t('toolbar.settings')" @click="router.push('/settings')">
+      <button class="p-1.5 rounded-md text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 focus:ring-2 focus:ring-offset-2 focus:ring-blue-400 focus:outline-none" :aria-label="t('toolbar.settings')" @click="router.push('/settings')">
         <Settings class="w-4 h-4" />
       </button>
     </el-tooltip>
