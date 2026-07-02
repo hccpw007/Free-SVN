@@ -8,6 +8,7 @@ import { ArrowLeft } from 'lucide-vue-next'
 import { ElMessage } from 'element-plus'
 import { wrappedInvoke } from '@/services/svn'
 import SvnSettings from '@/components/settings/SvnSettings.vue'
+import IgnoreFilesSettings from '@/components/settings/IgnoreFilesSettings.vue'
 import DiffMergeSettings from '@/components/settings/DiffMergeSettings.vue'
 import InterfaceSettings from '@/components/settings/InterfaceSettings.vue'
 import GeneralSettings from '@/components/settings/GeneralSettings.vue'
@@ -33,7 +34,7 @@ onMounted(async () => {
 })
 
 // ── Tab 定义 ──
-type TabKey = 'svn' | 'diffMerge' | 'interface' | 'general' | 'accountManagement' | 'about'
+type TabKey = 'svn' | 'ignoreFiles' | 'diffMerge' | 'interface' | 'general' | 'accountManagement' | 'about'
 const activeTab = ref<TabKey>('svn')
 
 interface TabItem {
@@ -43,6 +44,7 @@ interface TabItem {
 
 const tabs: TabItem[] = [
   { key: 'svn', label: t('settings.svn') },
+  { key: 'ignoreFiles', label: t('settings.ignoreFiles') },
   { key: 'diffMerge', label: t('settings.diffMerge') },
   { key: 'interface', label: t('settings.interface') },
   { key: 'general', label: t('settings.general') },
@@ -159,7 +161,13 @@ async function handleSave() {
         <div v-show="activeTab === 'svn'">
           <SvnSettings
             v-model:defaultCheckoutDir="form.defaultCheckoutDir"
-            v-model:globalIgnorePattern="form.globalIgnorePattern"
+            @changed="markChanged"
+          />
+        </div>
+
+        <div v-show="activeTab === 'ignoreFiles'">
+          <IgnoreFilesSettings
+            v-model:ignorePattern="form.globalIgnorePattern"
             @changed="markChanged"
           />
         </div>

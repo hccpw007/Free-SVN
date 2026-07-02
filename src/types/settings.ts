@@ -16,7 +16,38 @@ export interface AppSettings {
 
 export const DEFAULT_SETTINGS: AppSettings = {
   defaultCheckoutDir: '',
-  globalIgnorePattern: '',
+  globalIgnorePattern: `*.o
+*.lo
+*.la
+*.al
+.libs
+*.so
+*.so.*
+*.a
+*.pyc
+*.pyo
+__pycache__
+*.rej
+*~
+#*#
+.#*
+.*.swp
+.DS_Store
+Thumbs.db
+node_modules/
+dist/
+build/
+target/
+.idea/
+.vscode/
+*.class
+*.jar
+*.war
+*.log
+*.tmp
+*.bak
+*.swp
+*.swo`,
   diffTool: 'builtin',
   mergeTool: 'builtin',
   diffCommandTemplate: '',
