@@ -68,6 +68,8 @@
     "selectFiles": "Please select at least one file",
     "selectedCount": "{count} files selected",
     "pageInfo": "Page {page} / {total}",
+    "previousPage": "Previous Page",
+    "nextPage": "Next Page",
     "logNoSearchResult": "No matching log entries found",
     "noLogs": "No commit logs yet",
     "switchTitle": "Switch Branch",

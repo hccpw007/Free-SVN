@@ -68,6 +68,8 @@
     "selectFiles": "请至少选择一个文件",
     "selectedCount": "已选 {count} 个文件",
     "pageInfo": "第 {page} 页 / 共 {total} 页",
+    "previousPage": "上一页",
+    "nextPage": "下一页",
     "logNoSearchResult": "未找到匹配的提交记录",
     "noLogs": "暂无提交日志",
     "switchTitle": "切换分支",

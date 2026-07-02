@@ -7,6 +7,12 @@ mod shell_integration;
 mod logging;
 mod config;
 
+use tauri::{
+    AppHandle, Manager, Emitter,
+    tray::{TrayIconBuilder, TrayIconEvent, MouseButton, MouseButtonState},
+};
+use tauri_plugin_notification::NotificationExt;
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -38,7 +44,7 @@ pub fn run() {
         .plugin(
             tauri_plugin_log::Builder::new()
                 .target(tauri_plugin_log::Target::new(
-                    tauri_plugin_log::TargetKind::LogDir { name: "logs" },
+                    tauri_plugin_log::TargetKind::LogDir { file_name: "free-svn.log".into() },
                 ))
                 .level(log::LevelFilter::Info)
                 .build(),
@@ -56,15 +62,17 @@ pub fn run() {
             crate::config::store::init(app.handle())?;
 
             // ── 3. 构建系统托盘菜单 ──
-            let show = tauri::menu::MenuItemBuilder::with_id("show", "Show Main Window")
+            use tauri::menu::{MenuBuilder, MenuItemBuilder, SubmenuBuilder};
+
+            let show = MenuItemBuilder::with_id("show", "Show Main Window")
                 .accelerator("CmdOrCtrl+Shift+S").build(app)?;
-            let update = tauri::menu::MenuItemBuilder::with_id("update", "SVN Update").build(app)?;
-            let cleanup = tauri::menu::MenuItemBuilder::with_id("cleanup", "SVN Cleanup").build(app)?;
-            let about = tauri::menu::MenuItemBuilder::with_id("about", "About Free-SVN").build(app)?;
-            let quit = tauri::menu::MenuItemBuilder::with_id("quit", "Quit")
+            let update = MenuItemBuilder::with_id("update", "SVN Update").build(app)?;
+            let cleanup = MenuItemBuilder::with_id("cleanup", "SVN Cleanup").build(app)?;
+            let about = MenuItemBuilder::with_id("about", "About Free-SVN").build(app)?;
+            let quit = MenuItemBuilder::with_id("quit", "Quit")
                 .accelerator("CmdOrCtrl+Q").build(app)?;
 
-            let menu = tauri::menu::MenuBuilder::new(app)
+            let menu = MenuBuilder::new(app)
                 .item(&show)
                 .separator()
                 .item(&update)
@@ -96,24 +104,20 @@ pub fn run() {
                             let cwd = crate::config::store::current_workspace()
                                 .unwrap_or_default();
                             if !cwd.is_empty() {
+                                let handle = app_handle.clone();
                                 tauri::async_runtime::spawn(async move {
-                                    match crate::commands::update::update_workspace(
-                                        app_handle.clone(),
+                                    let result = crate::commands::update::update_workspace(
+                                        handle.clone(),
                                         crate::commands::update::UpdateParams {
                                             path: cwd, revision: None,
                                             depth: None, ignore_externals: None,
                                             credentials: None,
                                         },
-                                        app_handle.state::<crate::svn::queue::SvnQueue>(),
-                                    ).await {
-                                        Ok(r) => send_os_notification(
-                                            &app_handle, "SVN Update",
-                                            &format!("完成, 版本 {}", r.revision),
-                                        ),
-                                        Err(e) => send_os_notification(
-                                            &app_handle, "SVN Update",
-                                            &format!("失败"),
-                                        ),
+                                        handle.state::<crate::svn::queue::SvnQueue>(),
+                                    ).await;
+                                    match result {
+                                        Ok(_) => send_os_notification(&handle, "SVN Update", "完成"),
+                                        Err(_) => send_os_notification(&handle, "SVN Update", "失败"),
                                     }
                                 });
                             }
@@ -122,10 +126,11 @@ pub fn run() {
                             let cwd = crate::config::store::current_workspace()
                                 .unwrap_or_default();
                             if !cwd.is_empty() {
+                                let handle = app_handle.clone();
                                 tauri::async_runtime::spawn(async move {
-                                    let _ = cleanup_workspace(
+                                    let _ = crate::commands::cleanup::cleanup_workspace(
                                         cwd,
-                                        app_handle.state::<crate::svn::queue::SvnQueue>(),
+                                        handle.state::<crate::svn::queue::SvnQueue>(),
                                     ).await;
                                 });
                             }
@@ -134,27 +139,25 @@ pub fn run() {
                             if let Some(window) = app.get_webview_window("main") {
                                 let _ = window.show();
                                 let _ = window.set_focus();
-                                // 原生"关于"对话框
-                                let _ = tauri_plugin_dialog::DialogExt::dialog(app)
-                                    .message("Free-SVN — A cross-platform SVN GUI tool\n\nVersion: 0.1.0")
-                                    .title("About Free-SVN")
-                                    .show();
                             }
+                            let _ = tauri_plugin_dialog::DialogExt::dialog(app)
+                                .message("Free-SVN — A cross-platform SVN GUI tool\n\nVersion: 0.1.0")
+                                .title("About Free-SVN")
+                                .show(|_| {});
                         }
                         "quit" => { app.exit(0); }
                         _ => {}
                     }
                 })
                 .on_tray_icon_event(|tray, event| {
-                    if let tauri::tray::TrayIconEvent::Click {
-                        button: tauri::tray::MouseButton::Left,
-                        button_state: tauri::tray::MouseButtonState::Up, ..
+                    if let TrayIconEvent::Click {
+                        button: MouseButton::Left,
+                        button_state: MouseButtonState::Up, ..
                     } = event {
-                        if let Some(app) = tray.app_handle() {
-                            if let Some(window) = app.get_webview_window("main") {
-                                let _ = window.show();
-                                let _ = window.set_focus();
-                            }
+                        let app = tray.app_handle();
+                        if let Some(window) = app.get_webview_window("main") {
+                            let _ = window.show();
+                            let _ = window.set_focus();
                         }
                     }
                 })
@@ -213,15 +216,7 @@ pub fn run() {
         .expect("error while running tauri application");
 }
 
-// ── 辅助函数 ──
-
-use tauri::{
-    AppHandle, Manager,
-    tray::{TrayIconBuilder, TrayIconEvent, MouseButton, MouseButtonState},
-};
-
 /// 发送操作系统通知
-use tauri_plugin_notification::NotificationExt;
 fn send_os_notification(app: &AppHandle, title: &str, body: &str) {
     let _ = app.notification()
         .builder()
@@ -229,6 +224,3 @@ fn send_os_notification(app: &AppHandle, title: &str, body: &str) {
         .body(format!("{}: {}", title, body))
         .show();
 }
-
-/// 清理工作副本（托盘菜单使用）
-use crate::commands::cleanup::cleanup_workspace;
