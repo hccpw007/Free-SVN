@@ -348,12 +348,14 @@ pub async fn run_svn(
     let mut all_args: Vec<String> = Vec::new();
 
     if let Some(creds) = credentials {
-        // 有凭据：移除 --non-interactive（让 svn 接受 stdin 密码并写入缓存）
-        // 保留 --trust-server-cert-failures
+        // 有凭据：根据 save_to_cache 决定是否保留 --non-interactive
+        // --non-interactive：SVN 不会将凭据写入 ~/.subversion/auth/ 缓存
+        // 移除 --non-interactive：SVN 会自动缓存凭据
         for base_arg in BASE_SVN_ARGS {
-            if *base_arg != "--non-interactive" {
-                all_args.push(base_arg.to_string());
+            if creds.save_to_cache && *base_arg == "--non-interactive" {
+                continue; // 用户勾选了保存密码：移除 --non-interactive，让 svn 缓存凭据
             }
+            all_args.push(base_arg.to_string());
         }
         all_args.push("--username".to_string());
         all_args.push(creds.username.clone());
@@ -368,11 +370,11 @@ pub async fn run_svn(
     // 有凭据时 --password-from-stdin 已在上面添加，run_svn_sync
     // 通过 stdin 管道写入密码
     for arg in args.iter() {
-		if credentials.is_some() && *arg == "--non-interactive" {
-			continue;
-		}
-		all_args.push(arg.to_string());
-	}
+        if credentials.map_or(false, |c| c.save_to_cache) && *arg == "--non-interactive" {
+            continue; // save_to_cache=true 时移除 args 中的 --non-interactive 避免重复
+        }
+        all_args.push(arg.to_string());
+    }
 
     let cwd = cwd.to_string();
     // v5 修复：克隆 credentials 后传入 spawn_blocking（引用无法跨 'static 边界）
