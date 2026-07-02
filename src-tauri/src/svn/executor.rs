@@ -229,14 +229,15 @@ fn is_auth_error(stderr: &str) -> bool {
 }
 
 /// 提取 realm 信息（用于前端显示）
+/// 从 SVN 错误输出中提取认证领域名（仅用于 AuthDialog 的上下文提示）。
+/// 无论是否找到 realm，都不影响错误消息的完整性。
 fn extract_realm(stderr: &str) -> String {
     for line in stderr.lines() {
         if line.contains("Authentication realm") || line.contains("认证领域") {
             return line.trim().to_string();
         }
     }
-    // 未找到 realm 行时返回完整 stderr，避免丢失 E215004 等后续行
-    stderr.to_string()
+    String::new()  // 无 realm 行时返回空串，不参与错误消息
 }
 
 // ── 核心执行（v5 增加 credentials 支持） ────────────
@@ -319,10 +320,10 @@ fn run_svn_sync(
         let stderr = String::from_utf8_lossy(&output.stderr);
         log::warn!("svn stderr: {}", stderr);
 
-        // v5 新增：检测是否为认证错误
+        // 检测是否为认证错误 — 无论是否找到 realm，错误消息始终使用完整 stderr
         if is_auth_error(&stderr) {
-            let realm = extract_realm(&stderr);
-            return Err(AppError::SvnAuthFailed(realm));
+            let _realm = extract_realm(&stderr);  // realm 仅用于内部上下文（暂未使用）
+            return Err(AppError::SvnAuthFailed(stderr.to_string()));
         }
 
         Err(AppError::SvnCommand(stderr.to_string()))

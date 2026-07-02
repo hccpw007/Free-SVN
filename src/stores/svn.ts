@@ -112,7 +112,6 @@ export const useSvnStore = defineStore('svn', () => {
   async function call<T>(commandFn: () => Promise<T>, command?: string, args?: Record<string, unknown>): Promise<T> {
     try { return await commandFn() }
     catch (err) {
-      console.error('[svn store] Error in call:', err)
       // wrappedInvoke 始终抛出原始消息字符串（来自后端 AppError 的 .message）
       const rawMsg = typeof err === 'string' ? err
         : err instanceof Error ? err.message
