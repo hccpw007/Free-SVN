@@ -21,11 +21,11 @@ const fullPath = computed(() => workspaceStore.currentPath)
 const branchName = computed(() => workspaceStore.branchName)
 
 // 暗色模式状态
-const isDark = computed(() => document.documentElement.classList.contains('dark'))
+const isDark = computed(() => settingsStore.darkMode)
 
 function toggleDarkMode() {
   const html = document.documentElement
-  if (html.classList.contains('dark')) {
+  if (settingsStore.darkMode) {
     html.classList.remove('dark')
     settingsStore.darkMode = false
   } else {

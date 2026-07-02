@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useFileListStore } from '@/stores/fileList'
+import { useWorkspaceStore } from '@/stores/workspace'
 import { useSvnStore } from '@/stores/svn'
 import { useI18n } from 'vue-i18n'
 import { ElMessage, ElMessageBox } from 'element-plus'
@@ -8,11 +9,20 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 const emit = defineEmits<{ close: [] }>()
 const { t } = useI18n()
 const fileListStore = useFileListStore()
+const workspaceStore = useWorkspaceStore()
 const svnStore = useSvnStore()
+
+// 工作副本绝对路径，用于将相对路径转为绝对路径
+const cwd = workspaceStore.currentPath
 
 const commitMessage = ref('')
 const isSubmitting = ref(false)
 const submitError = ref('')
+
+// 将文件列表中的相对路径转为基于工作副本根目录的绝对路径
+function toAbsolute(relativePaths: string[]): string[] {
+  return relativePaths.map(p => `${cwd}/${p}`)
+}
 
 // 提交逻辑：自动 add unversioned + delete missing → commit
 async function handleCommit() {
