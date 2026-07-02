@@ -4,7 +4,7 @@ use crate::models::error::AppError;
 /// 加载应用设置
 #[tauri::command]
 pub async fn load_settings() -> Result<Settings, AppError> {
-    Ok(crate::config::store::load_settings())
+    crate::config::store::load_settings()
 }
 
 /// 保存应用设置

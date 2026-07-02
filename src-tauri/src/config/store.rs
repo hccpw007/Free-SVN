@@ -46,8 +46,8 @@ impl Default for Settings {
 static STORE: once_cell::sync::OnceCell<Arc<tauri_plugin_store::Store<tauri::Wry>>> =
     once_cell::sync::OnceCell::new();
 
-fn store() -> &'static Arc<tauri_plugin_store::Store<tauri::Wry>> {
-    STORE.get().expect("Store 未初始化")
+fn store() -> Result<&'static Arc<tauri_plugin_store::Store<tauri::Wry>>, AppError> {
+    STORE.get().ok_or_else(|| AppError::Repo("Store 未初始化 - 请在 lib.rs setup 中调用 init()".into()))
 }
 
 /// 初始化配置存储（lib.rs setup 中调用）
@@ -81,52 +81,54 @@ pub fn init(app_handle: &tauri::AppHandle) -> Result<(), Box<dyn std::error::Err
     Ok(())
 }
 
-/// 加载设置（失败返回默认值，不崩溃）
-pub fn load_settings() -> Settings {
-    store().get("settings")
+/// 加载设置（失败返回错误）
+pub fn load_settings() -> Result<Settings, AppError> {
+    store()?.get("settings")
         .and_then(|v| serde_json::from_value(v).ok())
-        .unwrap_or_default()
+        .ok_or_else(|| AppError::Repo("设置数据损坏".into()))
 }
 
 /// 保存设置
 pub fn save_settings(settings: &Settings) -> Result<(), AppError> {
     let value = serde_json::to_value(settings)
         .map_err(|e| AppError::Repo(format!("序列化失败: {}", e)))?;
-    let store = store();
+    let store = store()?;
     store.set("settings", value);
     store.save().map_err(|e| AppError::Repo(format!("保存失败: {}", e)))?;
     Ok(())
 }
 
 /// 获取最近打开的工作副本列表
-pub fn recent_workspaces() -> Vec<String> {
-    store().get("recentWorkspaces")
+pub fn recent_workspaces() -> Result<Vec<String>, AppError> {
+    store()?.get("recentWorkspaces")
         .and_then(|v| serde_json::from_value::<Vec<String>>(v).ok())
-        .unwrap_or_default()
+        .ok_or_else(|| AppError::Repo("工作副本列表数据损坏".into()))
 }
 
 /// 添加工作副本到最近列表（去重 + 前置 + 上限 20）
 pub fn add_recent_workspace(path: &str) {
-    let mut list = recent_workspaces();
+    let mut list = recent_workspaces().unwrap_or_default();
     if let Some(pos) = list.iter().position(|p| p == path) {
         list.remove(pos);
     }
     list.insert(0, path.to_string());
     list.truncate(20);
 
-    let store = store();
-    store.set("recentWorkspaces", serde_json::to_value(&list).unwrap_or_default());
-    store.save().ok();
+    if let Ok(store) = store() {
+        store.set("recentWorkspaces", serde_json::to_value(&list).unwrap_or_default());
+        store.save().ok();
+    }
 }
 
 pub fn current_workspace() -> Option<String> {
-    store().get("currentWorkspace")
+    store().ok()?.get("currentWorkspace")
         .and_then(|v| v.as_str().map(String::from))
 }
 
 pub fn set_current_workspace(path: &str) {
-    let store = store();
-    store.set("currentWorkspace", serde_json::Value::String(path.to_string()));
-    store.save().ok();
-    add_recent_workspace(path);
+    if let Ok(store) = store() {
+        store.set("currentWorkspace", serde_json::Value::String(path.to_string()));
+        store.save().ok();
+        add_recent_workspace(path);
+    }
 }

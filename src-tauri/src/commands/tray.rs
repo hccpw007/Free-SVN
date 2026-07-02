@@ -1,8 +1,9 @@
+use crate::models::error::AppError;
 use tauri::AppHandle;
 
 /// 设置系统托盘徽章（操作进行中/完成）
 #[tauri::command]
-pub async fn set_tray_badge(app: AppHandle, visible: bool) -> Result<(), String> {
+pub async fn set_tray_badge(app: AppHandle, visible: bool) -> Result<(), AppError> {
     // 通过 app.tray_by_id 获取系统托盘
     if let Some(tray) = app.tray_by_id("main") {
         if visible {
@@ -37,7 +38,10 @@ pub fn set_dock_badge(visible: bool) {
     unsafe {
         let dock_tile: *mut Object = msg_send![NSApp, dockTile];
         if visible {
-            let cls = Class::get("NSString").unwrap();
+            let cls = match Class::get("NSString") {
+                Some(c) => c,
+                None => return,
+            };
             // 使用 CString literal（Rust 1.77+），避免 manual_c_str_literals 警告
             let s: *const i8 = c"\u{25CF}".as_ptr();
             let label: *mut Object = msg_send![cls, stringWithUTF8String: s];

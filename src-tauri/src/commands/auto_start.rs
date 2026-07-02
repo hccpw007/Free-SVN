@@ -1,3 +1,4 @@
+use crate::models::error::AppError;
 use tauri::AppHandle;
 use tauri::Manager;
 use std::fs;
@@ -8,20 +9,20 @@ use std::fs;
 /// Windows：写入 HKEY_CURRENT_USER\\Software\\Microsoft\\Windows\\CurrentVersion\\Run
 /// Linux：创建/删除 ~/.config/autostart/ 下的 .desktop 文件
 #[tauri::command]
-pub async fn set_auto_start(app: AppHandle, enabled: bool) -> Result<(), String> {
+pub async fn set_auto_start(app: AppHandle, enabled: bool) -> Result<(), AppError> {
     let app_name = "com.free-svn.app";
     let app_exe = app.path().app_local_data_dir()
-        .map_err(|e| format!("Failed to get app data dir: {}", e))?
+        .map_err(|e| AppError::Repo(format!("获取应用数据目录失败: {}", e)))?
         .join("Free-SVN");
     let app_exe_str = app_exe.to_string_lossy().to_string();
 
     #[cfg(target_os = "macos")]
     {
         let plist_dir = dirs::home_dir()
-            .ok_or("Cannot find home directory")?
+            .ok_or_else(|| AppError::Repo("找不到 home 目录".into()))?
             .join("Library/LaunchAgents");
         fs::create_dir_all(&plist_dir)
-            .map_err(|e| format!("Failed to create LaunchAgents dir: {}", e))?;
+            .map_err(|e| AppError::Repo(format!("创建 LaunchAgents 目录失败: {}", e)))?;
         let plist_path = plist_dir.join(format!("{}.plist", app_name));
         if enabled {
             let plist_content = format!(
@@ -36,7 +37,7 @@ pub async fn set_auto_start(app: AppHandle, enabled: bool) -> Result<(), String>
                 app_name, app_exe_str
             );
             fs::write(&plist_path, plist_content)
-                .map_err(|e| format!("Failed to write plist: {}", e))?;
+                .map_err(|e| AppError::Repo(format!("写入 plist 文件失败: {}", e)))?;
         } else {
             let _ = fs::remove_file(&plist_path);
         }
@@ -50,10 +51,10 @@ pub async fn set_auto_start(app: AppHandle, enabled: bool) -> Result<(), String>
         let run_key = hkcu.open_subkey_with_flags(
             r"Software\Microsoft\Windows\CurrentVersion\Run",
             winreg::enums::KEY_SET_VALUE,
-        ).map_err(|e| format!("Failed to open registry key: {}", e))?;
+        ).map_err(|e| AppError::Repo(format!("打开注册表键失败: {}", e)))?;
         if enabled {
             run_key.set_value(app_name, &app_exe_str)
-                .map_err(|e| format!("Failed to set registry value: {}", e))?;
+                .map_err(|e| AppError::Repo(format!("设置注册表值失败: {}", e)))?;
         } else {
             let _ = run_key.delete_value(app_name);
         }
@@ -62,10 +63,10 @@ pub async fn set_auto_start(app: AppHandle, enabled: bool) -> Result<(), String>
     #[cfg(target_os = "linux")]
     {
         let autostart_dir = dirs::config_dir()
-            .ok_or("Cannot find config directory")?
+            .ok_or_else(|| AppError::Repo("找不到 config 目录".into()))?
             .join("autostart");
         fs::create_dir_all(&autostart_dir)
-            .map_err(|e| format!("Failed to create autostart dir: {}", e))?;
+            .map_err(|e| AppError::Repo(format!("创建 autostart 目录失败: {}", e)))?;
         let desktop_path = autostart_dir.join(format!("{}.desktop", app_name));
         if enabled {
             let desktop_content = format!(
@@ -73,7 +74,7 @@ pub async fn set_auto_start(app: AppHandle, enabled: bool) -> Result<(), String>
                 app_exe_str
             );
             fs::write(&desktop_path, desktop_content)
-                .map_err(|e| format!("Failed to write .desktop: {}", e))?;
+                .map_err(|e| AppError::Repo(format!("写入 .desktop 文件失败: {}", e)))?;
         } else {
             let _ = fs::remove_file(&desktop_path);
         }

@@ -130,15 +130,19 @@ pub fn get_svn_path() -> PathBuf {
 /// 需要设置 `LD_LIBRARY_PATH` 指向 `{svn_dir}/lib/`。
 /// macOS 和 Windows 不需要额外环境变量（分别使用 @executable_path 和同目录查找）。
 pub fn get_svn_env() -> Vec<(String, String)> {
-    let mut env = Vec::new();
     #[cfg(target_os = "linux")]
-    if let Some(resource_dir) = SVN_RESOURCE_DIR.get() {
-        let lib_dir = resource_dir.join("svn/linux/lib");
-        if lib_dir.exists() {
-            env.push(("LD_LIBRARY_PATH".to_string(), lib_dir.to_string_lossy().to_string()));
+    {
+        let mut env = Vec::new();
+        if let Some(resource_dir) = SVN_RESOURCE_DIR.get() {
+            let lib_dir = resource_dir.join("svn/linux/lib");
+            if lib_dir.exists() {
+                env.push(("LD_LIBRARY_PATH".to_string(), lib_dir.to_string_lossy().to_string()));
+            }
         }
+        return env;
     }
-    env
+    #[cfg(not(target_os = "linux"))]
+    Vec::new()
 }
 
 pub fn get_timeout_secs(args: &[&str]) -> u64 {
@@ -303,7 +307,7 @@ fn run_svn_sync(
     }
     // 取出所有权等待完成（取消操作可能已在间隙中 kill 了进程）
     let child = CURRENT_CHILD.lock().ok().and_then(|mut g| g.take())
-        .expect("run_svn_sync: child 必须在 CURRENT_CHILD 中");
+        .ok_or_else(|| AppError::Repo("run_svn_sync: 子进程句柄丢失".into()))?;
     let output = child.wait_with_output().map_err(AppError::Io)?;
     let elapsed = start.elapsed();
     log::info!("svn 完成 (耗时: {:?}, 退出码: {:?})", elapsed, output.status.code());

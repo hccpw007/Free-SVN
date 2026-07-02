@@ -56,10 +56,10 @@ pub fn set_app_handle(handle: tauri::AppHandle) {
     }
 }
 
-fn get_app_handle() -> tauri::AppHandle {
+fn get_app_handle() -> Result<tauri::AppHandle, AppError> {
     APP_HANDLE.lock().ok()
         .and_then(|g| g.clone())
-        .expect("AppHandle 未初始化，请在 lib.rs setup 中调用 set_app_handle()")
+        .ok_or_else(|| AppError::Repo("AppHandle 未初始化".into()))
 }
 
 /// 读取日志（合并 3 个文件，从旧到新，每文件限 500KB）
@@ -68,7 +68,7 @@ fn get_app_handle() -> tauri::AppHandle {
 /// 该范围内的第一个完整行开始读取，避免输出被截断的半行）。
 pub fn get_logs() -> Result<String, AppError> {
     let mut all = String::new();
-    let dir = log_dir(&get_app_handle());
+    let dir = log_dir(&get_app_handle()?);
 
     for name in &["free-svn.log.2", "free-svn.log.1", "free-svn.log"] {
         let path = dir.join(name);
