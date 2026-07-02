@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, watch } from 'vue'
+import { ref, onMounted, watch, provide } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter, useRoute, RouterView } from 'vue-router'
 import { listen } from '@tauri-apps/api/event'
@@ -8,6 +8,7 @@ import { useSvnStore } from '@/stores/svn'
 import { useKeyboardShortcuts, setOperationRunning } from '@/composables/useKeyboardShortcuts'
 import { useFileListStore } from '@/stores/fileList'
 import AuthDialog from '@/components/dialogs/AuthDialog.vue'
+import CommitDialog from '@/components/dialogs/CommitDialog.vue'
 
 const { locale, t } = useI18n()
 const settingsStore = useSettingsStore()
@@ -15,6 +16,10 @@ const svnStore = useSvnStore()
 const router = useRouter()
 const route = useRoute()
 const fileListStore = useFileListStore()
+
+// ── 提交弹窗 ──
+const showCommitDialog = ref(false)
+provide('openCommitDialog', () => { showCommitDialog.value = true })
 
 // ── 认证失败→AuthDialog 自动弹窗 ──
 const showAuthDialog = ref(false)
@@ -85,7 +90,7 @@ async function handleShellCommand(command: string, files: string[]) {
   if (interactiveCommands.includes(command)) {
     switch (command) {
       case 'commit':
-        router.push('/workspace/commit')
+        showCommitDialog.value = true
         break
       case 'log':
         router.push('/workspace/log')
@@ -142,8 +147,8 @@ onMounted(async () => {
   // 注册 8 组全局键盘快捷键
   const { register } = useKeyboardShortcuts()
   register([
-    // Ctrl+Enter → 导航到提交页面
-    { id: 'global-commit', keys: 'ctrl+Enter', handler: () => router.push('/workspace/commit'), scope: 'global' },
+    // Ctrl+Enter → 打开提交弹窗
+    { id: 'global-commit', keys: 'ctrl+Enter', handler: () => { showCommitDialog.value = true }, scope: 'global' },
     // Ctrl+D → 选中文件时导航到差异对比页面
     { id: 'global-diff', keys: 'ctrl+d', handler: () => {
       const paths = fileListStore.selectedPaths
@@ -160,9 +165,9 @@ onMounted(async () => {
     { id: 'global-back-workspace', keys: 'ctrl+w', handler: () => {
       if (route.path.startsWith('/workspace')) router.push('/workspace')
     }, scope: 'global' },
-    // Esc → 如果在提交或日志页面，返回工作区首页
+    // Esc → 如果在日志页面，返回工作区首页
     { id: 'global-escape', keys: 'Escape', handler: () => {
-      if (route.path.startsWith('/workspace/commit') || route.path.startsWith('/workspace/log')) {
+      if (route.path.startsWith('/workspace/log')) {
         router.push('/workspace')
       }
     }, scope: 'global' },
@@ -199,4 +204,5 @@ onMounted(async () => {
     @close="handleAuthClose"
     @success="showAuthDialog = false"
   />
+  <CommitDialog v-if="showCommitDialog" @close="showCommitDialog = false" />
 </template>

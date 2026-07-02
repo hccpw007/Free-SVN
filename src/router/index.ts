@@ -21,11 +21,6 @@ const routes: RouteRecordRaw[] = [
         component: () => import('@/pages/WelcomePage.vue'),
       },
       {
-        path: 'commit',
-        name: 'CommitPage',
-        component: () => import('@/pages/CommitPage.vue'),
-      },
-      {
         path: 'log',
         name: 'LogPage',
         component: () => import('@/pages/LogPage.vue'),
