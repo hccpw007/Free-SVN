@@ -26,6 +26,12 @@ function rowClassName({ row }: { row: { status: string } }): string {
   return row.status === 'conflicted' ? 'border-l-[3px] border-red-500' : ''
 }
 
+// 状态文字映射
+function statusLabel(status: string): string {
+  const key = `file.status${status.charAt(0).toUpperCase() + status.slice(1)}`
+  return t(key)
+}
+
 function handleRowClick(row: FileItem, _column: unknown, event: MouseEvent) {
   const allFiles = fileListStore.filteredFiles
   const idx = allFiles.findIndex(f => f.path === row.path)
@@ -91,8 +97,13 @@ function unlockFile(path: string) { fileListStore.unlockFile(path).catch(e => co
           <ElCheckbox :model-value="fileListStore.selectedPaths.has(row.path)" @change="() => fileListStore.toggleSelect(row.path)" />
         </template>
       </el-table-column>
-      <el-table-column :label="t('file.status')" width="80" sortable="custom" prop="status">
-        <template #default="{ row }"><FileStatusIcon :status="row.status" /></template>
+      <el-table-column :label="t('file.status')" width="140" sortable="custom" prop="status">
+        <template #default="{ row }">
+          <div class="flex items-center gap-1.5">
+            <FileStatusIcon :status="row.status" />
+            <span class="text-xs text-slate-500 dark:text-slate-400">{{ statusLabel(row.status) }}</span>
+          </div>
+        </template>
       </el-table-column>
       <el-table-column :label="t('file.fileName')" min-width="200" sortable="custom" prop="path">
         <template #default="{ row }">
