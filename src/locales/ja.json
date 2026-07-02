@@ -30,7 +30,8 @@
     "copyFailed": "Failed to copy",
     "credentialManagement": "Credential Management",
     "switchToLightMode": "Switch to light mode",
-    "switchToDarkMode": "Switch to dark mode"
+    "switchToDarkMode": "Switch to dark mode",
+    "delete": "削除"
   },
   "workspace": {
     "noChanges": "No changes in working copy",

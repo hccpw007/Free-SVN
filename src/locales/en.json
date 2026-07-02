@@ -47,7 +47,8 @@
     "create": "Create",
     "logMessage": "Log Message",
     "saved": "Saved",
-    "unknown": "Unknown"
+    "unknown": "Unknown",
+    "delete": "Delete"
   },
   "workspace": {
     "openExisting": "Open Existing Working Copy",
