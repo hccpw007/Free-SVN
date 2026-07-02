@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import type { FileItem } from '@/types/svn'
-import { fetchStatus, revertFiles as svnRevertFiles, deleteFiles as svnDeleteFiles, setIgnore as svnSetIgnore, unlockFiles as svnUnlockFiles } from '@/services/svn'
+import { getStatus as fetchStatus, revertFiles as svnRevertFiles, deleteFiles as svnDeleteFiles, setIgnore as svnSetIgnore, unlockFiles as svnUnlockFiles } from '@/services/svn'
 
 export const useFileListStore = defineStore('fileList', () => {
   const files = ref<FileItem[]>([])

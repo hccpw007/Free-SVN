@@ -1,5 +1,5 @@
 use tauri::AppHandle;
-use std::path::PathBuf;
+use tauri::Manager;
 use std::fs;
 
 /// 设置开机自启动

@@ -28,7 +28,7 @@ pub fn run() {
                     let cmd = args.get(cmd_idx + 1).cloned().unwrap_or_default();
                     let files: Vec<String> = args.iter()
                         .skip(cmd_idx + 2)
-                        .filter(|a| !a.starts_with('--'))
+                        .filter(|a| !a.starts_with("--"))
                         .cloned()
                         .collect();
                     if !cmd.is_empty() {
@@ -44,7 +44,7 @@ pub fn run() {
         .plugin(
             tauri_plugin_log::Builder::new()
                 .target(tauri_plugin_log::Target::new(
-                    tauri_plugin_log::TargetKind::LogDir { file_name: "free-svn.log".into() },
+                    tauri_plugin_log::TargetKind::LogDir { file_name: Some("free-svn.log".into()) },
                 ))
                 .level(log::LevelFilter::Info)
                 .build(),
@@ -62,7 +62,7 @@ pub fn run() {
             crate::config::store::init(app.handle())?;
 
             // ── 3. 构建系统托盘菜单 ──
-            use tauri::menu::{MenuBuilder, MenuItemBuilder, SubmenuBuilder};
+            use tauri::menu::{MenuBuilder, MenuItemBuilder};
 
             let show = MenuItemBuilder::with_id("show", "Show Main Window")
                 .accelerator("CmdOrCtrl+Shift+S").build(app)?;

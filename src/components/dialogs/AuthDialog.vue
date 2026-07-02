@@ -73,7 +73,7 @@ async function handleTestConnection() {
   statusType.value = ''
 
   try {
-    const msg = await testConnection(props.repoUrl || '', username.value, password.value)
+    const msg = await testConnection({ url: props.repoUrl || '', username: username.value, password: password.value })
     statusMessage.value = msg
     statusType.value = 'success'
   } catch (err: any) {

@@ -3,7 +3,7 @@ import { ref, computed, onMounted, onUnmounted, type Component } from 'vue'
 import { useRouter } from 'vue-router'
 import {
   GitCommit, FileDiff, RefreshCw, ArrowUpCircle, History,
-  GitBranch, Layers, GitMerge, Broom, Package,
+  GitBranch, Layers, GitMerge, Eraser, Package,
   Settings, MoreHorizontal,
 } from 'lucide-vue-next'
 import { useWorkspaceStore } from '@/stores/workspace'
@@ -28,13 +28,13 @@ let resizeObserver: ResizeObserver | undefined
 
 // 严格索引类型
 type IconKey = 'GitCommit' | 'FileDiff' | 'RefreshCw' | 'ArrowUpCircle' | 'History'
-  | 'GitBranch' | 'Layers' | 'GitMerge' | 'Broom' | 'Package'
+  | 'GitBranch' | 'Layers' | 'GitMerge' | 'Eraser' | 'Package'
   | 'Settings' | 'MoreHorizontal'
 
 // lucide-vue-next 图标组件映射
 const iconMap: Record<IconKey, Component> = {
   GitCommit, FileDiff, RefreshCw, ArrowUpCircle, History,
-  GitBranch, Layers, GitMerge, Broom, Package,
+  GitBranch, Layers, GitMerge, Eraser, Package,
   Settings, MoreHorizontal,
 }
 
@@ -107,7 +107,7 @@ const buttons = computed<ToolbarButton[]>(() => [
     getDisabledTooltip: () => globallyDisabled.value ? t('toolbar.operationInProgress') : t('toolbar.noWorkingCopy'),
   },
   {
-    key: 'cleanup', label: 'toolbar.cleanup', iconKey: 'Broom',
+    key: 'cleanup', label: 'toolbar.cleanup', iconKey: 'Eraser',
     action: () => svnStore.cleanup(workspaceStore.currentPath), priority: 1,
     getDisabledTooltip: () => globallyDisabled.value ? t('toolbar.operationInProgress') : t('toolbar.noWorkingCopy'),
   },

@@ -1,4 +1,5 @@
 use std::fs;
+#[cfg(unix)] use std::os::unix::fs::PermissionsExt;
 use crate::models::error::AppError;
 
 /// 注册工作副本右键菜单（11 项 + 1 检出）
