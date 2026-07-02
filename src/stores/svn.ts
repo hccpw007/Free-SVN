@@ -130,14 +130,14 @@ export const useSvnStore = defineStore('svn', () => {
   }
 
   // ── 每个方法调用 services/svn.ts 中的具体业务方法 ──
-  async function getStatus(path: string) { return call(() => servicesGetStatus(path)) }
-  async function getInfo(path: string) { return call(() => servicesGetInfo(path)) }
-  async function getDiff(params: { path: string; revision1?: number; revision2?: number }) { return call(() => servicesGetDiff(params)) }
+  async function getStatus(path: string) { return call(() => servicesGetStatus(path), 'get_status', { path }) }
+  async function getInfo(path: string) { return call(() => servicesGetInfo(path), 'get_info', { path }) }
+  async function getDiff(params: { path: string; revision1?: number; revision2?: number }) { return call(() => servicesGetDiff(params), 'get_diff', params) }
   async function getLog(params: { path: string; limit?: number; revision?: number; search?: string }) {
-    const entries = await call(() => servicesGetLog(params))
+    const entries = await call(() => servicesGetLog(params), 'get_log', params)
     return { entries, totalCount: entries.length }
   }
-  async function getBlame(params: { path: string; revision?: number }) { return call(() => servicesGetBlame(params)) }
+  async function getBlame(params: { path: string; revision?: number }) { return call(() => servicesGetBlame(params), 'get_blame', params) }
   async function checkoutRepo(params: { url: string; targetPath: string; depth?: string; ignoreExternals?: boolean; credentials?: { username: string; password: string; saveToCache: boolean } }) {
     return call(async () => {
       const r = await servicesCheckoutRepo({
@@ -145,7 +145,7 @@ export const useSvnStore = defineStore('svn', () => {
         ignoreExternals: params.ignoreExternals, credentials: params.credentials,
       })
       return JSON.stringify(r)
-    })
+    }, 'checkout_repo', params as unknown as Record<string, unknown>)
   }
   async function updateWorkspace(params: { path: string; revision?: number; depth?: string; ignoreExternals?: boolean }) {
     return call(async () => {
@@ -154,48 +154,48 @@ export const useSvnStore = defineStore('svn', () => {
         depth: params.depth, ignoreExternals: params.ignoreExternals,
       })
       return JSON.stringify(r)
-    })
+    }, 'update_workspace', params as unknown as Record<string, unknown>)
   }
   async function commit(params: { paths: string[]; message: string; keepLocks?: boolean }) {
     return call(async () => {
       const rev = await servicesCreateCommit(params)
       return { result: 'success', detail: `Committed revision ${rev}` } as OperationResult
-    })
+    }, 'create_commit', params as unknown as Record<string, unknown>)
   }
-  async function addFiles(paths: string[]) { return call(() => servicesAddFiles(paths)) }
-  async function deleteFiles(params: { paths: string[]; keepLocal?: boolean }) { return call(() => servicesDeleteFiles(params)) }
-  async function revertFiles(paths: string[]) { return call(() => servicesRevertFiles(paths)) }
+  async function addFiles(paths: string[]) { return call(() => servicesAddFiles(paths), 'add_files', { paths }) }
+  async function deleteFiles(params: { paths: string[]; keepLocal?: boolean }) { return call(() => servicesDeleteFiles(params), 'delete_files', params as unknown as Record<string, unknown>) }
+  async function revertFiles(paths: string[]) { return call(() => servicesRevertFiles(paths), 'revert_files', { paths }) }
   async function resolveConflict(params: { path: string; resolution: string }) {
-    return call(() => servicesResolveConflict({ path: params.path, resolution: params.resolution as 'mine-full' | 'theirs-full' | 'working' }))
+    return call(() => servicesResolveConflict({ path: params.path, resolution: params.resolution as 'mine-full' | 'theirs-full' | 'working' }), 'resolve_conflict', params)
   }
-  async function setIgnore(params: { path: string; pattern: string }) { return call(() => servicesSetIgnore(params)) }
+  async function setIgnore(params: { path: string; pattern: string }) { return call(() => servicesSetIgnore(params), 'set_ignore', params) }
   async function switchBranch(params: { path: string; targetUrl: string; ignoreAncestry?: boolean; credentials?: SvnCredentials }) {
-    return call(() => servicesSwitchBranch(params))
+    return call(() => servicesSwitchBranch(params), 'switch_branch', params as unknown as Record<string, unknown>)
   }
   async function copyBranchTag(params: { srcUrl: string; dstUrl: string; message: string; revision?: number; credentials?: SvnCredentials }) {
-    return call(() => servicesCopyBranchTag(params))
+    return call(() => servicesCopyBranchTag(params), 'copy_branch_tag', params as unknown as Record<string, unknown>)
   }
   async function mergeBranch(params: { srcUrl: string; revStart?: number; revEnd?: number; targetPath?: string; credentials?: SvnCredentials }) {
-    return call(() => servicesMergeBranch(params))
+    return call(() => servicesMergeBranch(params), 'merge_branch', params as unknown as Record<string, unknown>)
   }
-  async function cleanup(path: string) { return call(() => servicesCleanup(path)) }
+  async function cleanup(path: string) { return call(() => servicesCleanup(path), 'cleanup_workspace', { path }) }
   async function exportWorkspace(params: { path: string; targetDir: string; revision?: number; ignoreExternals?: boolean; credentials?: SvnCredentials }) {
-    return call(() => servicesExport(params))
+    return call(() => servicesExport(params), 'export_workspace', params as unknown as Record<string, unknown>)
   }
-  async function lockFiles(params: { paths: string[]; message?: string }) { return call(() => servicesLockFiles(params)) }
-  async function unlockFiles(paths: string[]) { return call(() => servicesUnlockFiles(paths)) }
+  async function lockFiles(params: { paths: string[]; message?: string }) { return call(() => servicesLockFiles(params), 'lock_files', params) }
+  async function unlockFiles(paths: string[]) { return call(() => servicesUnlockFiles(paths), 'unlock_files', { paths }) }
   async function relocate(params: { path: string; fromUrl: string; toUrl: string; credentials?: SvnCredentials }) {
-    return call(() => servicesRelocate({ path: params.path, fromUrl: params.fromUrl, toUrl: params.toUrl }))
+    return call(() => servicesRelocate({ path: params.path, fromUrl: params.fromUrl, toUrl: params.toUrl }), 'relocate_repo', params as unknown as Record<string, unknown>)
   }
-  async function propertyOps(params: { path: string; propName?: string; action?: string; propValue?: string }) { return call(() => servicesPropertyOps(params)) }
-  async function cancelOperation() { return call(() => servicesCancel()) }
-  async function getLogs() { return call(() => servicesGetLogs()) }
-  async function exportLogs(targetPath: string) { return call(() => servicesExportLogs(targetPath)) }
-  async function loadSettings() { return call(() => servicesLoadSettings()) }
-  async function saveSettings(settings: AppSettings) { return call(() => servicesSaveSettings(settings)) }
-  async function testConnection(params: { url: string; username: string; password: string }) { return call(() => servicesTestConnection(params)) }
-  async function saveCredentials(params: { url: string; username: string; password: string }) { return call(() => servicesSaveCredentials(params)) }
-  async function clearCredentials(url: string) { return call(() => servicesClearCredentials(url)) }
+  async function propertyOps(params: { path: string; propName?: string; action?: string; propValue?: string }) { return call(() => servicesPropertyOps(params), 'property_ops', params) }
+  async function cancelOperation() { return call(() => servicesCancel(), 'cancel_operation') }
+  async function getLogs() { return call(() => servicesGetLogs(), 'get_logs') }
+  async function exportLogs(targetPath: string) { return call(() => servicesExportLogs(targetPath), 'export_logs', { targetPath }) }
+  async function loadSettings() { return call(() => servicesLoadSettings(), 'load_settings') }
+  async function saveSettings(settings: AppSettings) { return call(() => servicesSaveSettings(settings), 'save_settings', { settings }) }
+  async function testConnection(params: { url: string; username: string; password: string }) { return call(() => servicesTestConnection(params), 'test_connection', params) }
+  async function saveCredentials(params: { url: string; username: string; password: string }) { return call(() => servicesSaveCredentials(params), 'save_credentials', params) }
+  async function clearCredentials(url: string) { return call(() => servicesClearCredentials(url), 'clear_credentials', { url }) }
 
   return {
     progress, isLoading, isOperationRunning, authFailed, authContext, showUpdateRevisionDialog,

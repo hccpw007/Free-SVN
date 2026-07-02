@@ -73,6 +73,7 @@ async function handleShellCommand(command: string, files: string[]) {
       case 'checkout':
       case 'export':
       case 'update-rev':
+        svnStore.showUpdateRevisionDialog = true
         break
     }
     return
