@@ -29,6 +29,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
 __pycache__
 *.rej
 *~
+~$*
 #*#
 .#*
 .*.swp
