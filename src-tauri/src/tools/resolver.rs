@@ -75,3 +75,20 @@ pub fn get_svn_version() -> Result<String, AppError> {
             }
         })
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_resolve_tool_path_nonexistent() {
+        assert!(resolve_tool_path("nonexistent-tool-12345").is_none());
+    }
+
+    #[test]
+    fn test_resolve_tool_path_existing() {
+        let result = resolve_tool_path("sh");
+        assert!(result.is_some());
+        assert!(result.unwrap().exists());
+    }
+}

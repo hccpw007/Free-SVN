@@ -27,7 +27,7 @@ export async function wrappedInvoke<T>(cmd: string, args?: Record<string, unknow
  */
 
 // ErrorCode 枚举定义 — 集中所有错误码，避免字符串散落各处
-export enum ErrorCode {
+enum ErrorCode {
   OperationTimeout = 'error.operationTimeout',
   OperationCancelled = 'error.operationCancelled',
   SvnNotFound = 'error.svnNotFound',
@@ -52,7 +52,7 @@ export enum ErrorCode {
 }
 
 /** ErrorCode 对应的英文回退文本（当语言包中未定义该 key 时使用） */
-export const ErrorFallbackMap: Record<ErrorCode, string> = {
+const ErrorFallbackMap: Record<ErrorCode, string> = {
   [ErrorCode.OperationTimeout]: 'Operation timed out',
   [ErrorCode.OperationCancelled]: 'Operation cancelled',
   [ErrorCode.SvnNotFound]: 'SVN not found, please check installation',
@@ -220,12 +220,12 @@ export async function listBranches(url: string): Promise<string[]> {
 }
 
 // ── Event Listeners（3个） ──────────────────
-export function onOperationProgress(cb: (p: OperationProgress) => void) {
+function onOperationProgress(cb: (p: OperationProgress) => void) {
   return listen<OperationProgress>('operation:progress', (e) => cb(e.payload))
 }
-export function onOperationCompleted(cb: (r: OperationResult) => void) {
+function onOperationCompleted(cb: (r: OperationResult) => void) {
   return listen<OperationResult>('operation:completed', (e) => cb(e.payload))
 }
-export function onOperationError(cb: (e: { errorCode: string; message: string }) => void) {
+function onOperationError(cb: (e: { errorCode: string; message: string }) => void) {
   return listen<{ errorCode: string; message: string }>('operation:error', (e) => cb(e.payload))
 }

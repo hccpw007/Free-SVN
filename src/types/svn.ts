@@ -21,7 +21,7 @@ export interface FileItem {
   lock?: LockInfo
 }
 
-export interface LockInfo {
+interface LockInfo {
   token: string
   owner: string
   comment?: string
@@ -90,12 +90,12 @@ export interface LogEntry {
   paths?: LogPathEntry[]
 }
 
-export interface LogPathEntry {
+interface LogPathEntry {
   action: string
   path: string
 }
 
-export interface ConflictInfo {
+interface ConflictInfo {
   path: string
   conflictType: 'text' | 'tree' | 'property'
   mineFile?: string
@@ -111,7 +111,7 @@ export interface MergeResult {
 }
 
 /** 认证连接测试结果 */
-export interface ConnectionTestResult {
+interface ConnectionTestResult {
   success: boolean
   realm?: string
   error?: string

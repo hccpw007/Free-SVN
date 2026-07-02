@@ -43,3 +43,58 @@ pub fn open_external_merge(tool: &str, params: ExternalMergeParams) -> Result<()
     log::info!("已打开外部合并工具: {} (pid={})", cmd, child.id());
     Ok(())
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_external_merge_params_creation() {
+        let params = ExternalMergeParams {
+            mine: "/tmp/mine.txt".to_string(),
+            base: "/tmp/base.txt".to_string(),
+            theirs: "/tmp/theirs.txt".to_string(),
+            output: "/tmp/output.txt".to_string(),
+        };
+        assert_eq!(params.mine, "/tmp/mine.txt");
+        assert_eq!(params.base, "/tmp/base.txt");
+        assert_eq!(params.theirs, "/tmp/theirs.txt");
+        assert_eq!(params.output, "/tmp/output.txt");
+    }
+
+    #[test]
+    fn test_open_external_merge_nonexistent_tool() {
+        let params = ExternalMergeParams {
+            mine: "/tmp/mine.txt".to_string(),
+            base: "/tmp/base.txt".to_string(),
+            theirs: "/tmp/theirs.txt".to_string(),
+            output: "/tmp/output.txt".to_string(),
+        };
+        let result = open_external_merge("nonexistent-merge-tool-abc-12345", params);
+        assert!(result.is_err());
+        match result {
+            Err(AppError::ToolNotFound(msg)) => {
+                assert!(msg.contains("未找到"));
+            }
+            _ => panic!("期望 ToolNotFound 错误"),
+        }
+    }
+
+    #[test]
+    fn test_open_external_merge_kaleidoscope_error() {
+        let params = ExternalMergeParams {
+            mine: "/tmp/mine.txt".to_string(),
+            base: "/tmp/base.txt".to_string(),
+            theirs: "/tmp/theirs.txt".to_string(),
+            output: "/tmp/output.txt".to_string(),
+        };
+        let result = open_external_merge("kaleidoscope", params);
+        assert!(result.is_err());
+        match result {
+            Err(AppError::ToolNotFound(msg)) => {
+                assert!(msg.contains("Kaleidoscope"));
+            }
+            _ => panic!("期望 ToolNotFound 错误"),
+        }
+    }
+}

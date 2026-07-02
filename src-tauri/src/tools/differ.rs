@@ -33,3 +33,34 @@ pub fn open_external_diff(tool: &str, params: ExternalDiffParams) -> Result<(), 
     log::info!("已打开外部差异工具: {} (pid={})", cmd, child.id());
     Ok(())
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_external_diff_params_creation() {
+        let params = ExternalDiffParams {
+            file1: "/tmp/file1.txt".to_string(),
+            file2: "/tmp/file2.txt".to_string(),
+        };
+        assert_eq!(params.file1, "/tmp/file1.txt");
+        assert_eq!(params.file2, "/tmp/file2.txt");
+    }
+
+    #[test]
+    fn test_open_external_diff_nonexistent_tool() {
+        let params = ExternalDiffParams {
+            file1: "/tmp/file1.txt".to_string(),
+            file2: "/tmp/file2.txt".to_string(),
+        };
+        let result = open_external_diff("nonexistent-diff-tool-abc-12345", params);
+        assert!(result.is_err());
+        match result {
+            Err(AppError::ToolNotFound(msg)) => {
+                assert!(msg.contains("未找到"));
+            }
+            _ => panic!("期望 ToolNotFound 错误"),
+        }
+    }
+}

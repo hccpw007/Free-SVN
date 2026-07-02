@@ -1,5 +1,5 @@
 /** 错误码枚举。与 Rust AppError 完全同步。 */
-export enum ErrorCode {
+enum ErrorCode {
   SVN_EXEC_FAILED = 'SVN_EXEC_FAILED',
   SVN_PARSE_FAILED = 'SVN_PARSE_FAILED',
   INVALID_INPUT = 'INVALID_INPUT',
@@ -15,14 +15,8 @@ export enum ErrorCode {
   TOOL_NOT_FOUND = 'TOOL_NOT_FOUND',
 }
 
-/** 后端错误返回结构 */
-export interface ErrorResponse {
-  error: string
-  message: string
-}
-
 /** ErrorCode → i18n key 映射（供 vue-i18n $t() / t() 使用） */
-export const ERROR_MESSAGE_KEYS: Record<ErrorCode, string> = {
+const ERROR_MESSAGE_KEYS: Record<ErrorCode, string> = {
   [ErrorCode.SVN_EXEC_FAILED]: 'error.SVN_EXEC_FAILED',
   [ErrorCode.SVN_PARSE_FAILED]: 'error.SVN_PARSE_FAILED',
   [ErrorCode.INVALID_INPUT]: 'error.INVALID_INPUT',
@@ -39,7 +33,7 @@ export const ERROR_MESSAGE_KEYS: Record<ErrorCode, string> = {
 }
 
 /** 回退中文翻译（i18n 不可用时使用，与 locale/zh-CN.json 同步） */
-export const FALLBACK_MESSAGES_ZH: Record<string, string> = {
+const FALLBACK_MESSAGES_ZH: Record<string, string> = {
   'error.SVN_EXEC_FAILED': 'SVN 命令执行失败',
   'error.SVN_PARSE_FAILED': 'SVN 输出解析错误',
   'error.INVALID_INPUT': '输入参数无效',
@@ -56,7 +50,7 @@ export const FALLBACK_MESSAGES_ZH: Record<string, string> = {
 }
 
 /** 回退英文翻译（在 i18n 和中文回退均不可用时使用） */
-export const FALLBACK_MESSAGES_EN: Record<string, string> = {
+const FALLBACK_MESSAGES_EN: Record<string, string> = {
   'error.SVN_EXEC_FAILED': 'SVN command execution failed',
   'error.SVN_PARSE_FAILED': 'SVN output parse error',
   'error.INVALID_INPUT': 'Invalid input',
