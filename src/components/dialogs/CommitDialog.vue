@@ -54,19 +54,19 @@ async function handleCommit() {
     const unversionedPaths = selectedPaths.filter(p => pathStatus.get(p) === 'unversioned')
     const missingPaths = selectedPaths.filter(p => pathStatus.get(p) === 'missing')
 
-    // 对未加入文件自动执行 svn add
+    // 对未加入文件自动执行 svn add（使用绝对路径，避免 cwd 错误）
     if (unversionedPaths.length > 0) {
-      await svnStore.addFiles(unversionedPaths)
+      await svnStore.addFiles(toAbsolute(unversionedPaths))
     }
 
     // 对缺失文件自动执行 svn delete
     if (missingPaths.length > 0) {
-      await svnStore.deleteFiles({ paths: missingPaths, keepLocal: false })
+      await svnStore.deleteFiles({ paths: toAbsolute(missingPaths), keepLocal: false })
     }
 
-    // 提交所有文件
+    // 提交所有文件（使用绝对路径）
     const result = await svnStore.commit({
-      paths: selectedPaths,
+      paths: toAbsolute(selectedPaths),
       message: commitMessage.value,
       keepLocks: false,
     })

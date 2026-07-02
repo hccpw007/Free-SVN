@@ -1,6 +1,15 @@
 use serde::Deserialize;
 use crate::models::error::AppError;
 use crate::svn;
+use std::path::Path;
+
+/// 从文件路径提取父目录作为 cwd，文件位于根目录时返回自身
+fn get_cwd(path: &str) -> String {
+    Path::new(path).parent()
+        .filter(|p| !p.as_os_str().is_empty())
+        .map(|p| p.to_string_lossy().to_string())
+        .unwrap_or_else(|| path.to_string())
+}
 
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -26,7 +35,7 @@ pub async fn add_files(
     state.try_lock()?;
     let mut args = vec!["add".to_string()];
     args.extend(params.paths.clone());
-    let r = svn::executor::run_svn(&args.iter().map(String::as_str).collect::<Vec<&str>>(), &params.paths[0], None).await;
+    let r = svn::executor::run_svn(&args.iter().map(String::as_str).collect::<Vec<&str>>(), &get_cwd(&params.paths[0]), None).await;
     state.unlock(); r
 }
 
@@ -41,7 +50,7 @@ pub async fn delete_files(
     let mut args = vec!["delete".to_string()];
     if params.keep_local.unwrap_or(false) { args.push("--keep-local".to_string()); }
     args.extend(params.paths.clone());
-    let r = svn::executor::run_svn(&args.iter().map(String::as_str).collect::<Vec<&str>>(), &params.paths[0], None).await;
+    let r = svn::executor::run_svn(&args.iter().map(String::as_str).collect::<Vec<&str>>(), &get_cwd(&params.paths[0]), None).await;
     state.unlock(); r
 }
 
@@ -55,7 +64,7 @@ pub async fn revert_files(
     state.try_lock()?;
     let mut args = vec!["revert".to_string()];
     args.extend(params.paths.clone());
-    let r = svn::executor::run_svn(&args.iter().map(String::as_str).collect::<Vec<&str>>(), &params.paths[0], None).await;
+    let r = svn::executor::run_svn(&args.iter().map(String::as_str).collect::<Vec<&str>>(), &get_cwd(&params.paths[0]), None).await;
     state.unlock(); r
 }
 
