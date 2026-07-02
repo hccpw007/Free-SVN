@@ -24,10 +24,9 @@ export async function wrappedInvoke<T>(cmd: string, args?: Record<string, unknow
     } else {
       msg = '未知错误'
     }
-    // translateError 返回 i18n key；如果无法匹配已知前缀（即返回 ErrorCode.Unknown），
-    // 直接返回后端原始消息，避免 store/组件收到无法翻译的 i18n key。
-    const translated = translateError(msg)
-    throw translated === ErrorCode.Unknown ? msg : translated
+    // translateError 返回 i18n key，用于 call() 中检测认证/操作特定错误
+    // 但始终抛出原始消息，让用户看到实际错误详情而非 i18n key
+    throw msg
   }
 }
 

@@ -111,20 +111,22 @@ export const useSvnStore = defineStore('svn', () => {
   async function call<T>(commandFn: () => Promise<T>, command?: string, args?: Record<string, unknown>): Promise<T> {
     try { return await commandFn() }
     catch (err) {
-      // err 可能是 i18n key 字符串（来自 wrappedInvoke/translateError）、
-      // Error 对象、或其他类型。统一提取可读消息。
-      const errorCode = typeof err === 'string' ? err : ''
-      const msg = errorCode || (typeof err === 'object' ? getErrorMessage(err) : 'Unknown error')
-      // SVN_AUTH_FAILED → 保存失败上下文供 AuthDialog 自动弹出
-      if (errorCode === 'error.SVN_AUTH_FAILED' || errorCode === 'SVN_AUTH_FAILED') {
-        authContext.value = { command: command || '', args: args || {}, errorMessage: msg }
+      // wrappedInvoke 始终抛出原始消息字符串（来自后端 AppError 的 .message）
+      const rawMsg = typeof err === 'string' ? err
+        : err instanceof Error ? err.message
+        : (typeof err === 'object' && err && (err as Record<string, unknown>).message as string) || 'Unknown error'
+      // 认证失败（SVN_AUTH_FAILED）→ 保存失败上下文供 AuthDialog 自动弹出
+      if (rawMsg.includes('SVN_AUTH_FAILED') || rawMsg.includes('E215004') || rawMsg.includes('E170001')
+        || rawMsg.includes('Authentication failed') || rawMsg.includes('认证失败')
+        || rawMsg.includes('authorization failed') || rawMsg.includes('No credentials')) {
+        authContext.value = { command: command || '', args: args || {}, errorMessage: rawMsg }
         authFailed.value = true
       }
       // SVN_OPERATION_IN_PROGRESS → 队列冲突
-      if (errorCode === 'error.operationInProgress' || errorCode === 'SVN_OPERATION_IN_PROGRESS') {
+      if (rawMsg.includes('SVN_OPERATION_IN_PROGRESS')) {
         throw new Error('SVN_OPERATION_IN_PROGRESS')
       }
-      throw new Error(msg)
+      throw new Error(rawMsg)
     }
   }
 
