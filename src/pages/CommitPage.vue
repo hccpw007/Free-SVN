@@ -124,8 +124,8 @@ async function handleCommit() {
       </button>
     </div>
     <!-- 文件列表 -->
-    <div class="flex-1 min-h-0 overflow-auto p-4">
-      <el-table :data="commitFiles" size="small" style="width:100%;height:100%" row-key="path" @row-click="(r: FileItem) => toggleFile(r.path)">
+    <div class="flex-1 min-h-0 overflow-auto">
+      <el-table :data="commitFiles" size="small" style="width:100%" height="100%" row-key="path" @row-click="(r: FileItem) => toggleFile(r.path)">
         <el-table-column width="40">
           <template #default="{ row }"><el-checkbox :model-value="commitSelected.has(row.path)" @change="() => toggleFile(row.path)" /></template>
         </el-table-column>
