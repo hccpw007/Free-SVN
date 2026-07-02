@@ -35,13 +35,12 @@ pub async fn update_workspace(
         "operation": "update"
     })).ok();
 
-    // BASE_SVN_ARGS: 追加 --non-interactive（在 --trust-server-cert-failures 之前）和证书信任参数
-    // 参数传递时序必须确保 --non-interactive 在前，--trust-server-cert-failures 在后
+    // BASE_SVN_ARGS: 由 run_svn() 统一追加（含完整 --trust-server-cert-failures）
+    // 命令特定 args 中不加 --trust-server-cert-failures 以免覆盖 BASE_SVN_ARGS 的完整列表
     let mut args = vec![
         "update".to_string(),
         "--xml".to_string(),
         "--non-interactive".to_string(),
-        "--trust-server-cert-failures=unknown-ca".to_string(),
     ];
     if let Some(rev) = params.revision {
         args.push("-r".to_string()); args.push(rev.to_string());

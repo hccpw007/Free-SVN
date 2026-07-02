@@ -45,13 +45,13 @@ pub async fn checkout_repo(
         "operation": "checkout"
     })).ok();
 
-    // BASE_SVN_ARGS: 所有服务端操作统一追加 --non-interactive 和 --trust-server-cert-failures=unknown-ca
-    // --non-interactive 在 --trust-server-cert-failures 之前传递，确保 svn CLI 不弹出交互式提示
-    // 参数传递时序：--non-interactive 必须在 --trust-server-cert-failures 之前，否则 svn 会忽略证书信任策略
+    // BASE_SVN_ARGS: 由 run_svn() 统一追加，包含 --non-interactive
+    // 和 --trust-server-cert-failures=unknown-ca,cn-mismatch,expired,...
+    // 命令特定的 args 中不要再加 --trust-server-cert-failures（会覆盖 BASE_SVN_ARGS 的完整列表）
+    // --non-interactive 在此显式添加以确保始终存在（run_svn 传凭据时会移除 BASE_SVN_ARGS 中的它）
     let mut args = vec![
         "checkout".to_string(),
         "--non-interactive".to_string(),
-        "--trust-server-cert-failures=unknown-ca".to_string(),
     ];
     args.push(params.url.clone());
     args.push(params.target_path.clone());
