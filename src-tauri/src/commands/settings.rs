@@ -34,7 +34,6 @@ mod tests {
             "diff_command_template": "",
             "merge_command_template": "",
             "fallback_to_builtin": true,
-            "show_unversioned": true,
             "language": "system",
             "auto_start": false,
             "dark_mode": false

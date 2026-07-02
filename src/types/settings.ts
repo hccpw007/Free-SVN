@@ -8,7 +8,6 @@ export interface AppSettings {
   mergeCommandTemplate: string
   /** 自定义外部工具失败时回退到内置工具（默认 true） */
   fallbackToBuiltin: boolean
-  showUnversioned: boolean
   language: string
   autoStart: boolean
   darkMode: boolean
@@ -54,7 +53,6 @@ target/
   diffCommandTemplate: '',
   mergeCommandTemplate: '',
   fallbackToBuiltin: true,
-  showUnversioned: true,
   language: 'system',
   autoStart: false,
   darkMode: false,

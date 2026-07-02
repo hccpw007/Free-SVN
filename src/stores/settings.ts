@@ -9,7 +9,6 @@ export const useSettingsStore = defineStore('settings', () => {
   const globalIgnorePattern = ref(DEFAULT_SETTINGS.globalIgnorePattern)
   const diffTool = ref(DEFAULT_SETTINGS.diffTool)
   const mergeTool = ref(DEFAULT_SETTINGS.mergeTool)
-  const showUnversioned = ref(DEFAULT_SETTINGS.showUnversioned)
   const language = ref(DEFAULT_SETTINGS.language)
   const autoStart = ref(DEFAULT_SETTINGS.autoStart)
   const darkMode = ref(DEFAULT_SETTINGS.darkMode)
@@ -46,7 +45,6 @@ export const useSettingsStore = defineStore('settings', () => {
       globalIgnorePattern.value = s.globalIgnorePattern || DEFAULT_SETTINGS.globalIgnorePattern
       diffTool.value = s.diffTool
       mergeTool.value = s.mergeTool
-      showUnversioned.value = s.showUnversioned
       language.value = s.language
       autoStart.value = s.autoStart
       darkMode.value = s.darkMode
@@ -73,7 +71,6 @@ export const useSettingsStore = defineStore('settings', () => {
    * | diffCommandTemplate           | diff_command_template        | string    | 差异命令模板                |
    * | mergeCommandTemplate          | merge_command_template       | string    | 合并命令模板                |
    * | fallbackToBuiltin             | fallback_to_builtin          | bool      | 外部工具失败时回退内置工具  |
-   * | showUnversioned               | show_unversioned             | bool      | 显示未版本控制文件          |
    * | language                      | language                     | string    | 界面语言                    |
    * | autoStart                     | auto_start                   | bool      | 开机自启动                  |
    * | darkMode                      | dark_mode                    | bool      | 暗色模式                    |
@@ -87,7 +84,6 @@ export const useSettingsStore = defineStore('settings', () => {
       diffCommandTemplate: diffCommandTemplate.value,
       mergeCommandTemplate: mergeCommandTemplate.value,
       fallbackToBuiltin: fallbackToBuiltin.value,
-      showUnversioned: showUnversioned.value,
       language: language.value,
       autoStart: autoStart.value,
       darkMode: darkMode.value,
@@ -97,7 +93,7 @@ export const useSettingsStore = defineStore('settings', () => {
 
   return {
     defaultCheckoutDir, globalIgnorePattern,
-    diffTool, mergeTool, showUnversioned, language, autoStart,
+    diffTool, mergeTool, language, autoStart,
     darkMode,
     diffCommandTemplate, mergeCommandTemplate, fallbackToBuiltin,
     isDirty, load, save,
