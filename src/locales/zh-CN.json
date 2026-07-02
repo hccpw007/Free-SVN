@@ -50,7 +50,7 @@
     "delete": "删除"
   },
   "workspace": {
-    "openExisting": "打开已有工作副本",
+    "openExisting": "打开文件夹",
     "recentWorkspaces": "最近打开的工作副本",
     "searchPlaceholder": "按文件名搜索...",
     "searchLogPlaceholder": "按提交信息搜索...",

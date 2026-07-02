@@ -50,7 +50,7 @@
     "delete": "Delete"
   },
   "workspace": {
-    "openExisting": "Open Existing Working Copy",
+    "openExisting": "Open Folder",
     "recentWorkspaces": "Recent Workspaces",
     "searchPlaceholder": "Search by file name...",
     "searchLogPlaceholder": "Search log message...",

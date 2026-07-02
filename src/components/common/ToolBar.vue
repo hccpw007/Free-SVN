@@ -148,49 +148,53 @@ onUnmounted(() => {
 <template>
   <div ref="toolbarRef" class="h-10 px-3 flex items-center bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
     <div class="flex items-center gap-1 flex-1 overflow-hidden">
-      <!-- 非工作副本路径时：检出按钮 -->
-      <button
-        v-if="workspaceStore.currentPath && !workspaceStore.isWorkingCopy"
-        class="inline-flex items-center gap-1 px-2.5 py-1 text-xs rounded-md whitespace-nowrap focus:ring-2 focus:ring-offset-2 focus:ring-blue-400 focus:outline-none text-orange-600 dark:text-orange-400 hover:bg-orange-50 dark:hover:bg-orange-900/20"
-        :aria-label="t('toolbar.checkout')"
-        @click="handleCheckout"
-      >
-        <Download class="w-4 h-4" /><span>{{ t('toolbar.checkout') }}</span>
-      </button>
-
-      <template v-for="btn in visibleButtons" :key="btn.key">
-        <el-tooltip
-          :content="btn.getDisabledTooltip()"
-          :disabled="!btnDisabled"
-          effect="dark"
-          placement="bottom"
+      <!-- 非工作副本（但当前路径存在）时：只显示检出按钮 -->
+      <template v-if="workspaceStore.currentPath && !workspaceStore.isWorkingCopy">
+        <button
+          class="inline-flex items-center gap-1 px-2.5 py-1 text-xs rounded-md whitespace-nowrap focus:ring-2 focus:ring-offset-2 focus:ring-blue-400 focus:outline-none text-orange-600 dark:text-orange-400 hover:bg-orange-50 dark:hover:bg-orange-900/20"
+          :aria-label="t('toolbar.checkout')"
+          @click="handleCheckout"
         >
-          <button
-            class="inline-flex items-center gap-1 px-2.5 py-1 text-xs rounded-md whitespace-nowrap focus:ring-2 focus:ring-offset-2 focus:ring-blue-400 focus:outline-none"
-            :class="btnDisabled
-              ? 'opacity-50 cursor-not-allowed text-slate-400 dark:text-slate-500'
-              : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-green-600 dark:hover:text-green-400'"
-            :disabled="btnDisabled"
-            :aria-label="t(btn.label)"
-            @click="btn.action"
-          >
-            <component :is="iconMap[btn.iconKey]" class="w-4 h-4" /><span>{{ t(btn.label) }}</span>
-          </button>
-        </el-tooltip>
-      </template>
-      <el-dropdown v-if="overflowButtons.length > 0" trigger="click" placement="bottom-end">
-        <button class="px-1.5 py-1 text-xs text-slate-400 focus:ring-2 focus:ring-offset-2 focus:ring-blue-400 focus:outline-none rounded" :aria-label="t('toolbar.moreOperations')">
-          <MoreHorizontal class="w-4 h-4" />
+          <Download class="w-4 h-4" /><span>{{ t('toolbar.checkout') }}</span>
         </button>
-        <template #dropdown>
-          <el-dropdown-menu>
-            <el-dropdown-item v-for="btn in overflowButtons" :key="btn.key" :disabled="btnDisabled" @click="btn.action">
-              <component :is="iconMap[btn.iconKey]" class="w-4 h-4 mr-2 inline-block align-middle" />
-              <span class="align-middle">{{ t(btn.label) }}</span>
-            </el-dropdown-item>
-          </el-dropdown-menu>
+      </template>
+
+      <!-- 工作副本时：隐藏检出，显示所有操作按钮 -->
+      <template v-if="workspaceStore.isWorkingCopy">
+        <template v-for="btn in visibleButtons" :key="btn.key">
+          <el-tooltip
+            :content="btn.getDisabledTooltip()"
+            :disabled="!btnDisabled"
+            effect="dark"
+            placement="bottom"
+          >
+            <button
+              class="inline-flex items-center gap-1 px-2.5 py-1 text-xs rounded-md whitespace-nowrap focus:ring-2 focus:ring-offset-2 focus:ring-blue-400 focus:outline-none"
+              :class="btnDisabled
+                ? 'opacity-50 cursor-not-allowed text-slate-400 dark:text-slate-500'
+                : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-green-600 dark:hover:text-green-400'"
+              :disabled="btnDisabled"
+              :aria-label="t(btn.label)"
+              @click="btn.action"
+            >
+              <component :is="iconMap[btn.iconKey]" class="w-4 h-4" /><span>{{ t(btn.label) }}</span>
+            </button>
+          </el-tooltip>
         </template>
-      </el-dropdown>
+        <el-dropdown v-if="overflowButtons.length > 0" trigger="click" placement="bottom-end">
+          <button class="px-1.5 py-1 text-xs text-slate-400 focus:ring-2 focus:ring-offset-2 focus:ring-blue-400 focus:outline-none rounded" :aria-label="t('toolbar.moreOperations')">
+            <MoreHorizontal class="w-4 h-4" />
+          </button>
+          <template #dropdown>
+            <el-dropdown-menu>
+              <el-dropdown-item v-for="btn in overflowButtons" :key="btn.key" :disabled="btnDisabled" @click="btn.action">
+                <component :is="iconMap[btn.iconKey]" class="w-4 h-4 mr-2 inline-block align-middle" />
+                <span class="align-middle">{{ t(btn.label) }}</span>
+              </el-dropdown-item>
+            </el-dropdown-menu>
+          </template>
+        </el-dropdown>
+      </template>
     </div>
   </div>
 </template>
