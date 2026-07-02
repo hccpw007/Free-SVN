@@ -183,7 +183,17 @@
     "operationInProgress": "操作进行中，请等待",
     "noWorkingCopy": "无可用工作副本",
     "noChanges": "当前工作副本无变更",
-    "noSelection": "请先选中文件"
+    "noSelection": "请先选中文件",
+    "descCommit": "提交本地修改到版本库",
+    "descDiff": "对比工作副本与版本库的文件差异",
+    "descUpdate": "从版本库更新工作副本到最新版本",
+    "descUpdateToRevision": "将工作副本更新到指定版本号",
+    "descLog": "查看文件的提交历史记录",
+    "descSwitch": "切换工作副本到其他分支或标签",
+    "descBranchTag": "创建分支或标签",
+    "descMerge": "将其他分支的变更合并到当前工作副本",
+    "descCleanup": "清理工作副本中的锁和遗留状态",
+    "descExport": "将工作副本导出到其他目录"
   },
   "statusBar": {
     "revision": "版本 {rev}",

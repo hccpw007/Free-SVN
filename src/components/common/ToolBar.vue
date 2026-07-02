@@ -41,6 +41,7 @@ const iconMap: Record<IconKey, Component> = {
 interface ToolbarButton {
   key: string
   label: string
+  desc: string
   iconKey: IconKey
   action: () => void
   priority: number
@@ -56,7 +57,7 @@ const hasVersionedChanges = computed(() =>
 
 const buttons = computed<ToolbarButton[]>(() => [
   {
-    key: 'commit', label: 'toolbar.commit', iconKey: 'GitCommit',
+    key: 'commit', label: 'toolbar.commit', desc: 'toolbar.descCommit', iconKey: 'GitCommit',
     action: () => router.push('/workspace/commit'), priority: 8,
     getDisabledTooltip: () => {
       if (globallyDisabled.value) return t('toolbar.operationInProgress')
@@ -67,7 +68,7 @@ const buttons = computed<ToolbarButton[]>(() => [
     },
   },
   {
-    key: 'diff', label: 'toolbar.diff', iconKey: 'FileDiff',
+    key: 'diff', label: 'toolbar.diff', desc: 'toolbar.descDiff', iconKey: 'FileDiff',
     action: () => router.push('/workspace/diff'), priority: 8,
     getDisabledTooltip: () => {
       if (globallyDisabled.value) return t('toolbar.operationInProgress')
@@ -77,42 +78,42 @@ const buttons = computed<ToolbarButton[]>(() => [
     },
   },
   {
-    key: 'update', label: 'toolbar.update', iconKey: 'RefreshCw',
+    key: 'update', label: 'toolbar.update', desc: 'toolbar.descUpdate', iconKey: 'RefreshCw',
     action: () => emit('open-dialog', 'update'), priority: 7,
     getDisabledTooltip: () => globallyDisabled.value ? t('toolbar.operationInProgress') : t('toolbar.noWorkingCopy'),
   },
   {
-    key: 'updateToRevision', label: 'toolbar.updateToRevision', iconKey: 'ArrowUpCircle',
+    key: 'updateToRevision', label: 'toolbar.updateToRevision', desc: 'toolbar.descUpdateToRevision', iconKey: 'ArrowUpCircle',
     action: () => emit('open-dialog', 'update-to-revision'), priority: 6,
     getDisabledTooltip: () => globallyDisabled.value ? t('toolbar.operationInProgress') : t('toolbar.noWorkingCopy'),
   },
   {
-    key: 'log', label: 'toolbar.log', iconKey: 'History',
+    key: 'log', label: 'toolbar.log', desc: 'toolbar.descLog', iconKey: 'History',
     action: () => router.push('/workspace/log'), priority: 6,
     getDisabledTooltip: () => globallyDisabled.value ? t('toolbar.operationInProgress') : t('toolbar.noWorkingCopy'),
   },
   {
-    key: 'switch', label: 'toolbar.switch', iconKey: 'GitBranch',
+    key: 'switch', label: 'toolbar.switch', desc: 'toolbar.descSwitch', iconKey: 'GitBranch',
     action: () => emit('open-dialog', 'switch'), priority: 5,
     getDisabledTooltip: () => globallyDisabled.value ? t('toolbar.operationInProgress') : t('toolbar.noWorkingCopy'),
   },
   {
-    key: 'branchTag', label: 'toolbar.branchTag', iconKey: 'Layers',
+    key: 'branchTag', label: 'toolbar.branchTag', desc: 'toolbar.descBranchTag', iconKey: 'Layers',
     action: () => emit('open-dialog', 'branch-tag'), priority: 4,
     getDisabledTooltip: () => globallyDisabled.value ? t('toolbar.operationInProgress') : t('toolbar.noWorkingCopy'),
   },
   {
-    key: 'merge', label: 'toolbar.merge', iconKey: 'GitMerge',
+    key: 'merge', label: 'toolbar.merge', desc: 'toolbar.descMerge', iconKey: 'GitMerge',
     action: () => emit('open-dialog', 'merge'), priority: 3,
     getDisabledTooltip: () => globallyDisabled.value ? t('toolbar.operationInProgress') : t('toolbar.noWorkingCopy'),
   },
   {
-    key: 'cleanup', label: 'toolbar.cleanup', iconKey: 'Eraser',
+    key: 'cleanup', label: 'toolbar.cleanup', desc: 'toolbar.descCleanup', iconKey: 'Eraser',
     action: () => svnStore.cleanup(workspaceStore.currentPath), priority: 1,
     getDisabledTooltip: () => globallyDisabled.value ? t('toolbar.operationInProgress') : t('toolbar.noWorkingCopy'),
   },
   {
-    key: 'export', label: 'toolbar.export', iconKey: 'Package',
+    key: 'export', label: 'toolbar.export', desc: 'toolbar.descExport', iconKey: 'Package',
     action: () => emit('open-dialog', 'export'), priority: 0,
     getDisabledTooltip: () => globallyDisabled.value ? t('toolbar.operationInProgress') : t('toolbar.noWorkingCopy'),
   },
@@ -163,8 +164,7 @@ onUnmounted(() => {
       <template v-if="workspaceStore.isWorkingCopy">
         <template v-for="btn in visibleButtons" :key="btn.key">
           <el-tooltip
-            :content="btn.getDisabledTooltip()"
-            :disabled="!btnDisabled"
+            :content="btnDisabled ? btn.getDisabledTooltip() : t(btn.desc)"
             effect="dark"
             placement="bottom"
           >

@@ -78,7 +78,17 @@
     "operationInProgress": "Operation in progress, please wait",
     "noWorkingCopy": "No working copy available",
     "noChanges": "No changes in working copy",
-    "noSelection": "Please select a file first"
+    "noSelection": "Please select a file first",
+    "descCommit": "Commit local changes to the repository",
+    "descDiff": "Compare file differences with the repository",
+    "descUpdate": "Update working copy to the latest revision",
+    "descUpdateToRevision": "Update working copy to a specific revision",
+    "descLog": "View commit history for files",
+    "descSwitch": "Switch working copy to another branch or tag",
+    "descBranchTag": "Create a branch or tag",
+    "descMerge": "Merge changes from another branch",
+    "descCleanup": "Clean up locks and stale state in working copy",
+    "descExport": "Export working copy to another directory"
   },
   "statusBar": {
     "revision": "Revision {rev}",
