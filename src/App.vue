@@ -134,17 +134,6 @@ onMounted(async () => {
   applyLanguage(settingsStore.language)
   applyDarkMode(settingsStore.darkMode)
 
-  // 关闭按钮隐藏窗口到托盘而非退出
-  try {
-    const { getCurrentWebviewWindow } = await import('@tauri-apps/api/webviewWindow')
-    const win = getCurrentWebviewWindow()
-    win.onCloseRequested(async () => {
-      await win.hide()
-    })
-  } catch (e: unknown) {
-    console.warn('[App] Tauri webviewWindow 不可用（浏览器环境）:', e)
-  }
-
   // 全局焦点跟踪：同步 fileListStore.isOperationRunning 到 useKeyboardShortcuts
   watch(() => fileListStore.isOperationRunning, (v) => {
     setOperationRunning(v)
