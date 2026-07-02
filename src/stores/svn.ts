@@ -72,7 +72,11 @@ export const useSvnStore = defineStore('svn', () => {
       authFailed.value = false
       authContext.value = null
       return true
-    } catch { return false }
+    } catch (e) {
+      // 抛出实际错误，让 AuthDialog 能显示具体失败原因而非通用提示
+      const detail = typeof e === 'string' ? e : e instanceof Error ? e.message : String(e)
+      throw new Error(detail)
+    }
   }
 
   function cancelAuth() {
