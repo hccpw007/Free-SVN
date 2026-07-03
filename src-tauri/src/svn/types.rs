@@ -2,11 +2,17 @@ use serde::{Deserialize, Serialize};
 
 /// 长操作进度（后端 → 前端，通过 Tauri event 推送）
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct OperationProgress {
     pub operation: String,
     pub percent: u8,
     pub stage: String,
     pub file_count: u32,
+    pub completed_count: u32,
+    pub pending_count: u32,
+    pub speed: Option<String>,
+    pub elapsed: Option<String>,
+    pub current_lines: Vec<String>,
 }
 
 /// 长操作完成结果

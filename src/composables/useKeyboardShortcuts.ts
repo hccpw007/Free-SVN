@@ -1,7 +1,7 @@
 /**
  * useKeyboardShortcuts - 全局键盘快捷键注册与管理
  * 支持作用域管理：对话框 > 面板 > 全局
- * ProgressOverlay 期间仅 Esc 生效
+ * ProgressPanel 期间仅 Esc 生效
  *
  * 使用示例：
  * const { register, unregister } = useKeyboardShortcuts()

@@ -5,7 +5,7 @@ import { useAutoRefresh } from '@/composables/useAutoRefresh'
 import TopBar from '@/components/common/TopBar.vue'
 import ToolBar from '@/components/common/ToolBar.vue'
 import StatusBar from '@/components/common/StatusBar.vue'
-import ProgressOverlay from '@/components/svn/ProgressOverlay.vue'
+import ProgressPanel from '@/components/svn/ProgressPanel.vue'
 
 const route = useRoute()
 
@@ -34,7 +34,7 @@ const isWelcomePage = computed(() => {
     <!-- StatusBar: 28px 固定高度，欢迎页模式隐藏 -->
     <StatusBar v-if="!isWelcomePage" class="shrink-0" />
 
-    <!-- ProgressOverlay: 全屏遮罩，通过 v-if 控制显示 -->
-    <ProgressOverlay />
+    <!-- ProgressPanel: 全屏遮罩，通过 v-if 控制显示 -->
+    <ProgressPanel />
   </div>
 </template>

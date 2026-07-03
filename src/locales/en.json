@@ -247,7 +247,17 @@
     "operationInProgress": "Operation in Progress",
     "processing": "Processing...",
     "filesProcessed": "{count} files processed",
-    "cancelling": "Cancelling..."
+    "cancelling": "Cancelling...",
+    "cancelConfirmed": "Operation cancelled",
+    "connecting": "Connecting to server...",
+    "completed": "Operation completed",
+    "error": "Operation failed",
+    "autoClose": "Auto-closes on completion",
+    "downloadSpeed": "Speed",
+    "completedCount": "Completed",
+    "pendingCount": "Pending",
+    "elapsed": "Elapsed",
+    "pendingEstimate": "~{count} pending"
   },
   "dialog": {
     "checkout": "Checkout Repository",

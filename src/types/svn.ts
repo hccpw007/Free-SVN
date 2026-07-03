@@ -74,6 +74,11 @@ export interface OperationProgress {
   percent: number
   stage: string
   fileCount: number
+  completedCount: number
+  pendingCount: number
+  speed: string
+  elapsed: string
+  currentLines: string[]
 }
 
 export interface OperationResult {
