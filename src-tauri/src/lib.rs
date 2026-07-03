@@ -164,7 +164,24 @@ pub fn run() {
                                 .title("About Free-SVN")
                                 .show(|_| {});
                         }
-                        "quit" => { app.exit(0); }
+                        "quit" => {
+                            let state: tauri::State<crate::svn::queue::SvnQueue> = app.state();
+                            if state.is_locked() || crate::svn::executor::is_cancelled() {
+                                let handle = app_handle.clone();
+                                let cwd = crate::config::store::current_workspace().unwrap_or_default();
+                                crate::svn::executor::kill_current_process();
+                                tauri::async_runtime::spawn(async move {
+                                    if !cwd.is_empty() {
+                                        let _ = crate::svn::executor::run_svn(&["cleanup"], &cwd, None).await;
+                                    }
+                                    handle.state::<crate::svn::queue::SvnQueue>().unlock();
+                                    crate::svn::executor::set_cancelled(false);
+                                    handle.exit(0);
+                                });
+                            } else {
+                                app.exit(0);
+                            }
+                        }
                         _ => {}
                     }
                 })
@@ -191,6 +208,26 @@ pub fn run() {
             }
 
             Ok(())
+        })
+        .on_window_event(|window, event| {
+            if let tauri::WindowEvent::CloseRequested { api, .. } = event {
+                let app_handle = window.app_handle();
+                let state: tauri::State<crate::svn::queue::SvnQueue> = app_handle.state();
+                if state.is_locked() || crate::svn::executor::is_cancelled() {
+                    api.prevent_default();
+                    let handle = app_handle.clone();
+                    let cwd = crate::config::store::current_workspace().unwrap_or_default();
+                    tauri::async_runtime::spawn(async move {
+                        crate::svn::executor::kill_current_process();
+                        if !cwd.is_empty() {
+                            let _ = crate::svn::executor::run_svn(&["cleanup"], &cwd, None).await;
+                        }
+                        handle.state::<crate::svn::queue::SvnQueue>().unlock();
+                        crate::svn::executor::set_cancelled(false);
+                        handle.exit(0);
+                    });
+                }
+            }
         })
         .invoke_handler(tauri::generate_handler![
             // 3A — 只读操作

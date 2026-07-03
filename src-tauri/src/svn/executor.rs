@@ -173,6 +173,10 @@ pub fn set_cancelled(val: bool) {
     CANCELLED.store(val, Ordering::SeqCst);
 }
 
+pub fn has_child_process() -> bool {
+    CURRENT_CHILD.lock().map(|guard| guard.is_some()).unwrap_or(false)
+}
+
 // ── 认证检测 ──────────────────────────────────────────
 
 fn check_auth_hint(stderr: &str) -> bool {
