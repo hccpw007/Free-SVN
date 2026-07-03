@@ -114,7 +114,7 @@ svn/types.rs     # 共享数据类型
 | `models/*.rs` | 150 行 | 按实体拆分 |
 | `lib.rs` | 60 行 | 提取 plugin/setup/command 到子模块 |
 
-拆分信号：多个 `pub fn` 且前缀重复 / `use` 超过 15 个 / `#[cfg(test)]` 超过 100 行。
+拆分信号：多个 `pub fn` 且前缀重复 / `use` 超过 15 个 / `#[cfg(test)]` 超过 100 行。**框架要求的入口/注册文件（如 `lib.rs`、`main.rs`）若因框架约定无法拆分可豁免。**
 
 ## 07-死代码预防
 

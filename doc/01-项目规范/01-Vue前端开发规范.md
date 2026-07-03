@@ -93,7 +93,7 @@ const emit = defineEmits<{ select: [path: string] }>()
 | `composables/*.ts` | 100 行 | 按场景拆分 |
 | `router/*.ts` | 80 行 | 提取 `router/modules/` |
 
-拆分信号：一文件多职责 / 多处 import 同一文件的部分函数 / 修改需滚动 3 屏以上。
+拆分信号：一文件多职责 / 多处 import 同一文件的部分函数 / 修改需滚动 3 屏以上。**框架要求的入口/注册文件（如 `main.ts`、`App.vue`）若因框架约定无法拆分可豁免。**
 
 ## 09-编码约定
 
