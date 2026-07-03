@@ -9,10 +9,12 @@ const emit = defineEmits<{ changed: [] }>()
 </script>
 
 <template>
+  <!-- 语言设置区块 -->
   <div class="max-w-xl">
     <div class="space-y-4">
       <div>
         <label class="text-xs text-slate-500 dark:text-slate-400">{{ t('settings.language') }}</label>
+        <!-- 界面语言选择器 -->
         <el-select v-model="language" size="default" class="!w-full mt-1" @change="emit('changed')">
           <el-option :label="t('settings.langSystem')" value="system" />
           <el-option :label="t('settings.langZhCN')" value="zh-CN" />

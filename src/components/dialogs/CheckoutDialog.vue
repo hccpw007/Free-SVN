@@ -169,6 +169,7 @@ async function handleCheckout() {
         <div class="flex flex-col gap-2">
           <div>
             <el-input id="checkout-username" v-model="authForm.username" size="small" :placeholder="t('auth.username')" />
+            <!-- 用户名错误提示 -->
             <p v-if="usernameError" class="text-xs text-red-500 mt-1">{{ usernameError }}</p>
           </div>
           <div>
@@ -176,6 +177,7 @@ async function handleCheckout() {
               <el-input v-model="authForm.password" size="small"
                 :type="authForm.showPassword ? 'text' : 'password'"
                 :placeholder="t('auth.password')" />
+              <!-- 切换密码可见性 -->
               <button
                 @click="authForm.showPassword = !authForm.showPassword"
                 class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 hover:text-slate-600 focus:ring-2 focus:ring-offset-2 focus:ring-blue-400 focus:outline-none rounded"
@@ -185,13 +187,16 @@ async function handleCheckout() {
                 <Eye v-else class="w-4 h-4" />
               </button>
             </div>
+            <!-- 密码错误提示 -->
             <p v-if="passwordError" class="text-xs text-red-500 mt-1">{{ passwordError }}</p>
           </div>
+          <!-- 缓存凭证 -->
           <el-checkbox v-model="authForm.saveToCache" size="small">{{ t('auth.saveToCache') }}</el-checkbox>
         </div>
       </div>
     </div>
 
+    <!-- 底部按钮区 -->
     <template #footer>
       <el-button size="default" class="focus:ring-2 focus:ring-offset-2 focus:ring-blue-400 focus:outline-none" @click="emit('close')" :disabled="isCheckingOut">
         {{ t('dialog.cancel') }}

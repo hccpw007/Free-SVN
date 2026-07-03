@@ -13,8 +13,10 @@ function markChanged() {
 </script>
 
 <template>
+  <!-- 忽略文件设置 -->
   <div class="max-w-2xl">
     <div class="space-y-4">
+      <!-- 忽略模式输入框组 -->
       <div>
         <label class="text-xs text-slate-500 dark:text-slate-400">{{ t('settings.ignorePatternDescription') }}</label>
         <el-input
