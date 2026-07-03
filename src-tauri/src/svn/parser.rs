@@ -133,8 +133,10 @@ pub fn parse_info(xml: &str) -> Result<RepoInfo, AppError> {
     struct CommitAuthorInfo {
         #[serde(rename = "@revision")]
         revision: u64,
-        author: String,
-        date: String,
+        #[serde(default)]
+        author: Option<String>,
+        #[serde(default)]
+        date: Option<String>,
     }
     #[derive(Debug, serde::Deserialize)]
     struct LockEntry {
@@ -162,8 +164,8 @@ pub fn parse_info(xml: &str) -> Result<RepoInfo, AppError> {
         revision: entry.revision,
         node_kind: entry.kind,
         last_changed_revision: entry.commit.revision,
-        last_changed_author: entry.commit.author,
-        last_changed_date: entry.commit.date,
+        last_changed_author: entry.commit.author.unwrap_or_default(),
+        last_changed_date: entry.commit.date.unwrap_or_default(),
         schedule: entry.wc_info.as_ref().and_then(|w| w.schedule.clone()),
         depth: entry.wc_info.as_ref().and_then(|w| w.depth.clone()),
         checksum: entry.wc_info.as_ref().and_then(|w| w.checksum.clone()),
