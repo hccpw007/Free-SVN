@@ -4,7 +4,7 @@ import { listen } from '@tauri-apps/api/event'
 import { getErrorMessage } from '@/types/error-codes'
 import type {
   FileItem, RepoInfo, DiffResult, OperationProgress,
-  OperationResult, BlameLine, LogEntry, SvnCredentials,
+  BlameLine, LogEntry, SvnCredentials,
 } from '@/types/svn'
 import type { AppSettings } from '@/types/settings'
 import { useFileListStore } from './fileList'
