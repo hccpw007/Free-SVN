@@ -44,6 +44,7 @@ import {
   clearCredentials as servicesClearCredentials,
 } from '@/services/svn'
 
+/** SVN 主 Store——封装所有 SVN 操作（CRUD + 事件监听 + 认证联动） */
 export const useSvnStore = defineStore('svn', () => {
   const progress = ref<OperationProgress | null>(null)
   const isLoading = ref(false)

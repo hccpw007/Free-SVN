@@ -4,6 +4,7 @@ use crate::svn;
 use tauri::AppHandle;
 use tauri::Emitter;
 
+/// 更新操作参数
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct UpdateParams {

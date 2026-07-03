@@ -4,6 +4,7 @@ use crate::svn;
 use tauri::AppHandle;
 use tauri::Emitter;
 
+/// 检出操作参数
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CheckoutParams {

@@ -4,6 +4,7 @@ import type { AppSettings } from '@/types/settings'
 import { DEFAULT_SETTINGS } from '@/types/settings'
 import { loadSettings, saveSettings } from '@/services/svn'
 
+/** 设置 Store——应用设置加载/保存，含字段映射文档 */
 export const useSettingsStore = defineStore('settings', () => {
   const defaultCheckoutDir = ref(DEFAULT_SETTINGS.defaultCheckoutDir)
   const globalIgnorePattern = ref(DEFAULT_SETTINGS.globalIgnorePattern)

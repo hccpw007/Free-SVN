@@ -3,6 +3,7 @@ use crate::models::error::AppError;
 use crate::svn;
 use std::path::Path;
 
+/// 差异对比参数
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct DiffParams {

@@ -5,6 +5,7 @@ use crate::models::repo::RepoInfo;
 use crate::svn;
 use std::path::Path;
 
+/// 获取状态参数
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct StatusParams {
@@ -13,6 +14,7 @@ pub struct StatusParams {
     pub ignore_patterns: Option<String>,
 }
 
+/// 获取信息参数
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct InfoParams {

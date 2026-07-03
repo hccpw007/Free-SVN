@@ -13,6 +13,7 @@ export interface AppSettings {
   darkMode: boolean
 }
 
+/** 应用设置默认值 */
 export const DEFAULT_SETTINGS: AppSettings = {
   defaultCheckoutDir: '',
   globalIgnorePattern: `*.o

@@ -3,6 +3,7 @@ import { ref, computed } from 'vue'
 import type { FileItem } from '@/types/svn'
 import { getStatus as fetchStatus, revertFiles as svnRevertFiles, deleteFiles as svnDeleteFiles, setIgnore as svnSetIgnore, unlockFiles as svnUnlockFiles } from '@/services/svn'
 
+/** 文件列表 Store——变更文件缓存/筛选/排序/操作状态 */
 export const useFileListStore = defineStore('fileList', () => {
   const files = ref<FileItem[]>([])
   const selectedPaths = ref<Set<string>>(new Set())

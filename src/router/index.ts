@@ -1,3 +1,4 @@
+/** 路由配置——工作区子路由 + 设置页 */
 import { createRouter, createWebHistory } from 'vue-router'
 import type { RouteRecordRaw } from 'vue-router'
 

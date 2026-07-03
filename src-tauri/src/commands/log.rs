@@ -3,6 +3,7 @@ use crate::models::error::AppError;
 use crate::svn;
 use crate::svn::parser::{BlameLine, LogEntry};
 
+/// 日志查询参数
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct LogParams {
@@ -14,6 +15,7 @@ pub struct LogParams {
     pub credentials: Option<crate::svn::types::SvnCredentials>,
 }
 
+/// 注解查询参数
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct BlameParams {
