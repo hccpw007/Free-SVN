@@ -2,9 +2,7 @@ use serde::Deserialize;
 use crate::models::error::AppError;
 use crate::svn;
 use tauri::AppHandle;
-use tauri::Emitter;
 
-/// 更新操作参数
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct UpdateParams {
@@ -32,11 +30,7 @@ pub async fn update_workspace(
 
     state.try_lock()?;
 
-    app_handle.emit("operation:started", serde_json::json!({
-        "operation": "update"
-    })).ok();
-
-    // BASE_SVN_ARGS: 由 run_svn() 统一追加（含完整 --trust-server-cert-failures）
+    // BASE_SVN_ARGS: 由 run_svn_with_progress() 统一追加（含完整 --trust-server-cert-failures）
     // 命令特定 args 中不加 --trust-server-cert-failures 以免覆盖 BASE_SVN_ARGS 的完整列表
     let mut args = vec![
         "update".to_string(),
@@ -56,25 +50,13 @@ pub async fn update_workspace(
     }
     args.push(params.path.clone());
 
-    let result = svn::executor::run_svn(
+    let result = svn::executor::run_svn_with_progress(
         &args.iter().map(String::as_str).collect::<Vec<&str>>(),
         &params.path,
         params.credentials.as_ref(),
+        app_handle,
+        "update",
     ).await;
-
-    match &result {
-        Ok(xml) => {
-            let rev = extract_update_revision(xml);
-            app_handle.emit("operation:completed", serde_json::json!({
-                "result": "success", "detail": format!("Updated to revision {}", rev)
-            })).ok();
-        }
-        Err(e) => {
-            app_handle.emit("operation:error", serde_json::json!({
-                "errorCode": format!("{}", e), "message": format!("{}", e)
-            })).ok();
-        }
-    }
 
     state.unlock();
     result

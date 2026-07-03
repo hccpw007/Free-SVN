@@ -23,6 +23,9 @@ pub struct OperationLine {
     pub file_path: String,
     /// "completed" | "in_progress" | "pending"
     pub status: String,
+    /// 是否是标记行（如管道中断提示），前端可据此判断是否展示
+    #[serde(default)]
+    pub is_marker: bool,
 }
 
 /// 操作取消信息（通过 operation:cancelled 事件推送）

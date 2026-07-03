@@ -634,8 +634,9 @@ pub async fn run_svn_with_progress(
                         if line.starts_with("__STDOUT_CLOSED__:") {
                             ah.emit("operation:line", serde_json::json!({
                                 "operation": operation_owned,
-                                "filePath": "[管道中断，部分文件列表可能不完整]",
-                                "status": "completed"
+                                "filePath": "",
+                                "status": "completed",
+                                "isMarker": true,
                             })).ok();
                             continue;
                         }

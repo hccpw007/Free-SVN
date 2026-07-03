@@ -2,9 +2,7 @@ use serde::Deserialize;
 use crate::models::error::AppError;
 use crate::svn;
 use tauri::AppHandle;
-use tauri::Emitter;
 
-/// 导出操作参数
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ExportParams {
@@ -45,31 +43,19 @@ pub async fn export_workspace(
     }
     state.try_lock()?;
 
-    app_handle.emit("operation:started",
-        serde_json::json!({"operation": "export"})).ok();
-
     let mut args = vec!["export".to_string()];
     if let Some(rev) = params.revision { args.push("-r".to_string()); args.push(rev.to_string()); }
     args.push(params.path.clone());
     args.push(params.target_dir.clone());
     if params.ignore_externals.unwrap_or(false) { args.push("--ignore-externals".to_string()); }
 
-    let result = svn::executor::run_svn(
+    let result = svn::executor::run_svn_with_progress(
         &args.iter().map(String::as_str).collect::<Vec<&str>>(),
         &params.path,
         params.credentials.as_ref(),
+        app_handle,
+        "export",
     ).await;
-
-    match &result {
-        Ok(_) => {
-            app_handle.emit("operation:completed",
-                serde_json::json!({"result": "success"})).ok();
-        }
-        Err(e) => {
-            app_handle.emit("operation:error",
-                serde_json::json!({"errorCode": format!("{}", e)})).ok();
-        }
-    }
 
     state.unlock(); result
 }

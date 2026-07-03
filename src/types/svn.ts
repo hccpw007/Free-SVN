@@ -12,7 +12,6 @@ export interface CachedCredential {
   realm: string
 }
 
-/** 文件状态条目（对应后端 FileItem，经过 ignore 过滤后） */
 export interface FileItem {
   path: string
   status: string
@@ -37,7 +36,6 @@ interface LockInfo {
   expires?: string
 }
 
-/** 仓库信息（对应后端 RepoInfo） */
 export interface RepoInfo {
   path: string
   url: string
@@ -56,7 +54,6 @@ export interface RepoInfo {
   branchName?: string
 }
 
-/** 差异对比结果 */
 export interface DiffResult {
   content: string
   isBinary: boolean
@@ -72,7 +69,6 @@ export interface DiffResult {
   author?: string
 }
 
-/** 操作进度信息（operation:progress 事件 payload） */
 export interface OperationProgress {
   operation: string
   percent: number
@@ -90,6 +86,8 @@ export interface OperationLine {
   operation: string
   filePath: string
   status: 'completed' | 'in_progress' | 'pending'
+  /** 是否是标记行（如管道中断提示），前端可据此判断是否展示 */
+  isMarker?: boolean
 }
 
 /** 操作取消信息（operation:cancelled 事件 payload） */
@@ -97,13 +95,11 @@ export interface CancelledPayload {
   reason: string
 }
 
-/** 操作结果 */
 export interface OperationResult {
   result: string
   detail?: string
 }
 
-/** 注解行信息 */
 export interface BlameLine {
   revision: number
   author: string
@@ -112,7 +108,6 @@ export interface BlameLine {
   content: string
 }
 
-/** 日志条目 */
 export interface LogEntry {
   revision: number
   author?: string
@@ -134,7 +129,6 @@ interface ConflictInfo {
   theirsFile?: string
 }
 
-/** 合并操作结果 */
 export interface MergeResult {
   result: 'success' | 'conflicts' | 'error'
   conflictCount: number
