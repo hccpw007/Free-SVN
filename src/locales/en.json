@@ -62,7 +62,8 @@
     "delete": "Delete"
   },
   "workspace": {
-    "openExisting": "Open Folder",
+    "openExisting": "Open Working Copy",
+    "checkoutNewRepo": "Checkout New Repo",
     "recentWorkspaces": "Recent Workspaces",
     "searchPlaceholder": "Search by file name...",
     "searchLogPlaceholder": "Search log message...",
