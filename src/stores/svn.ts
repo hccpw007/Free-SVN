@@ -48,9 +48,15 @@ export const useSvnStore = defineStore('svn', () => {
   const progress = ref<OperationProgress | null>(null)
   const isLoading = ref(false)
   const isOperationRunning = ref(false)
-  const fileLines = ref<OperationLine[]>([])  // v3 新增：文件行列表
+  const fileLines = ref<OperationLine[]>([])  // 文件行列表（IPC 通信数据）
   let initialized = false
   const unlistenFns: Array<() => void> = []
+
+  // ── 操作进行中守卫（防抖双保险：svnStore 层） ──
+  /** 检查是否有操作正在运行。供操作发起方在调用前检查，防止绕过 composable 直接调用 store */
+  function checkOperationRunning(): boolean {
+    return isOperationRunning.value
+  }
 
   // ── 认证失败→AuthDialog 联动状态 ──
   interface AuthFailedContext {
@@ -228,5 +234,6 @@ export const useSvnStore = defineStore('svn', () => {
     loadSettings, saveSettings,
     testConnection, saveCredentials, clearCredentials,
     retryAuth, cancelAuth, initEventListeners, destroyEventListeners,
+    checkOperationRunning,
   }
 })

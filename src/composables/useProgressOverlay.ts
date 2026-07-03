@@ -4,13 +4,18 @@
 import { ref, computed } from 'vue'
 import { useSvnStore } from '@/stores/svn'
 
-export function useProgressOverlay() {
+/**
+ * 进度弹窗 UI 状态管理 composable
+ * @param scrollThreshold - 自动滚动暂停检测阈值（px），默认 20
+ */
+export function useProgressOverlay(scrollThreshold = 20) {
   const svnStore = useSvnStore()
 
   // ── 弹窗本地 UI 状态 ──
 
   const isDragging = ref(false)
   const isCancelling = ref(false)  // 取消按钮 loading 状态
+  const showProgress = ref(false)  // UI-only：是否显示弹窗
   const panelPosition = ref({ x: 0, y: 0 })
   const panelOffset = ref({ x: 0, y: 0 })     // 拖拽偏移量
   const dragStartPos = ref({ x: 0, y: 0 })     // 拖拽起始鼠标位置
@@ -26,9 +31,9 @@ export function useProgressOverlay() {
   // ── 操作请求防抖 ──
   const operationRequested = ref(false)
 
-  /** 尝试请求操作（防抖，同一时刻只允许一个进度弹窗激活） */
+  /** 尝试请求操作（防抖双保险：composable 层 + svnStore 层） */
   function tryRequestOperation(): boolean {
-    if (operationRequested.value || svnStore.isOperationRunning) {
+    if (operationRequested.value || svnStore.isOperationRunning || svnStore.checkOperationRunning()) {
       return false  // 已有操作在进行中
     }
     operationRequested.value = true
@@ -81,8 +86,7 @@ export function useProgressOverlay() {
     if (!fileListRef.value) return
     const el = fileListRef.value
     // 检测用户是否已手动向上滚动浏览历史行
-    const threshold = 20
-    const isNearBottom = el.scrollTop + el.clientHeight >= el.scrollHeight - threshold
+    const isNearBottom = el.scrollTop + el.clientHeight >= el.scrollHeight - scrollThreshold
     if (isNearBottom) {
       el.scrollTop = el.scrollHeight
     }
@@ -90,7 +94,7 @@ export function useProgressOverlay() {
 
   return {
     // 读写状态
-    isDragging, isCancelling, panelPosition, panelOffset,
+    isDragging, isCancelling, showProgress, scrollThreshold, panelPosition, panelOffset,
     dragStartPos, dragStartOffset, fileListRef,
     // 只读计算状态
     isVisible, progress, fileLines,
