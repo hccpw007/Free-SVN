@@ -23,8 +23,10 @@ export const useWorkspaceStore = defineStore('workspace', () => {
   const isLoading = ref(false)
   // 当前路径是否为有效 SVN 工作副本（switchWorkspace 时自动检测）
   const isWorkingCopy = ref(savedWC)
-  // TopBar 触发检出弹窗的信号（HomePage/WelcomePage watch 消费后重置）
+  // TopBar 触发检出弹窗的信号（App.vue watch 消费后重置）
   const showCheckoutDialog = ref(false)
+  // 检出的预填路径（由 TopBar 非工作副本时设置）
+  const checkoutInitialPath = ref('')
 
   function reset() {
     url.value = ''
@@ -92,7 +94,7 @@ export const useWorkspaceStore = defineStore('workspace', () => {
   return {
     currentPath, recentWorkspaces, url, sourceUrl, branchName, currentRevision,
     lastCommitTime, svnVersion, isOffline, isLoading,
-    isWorkingCopy, showCheckoutDialog,
+    isWorkingCopy, showCheckoutDialog, checkoutInitialPath,
     reset, switchWorkspace, addRecent, removeRecent,
   }
 })

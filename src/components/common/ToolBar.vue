@@ -106,11 +106,6 @@ const buttons = computed<ToolbarButton[]>(() => [
 
 const btnDisabled = computed(() => wpUnavailable.value || globallyDisabled.value)
 
-// 非工作副本 → 触发检出弹窗
-function handleCheckout() {
-  workspaceStore.showCheckoutDialog = true
-}
-
 const visibleButtons = computed(() => {
   const count = Math.max(1, buttons.value.length - overflowCount.value)
   return buttons.value.slice(0, count)
@@ -134,18 +129,20 @@ onUnmounted(() => {
 <template>
   <div ref="toolbarRef" class="h-10 px-3 flex items-center bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
     <div class="flex items-center gap-1 flex-1 overflow-hidden">
-      <!-- 非工作副本（但当前路径存在）时：只显示检出按钮 -->
-      <template v-if="workspaceStore.currentPath && !workspaceStore.isWorkingCopy">
-        <button
-          class="inline-flex items-center gap-1 px-2.5 py-1 text-xs rounded-md whitespace-nowrap focus:ring-2 focus:ring-offset-2 focus:ring-blue-400 focus:outline-none text-orange-600 dark:text-orange-400 hover:bg-orange-50 dark:hover:bg-orange-900/20"
-          :aria-label="t('toolbar.checkout')"
-          @click="handleCheckout"
-        >
-          <Download class="w-4 h-4" /><span>{{ t('toolbar.checkout') }}</span>
-        </button>
-      </template>
+      <!-- 检出按钮始终可见（仅操作进行中时禁用） -->
+      <button
+        class="inline-flex items-center gap-1 px-2.5 py-1 text-xs rounded-md whitespace-nowrap focus:ring-2 focus:ring-offset-2 focus:ring-blue-400 focus:outline-none"
+        :class="globallyDisabled
+          ? 'opacity-50 cursor-not-allowed text-slate-400 dark:text-slate-500'
+          : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-green-600 dark:hover:text-green-400'"
+        :disabled="globallyDisabled"
+        :aria-label="t('toolbar.checkout')"
+        @click="workspaceStore.showCheckoutDialog = true"
+      >
+        <Download class="w-4 h-4" /><span>{{ t('toolbar.checkout') }}</span>
+      </button>
 
-      <!-- 工作副本时：隐藏检出，显示所有操作按钮 -->
+      <!-- 工作副本时：显示所有操作按钮 -->
       <template v-if="workspaceStore.isWorkingCopy">
         <template v-for="btn in visibleButtons" :key="btn.key">
           <el-tooltip

@@ -2,27 +2,15 @@
 import { useRouter } from 'vue-router'
 import { useWorkspaceStore } from '@/stores/workspace'
 import { useI18n } from 'vue-i18n'
-import { ref, watch } from 'vue'
 import { open } from '@tauri-apps/plugin-dialog'
 import { X } from 'lucide-vue-next'
-import CheckoutDialog from '@/components/dialogs/CheckoutDialog.vue'
 
 const router = useRouter()
 const { t } = useI18n()
 const workspaceStore = useWorkspaceStore()
 
-const showCheckoutDialog = ref(false)
-
-// 监听 workspaceStore.showCheckoutDialog（由外部触发检出弹窗）
-watch(() => workspaceStore.showCheckoutDialog, (val) => {
-  if (val) {
-    showCheckoutDialog.value = true
-    workspaceStore.showCheckoutDialog = false // 消费后重置
-  }
-})
-
 function handleCheckout() {
-  showCheckoutDialog.value = true
+  workspaceStore.showCheckoutDialog = true
 }
 
 async function handleOpenWorkspace() {
@@ -92,7 +80,4 @@ async function handleRecentWorkspaceClick(wp: string) {
       </div>
     </div>
   </div>
-
-  <!-- 检出对话框 -->
-  <CheckoutDialog v-if="showCheckoutDialog" :initialPath="workspaceStore.currentPath" @close="showCheckoutDialog = false" />
 </template>

@@ -5,14 +5,17 @@ import { useRouter, useRoute, RouterView } from 'vue-router'
 import { listen } from '@tauri-apps/api/event'
 import { useSettingsStore } from '@/stores/settings'
 import { useSvnStore } from '@/stores/svn'
+import { useWorkspaceStore } from '@/stores/workspace'
 import { useKeyboardShortcuts, setOperationRunning } from '@/composables/useKeyboardShortcuts'
 import { useFileListStore } from '@/stores/fileList'
 import AuthDialog from '@/components/dialogs/AuthDialog.vue'
 import CommitDialog from '@/components/dialogs/CommitDialog.vue'
+import CheckoutDialog from '@/components/dialogs/CheckoutDialog.vue'
 
 const { locale, t } = useI18n()
 const settingsStore = useSettingsStore()
 const svnStore = useSvnStore()
+const workspaceStore = useWorkspaceStore()
 const router = useRouter()
 const route = useRoute()
 const fileListStore = useFileListStore()
@@ -205,4 +208,9 @@ onMounted(async () => {
     @success="showAuthDialog = false"
   />
   <CommitDialog v-if="showCommitDialog" @close="showCommitDialog = false" />
+  <CheckoutDialog
+    v-if="workspaceStore.showCheckoutDialog"
+    :initialPath="workspaceStore.checkoutInitialPath"
+    @close="workspaceStore.showCheckoutDialog = false; workspaceStore.checkoutInitialPath = ''"
+  />
 </template>

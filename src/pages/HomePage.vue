@@ -11,7 +11,6 @@ import { RefreshCw, CheckCircle, Search, GitCommit, RotateCcw } from 'lucide-vue
 import { exists } from '@tauri-apps/plugin-fs'
 import { getInfo as fetchInfo } from '@/services/svn'
 import FileListTable from '@/components/svn/FileListTable.vue'
-import CheckoutDialog from '@/components/dialogs/CheckoutDialog.vue'
 import UpdateRevisionDialog from '@/components/dialogs/UpdateRevisionDialog.vue'
 import SwitchDialog from '@/components/dialogs/SwitchDialog.vue'
 
@@ -38,7 +37,6 @@ const selectedCommitCount = computed(() =>
   fileListStore.files.filter(f => fileListStore.selectedPaths.has(f.path)).length
 )
 
-const showCheckoutDialog = ref(false)
 const showUpdateRevisionDialog = ref(false)
 const showSwitchDialog = ref(false)
 
@@ -95,14 +93,6 @@ watch(() => svnStore.showUpdateRevisionDialog, (val) => {
   if (val) svnStore.showUpdateRevisionDialog = false // 消费后重置
 })
 
-// 监听 workspaceStore.showCheckoutDialog（由 ToolBar 非工作副本"检出"按钮触发）
-watch(() => workspaceStore.showCheckoutDialog, (val) => {
-  if (val) {
-    showCheckoutDialog.value = true
-    workspaceStore.showCheckoutDialog = false // 消费后重置
-  }
-})
-
 // 切换工作副本后自动刷新 workspace 信息（isWorkingCopy 由 workspaceStore.switchWorkspace 负责检测）
 async function refreshWorkspaceInfo() {
   if (!workspaceStore.currentPath) return
@@ -120,8 +110,6 @@ async function refreshWorkspaceInfo() {
 </script>
 
 <template>
-  <!-- 检出对话框（由 ToolBar 非工作副本按钮触发） -->
-  <CheckoutDialog v-if="showCheckoutDialog" :initialPath="workspaceStore.currentPath" @close="showCheckoutDialog = false" />
   <!-- 更新到版本对话框（由右键菜单 --svn-cmd update-rev 触发） -->
   <UpdateRevisionDialog v-if="showUpdateRevisionDialog" @close="showUpdateRevisionDialog = false" />
   <!-- 切换分支对话框 -->
