@@ -23,8 +23,10 @@ const btn = (labelKey: string, cls: string, action: string) => ({
 })
 </script>
 
+<!-- 文件操作按钮组 -->
 <template>
   <div class="flex items-center gap-2">
+    <!-- 按文件状态动态生成对应的操作按钮 -->
     <button
       v-for="b in (
         isOp('modified') ? [btn('file.diff','text-blue-600 dark:text-blue-400','diff'),btn('file.revert','text-amber-600 dark:text-amber-400','revert')] :

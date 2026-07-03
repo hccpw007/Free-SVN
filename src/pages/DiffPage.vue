@@ -3,7 +3,9 @@
 import DiffViewer from '@/components/svn/DiffViewer.vue'
 </script>
 
+<!-- diff 页面包装层 -->
 <template>
+  <!-- 差异对比渲染容器 -->
   <div class="h-full w-full">
     <DiffViewer />
   </div>

@@ -19,6 +19,7 @@ async function copyRev() {
 </script>
 
 <template>
+  <!-- 状态栏 -->
   <div class="h-7 px-4 flex items-center justify-between bg-slate-100 dark:bg-slate-800/50 border-t border-slate-200 dark:border-slate-700 text-xs">
     <span
       class="text-slate-500 dark:text-slate-400 font-mono cursor-pointer hover:text-green-600 transition-colors duration-150"

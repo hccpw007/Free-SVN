@@ -95,9 +95,10 @@ onMounted(loadCachedCredentials)
 </script>
 
 <template>
+  <!-- 账号管理设置 -->
   <div class="max-w-2xl">
     <div>
-        <!-- 标题栏与添加按钮 -->
+      <!-- 标题栏与添加按钮 -->
       <div class="flex items-center justify-between mb-4">
         <h3 class="text-base font-medium text-slate-800 dark:text-slate-200">{{ t('settings.account') }}</h3>
         <el-button size="small" type="primary" class="focus:ring-2 focus:ring-offset-2 focus:ring-blue-400 focus:outline-none" @click="openAddDialog">
