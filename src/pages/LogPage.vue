@@ -1,4 +1,5 @@
 <script setup lang="ts">
+/** 版本历史页面——日志列表 + 搜索/分页/展开详情。 */
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useSvnStore } from '@/stores/svn'

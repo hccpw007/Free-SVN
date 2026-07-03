@@ -1,4 +1,5 @@
 <script setup lang="ts">
+/** 文件列表表格——变更文件列表、右键菜单、状态标签、排序/筛选。 */
 import { ref } from 'vue'
 import { useFileListStore } from '@/stores/fileList'
 import { useI18n } from 'vue-i18n'

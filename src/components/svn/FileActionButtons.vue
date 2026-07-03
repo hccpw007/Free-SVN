@@ -1,4 +1,5 @@
 <script setup lang="ts">
+/** 文件操作按钮组——按文件状态显示对应的可操作按钮组合。 */
 import { computed } from 'vue'
 import { useFileListStore } from '@/stores/fileList'
 import { useI18n } from 'vue-i18n'

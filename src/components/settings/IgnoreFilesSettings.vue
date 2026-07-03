@@ -1,4 +1,5 @@
 <script setup lang="ts">
+/** 忽略文件设置——全局忽略模式编辑框。 */
 import { useI18n } from 'vue-i18n'
 
 const { t } = useI18n()

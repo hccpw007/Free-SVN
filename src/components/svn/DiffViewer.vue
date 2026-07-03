@@ -1,4 +1,5 @@
 <script setup lang="ts">
+/** 差异查看器——基于 diff2html 渲染的内置差异对比面板，含搜索/导航/拖拽。 */
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useFileListStore } from '@/stores/fileList'

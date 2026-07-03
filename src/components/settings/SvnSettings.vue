@@ -1,4 +1,5 @@
 <script setup lang="ts">
+/** SVN 设置——默认检出目录、差异/合并工具选择。 */
 import { useI18n } from 'vue-i18n'
 import { open } from '@tauri-apps/plugin-dialog'
 import { computed } from 'vue'

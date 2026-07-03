@@ -3,6 +3,7 @@ use crate::models::error::AppError;
 use crate::svn;
 use super::checkout::is_valid_svn_url;
 
+/// 仓库重定位参数
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct RelocateParams {

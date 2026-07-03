@@ -3,6 +3,8 @@ import { ref } from 'vue'
 import { MAX_RECENT_WORKSPACES } from '@/types/workspace'
 import { getInfo } from '@/services/svn'
 
+/** 工作空间 Store——当前路径/仓库信息/最近工作副本管理 */
+
 const STORAGE_KEY_PATH = 'free-svn:currentPath'
 const STORAGE_KEY_WC = 'free-svn:isWorkingCopy'
 

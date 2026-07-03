@@ -1,4 +1,5 @@
 <script setup lang="ts">
+/** 更新到版本对话框——选择目标版本号和深度。 */
 import { ref } from 'vue'
 import { useSvnStore } from '@/stores/svn'
 import { useWorkspaceStore } from '@/stores/workspace'

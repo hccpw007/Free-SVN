@@ -1,4 +1,5 @@
 <script setup lang="ts">
+/** 账号管理设置——缓存的 SVN 凭据列表管理与增删改。 */
 import { ref, reactive, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { ElMessage, ElMessageBox } from 'element-plus'

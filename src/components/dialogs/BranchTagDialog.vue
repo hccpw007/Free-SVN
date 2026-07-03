@@ -1,4 +1,5 @@
 <script setup lang="ts">
+/** 创建分支/标签对话框——指定源/目标 URL 和提交信息。 */
 import { ref, computed } from 'vue'
 import { useWorkspaceStore } from '@/stores/workspace'
 import { useSvnStore } from '@/stores/svn'

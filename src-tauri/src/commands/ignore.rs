@@ -2,6 +2,7 @@ use serde::Deserialize;
 use crate::models::error::AppError;
 use crate::svn;
 
+/// 忽略规则参数
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct IgnoreParams {

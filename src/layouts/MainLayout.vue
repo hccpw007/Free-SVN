@@ -1,4 +1,5 @@
 <script setup lang="ts">
+/** 主布局组件——TopBar + 可选 ToolBar/StatusBar + RouterView + ProgressPanel。 */
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { useAutoRefresh } from '@/composables/useAutoRefresh'

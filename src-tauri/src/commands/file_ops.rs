@@ -11,6 +11,7 @@ fn get_cwd(path: &str) -> String {
         .unwrap_or_else(|| path.to_string())
 }
 
+/// 文件操作参数（add/delete/revert）
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct FileOpsParams {
@@ -18,6 +19,7 @@ pub struct FileOpsParams {
     pub keep_local: Option<bool>,
 }
 
+/// 冲突解决参数
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ResolveParams {

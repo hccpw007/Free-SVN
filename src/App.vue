@@ -1,4 +1,5 @@
 <script setup lang="ts">
+/** 应用根组件——全局弹窗管理（认证、提交、检出）及 Shell 命令监听。 */
 import { ref, onMounted, watch, provide } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter, useRoute, RouterView } from 'vue-router'

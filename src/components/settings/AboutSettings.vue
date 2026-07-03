@@ -1,4 +1,5 @@
 <script setup lang="ts">
+/** 关于设置——版本信息、安全提示、日志导出。 */
 import { useI18n } from 'vue-i18n'
 
 defineProps<{

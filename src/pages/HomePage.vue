@@ -1,4 +1,5 @@
 <script setup lang="ts">
+/** 工作副本主页——变更列表视图、筛选/搜索、空状态/刷新逻辑。 */
 import { useRouter } from 'vue-router'
 import { useWorkspaceStore } from '@/stores/workspace'
 import { useFileListStore } from '@/stores/fileList'

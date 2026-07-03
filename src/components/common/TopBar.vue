@@ -1,4 +1,5 @@
 <script setup lang="ts">
+/** 顶栏组件——工作副本路径显示、分支名徽章、暗色模式切换、设置入口。 */
 import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { GitBranch, Moon, Sun, Settings } from 'lucide-vue-next'

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+/** 操作文件行——进度面板中单行文件的图标/状态/路径展示。 */
 import { Check, Loader, MoveRight } from 'lucide-vue-next'
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+/** 状态栏组件——当前版本号、最后提交时间、SVN 版本。 */
 import { computed } from 'vue'
 import { useWorkspaceStore } from '@/stores/workspace'
 import { useI18n } from 'vue-i18n'

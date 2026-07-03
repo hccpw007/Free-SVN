@@ -5,6 +5,7 @@ use crate::svn::types::OperationResult;
 use tauri::AppHandle;
 use tauri::Emitter;
 
+/// 切换分支参数
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct SwitchParams {
@@ -14,6 +15,7 @@ pub struct SwitchParams {
     pub credentials: Option<crate::svn::types::SvnCredentials>,
 }
 
+/// 复制分支/标签参数
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CopyParams {
@@ -24,6 +26,7 @@ pub struct CopyParams {
     pub credentials: Option<crate::svn::types::SvnCredentials>,
 }
 
+/// 合并分支参数
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct MergeParams {

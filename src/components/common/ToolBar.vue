@@ -1,4 +1,5 @@
 <script setup lang="ts">
+/** 工具栏组件——SVN 操作按钮（diff/update/log/switch/merge 等）。 */
 import { ref, computed, onMounted, onUnmounted, type Component } from 'vue'
 import { useRouter } from 'vue-router'
 import {

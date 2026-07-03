@@ -1,4 +1,5 @@
 <script setup lang="ts">
+/** 切换分支对话框——选择/输入目标分支 URL 执行切换。 */
 import { ref, onMounted } from 'vue'
 import { listBranches } from '@/services/svn'
 import { useWorkspaceStore } from '@/stores/workspace'

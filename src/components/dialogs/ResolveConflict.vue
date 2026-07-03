@@ -1,4 +1,5 @@
 <script setup lang="ts">
+/** 冲突解决对话框——选择冲突文件和执行解决策略。 */
 import { ref, computed } from 'vue'
 import { useFileListStore } from '@/stores/fileList'
 import { useSvnStore } from '@/stores/svn'

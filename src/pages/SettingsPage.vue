@@ -1,4 +1,5 @@
 <script setup lang="ts">
+/** 设置页——Tab 式设置面板（SVN/忽略/语言/通用/账号/关于）。 */
 import { ref, reactive, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useSettingsStore } from '@/stores/settings'

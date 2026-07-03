@@ -1,4 +1,5 @@
 <script setup lang="ts">
+/** 通用设置——开机自启动开关。 */
 import { useI18n } from 'vue-i18n'
 
 const { t } = useI18n()

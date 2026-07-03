@@ -1,4 +1,5 @@
 <script setup lang="ts">
+/** 忽略规则对话框——文件/扩展名/目录/自定义四种忽略模式。 */
 import { ref, computed } from 'vue'
 import { useFileListStore } from '@/stores/fileList'
 import { useSvnStore } from '@/stores/svn'

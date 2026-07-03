@@ -1,4 +1,5 @@
 <script setup lang="ts">
+/** 通用确认对话框——可配置标题/消息/文件列表/危险级别。 */
 import { useI18n } from 'vue-i18n'
 
 interface Props {

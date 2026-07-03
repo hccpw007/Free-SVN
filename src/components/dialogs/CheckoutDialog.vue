@@ -1,4 +1,5 @@
 <script setup lang="ts">
+/** 检出对话框——SVN 仓库检出参数配置，含认证区域。 */
 import { ref, reactive, computed, nextTick } from 'vue'
 import { useSvnStore } from '@/stores/svn'
 import { useWorkspaceStore } from '@/stores/workspace'

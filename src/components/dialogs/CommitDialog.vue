@@ -1,4 +1,5 @@
 <script setup lang="ts">
+/** 提交对话框——提交信息录入、自动 add/missing 预处理。 */
 import { ref } from 'vue'
 import { useFileListStore } from '@/stores/fileList'
 import { useWorkspaceStore } from '@/stores/workspace'

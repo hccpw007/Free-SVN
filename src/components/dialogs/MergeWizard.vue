@@ -1,4 +1,5 @@
 <script setup lang="ts">
+/** 合并向导——四步式合并流程（来源→版本→选项→执行）。 */
 import { ref, computed } from 'vue'
 import { useWorkspaceStore } from '@/stores/workspace'
 import { useSvnStore } from '@/stores/svn'

@@ -2,6 +2,7 @@ use serde::Deserialize;
 use crate::models::error::AppError;
 use crate::svn;
 
+/// 锁定/解锁操作参数
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct LockParams {

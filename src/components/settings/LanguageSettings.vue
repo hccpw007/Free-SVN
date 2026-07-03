@@ -1,4 +1,5 @@
 <script setup lang="ts">
+/** 语言设置——界面语言选择器。 */
 import { useI18n } from 'vue-i18n'
 
 const { t } = useI18n()

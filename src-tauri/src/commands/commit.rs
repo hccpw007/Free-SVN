@@ -3,6 +3,7 @@ use crate::models::error::AppError;
 use crate::svn;
 use crate::svn::types::OperationResult;
 
+/// 提交操作参数
 /// 提交参数（v5 新增 credentials）
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]

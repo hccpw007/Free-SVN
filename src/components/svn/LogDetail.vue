@@ -1,4 +1,5 @@
 <script setup lang="ts">
+/** 日志详情——展开日志条目展示作者/日期/变更文件列表。 */
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 

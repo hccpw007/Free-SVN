@@ -1,4 +1,5 @@
 <script setup lang="ts">
+/** 进度面板——全屏进度弹窗（进度条+取消按钮+错误提示）。 */
 import { ref, computed } from 'vue'
 import { ElMessage } from 'element-plus'
 import { useSvnStore } from '@/stores/svn'

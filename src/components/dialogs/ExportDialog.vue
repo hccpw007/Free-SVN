@@ -1,4 +1,5 @@
 <script setup lang="ts">
+/** 导出对话框——导出干净副本到指定目录。 */
 import { ref, computed } from 'vue'
 import { useSvnStore } from '@/stores/svn'
 import { useWorkspaceStore } from '@/stores/workspace'

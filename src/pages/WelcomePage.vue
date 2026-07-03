@@ -1,4 +1,5 @@
 <script setup lang="ts">
+/** 欢迎页——检出新仓库 / 打开已有工作副本 / 最近工作副本列表。 */
 import { useRouter } from 'vue-router'
 import { useWorkspaceStore } from '@/stores/workspace'
 import { useI18n } from 'vue-i18n'

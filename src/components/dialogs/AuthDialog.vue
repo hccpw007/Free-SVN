@@ -1,4 +1,5 @@
 <script setup lang="ts">
+/** 认证对话框——认证失败时弹出，支持用户名/密码输入和重试。 */
 import { ref, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { Eye, EyeOff, CheckCircle, XCircle } from 'lucide-vue-next'
