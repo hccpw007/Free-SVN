@@ -31,6 +31,7 @@ async function browseDir() {
 </script>
 
 <template>
+  <!-- SVN 设置 -->
   <div class="max-w-xl">
     <div class="space-y-6">
       <!-- 默认检出目录 -->
@@ -42,6 +43,7 @@ async function browseDir() {
         </div>
       </div>
 
+      <!-- 分区线 -->
       <el-divider />
 
       <!-- 差异/合并工具 -->
