@@ -102,6 +102,19 @@
     "operationInProgress": "Operation in Progress",
     "processing": "Processing...",
     "filesProcessed": "{count} files processed",
-    "cancelling": "Cancelling..."
+    "cancelling": "Cancelling...",
+    "cancelConfirmed": "操作がキャンセルされました",
+    "connecting": "サーバーに接続中...",
+    "completed": "操作が完了しました",
+    "error": "操作に失敗しました",
+    "autoClose": "完了時に自動で閉じます",
+    "downloadSpeed": "速度",
+    "completedCount": "完了",
+    "pendingCount": "保留中",
+    "elapsed": "経過時間",
+    "pendingEstimate": "~{count} 保留中",
+    "fileLineCompleted": "完了",
+    "fileLineInProgress": "処理中",
+    "fileLinePending": "待機中"
   }
 }

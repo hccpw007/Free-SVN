@@ -81,6 +81,18 @@ export interface OperationProgress {
   currentLines: string[]
 }
 
+/** 单行文件操作信息（operation:line 事件 payload） */
+export interface OperationLine {
+  operation: string
+  filePath: string
+  status: 'completed' | 'in_progress' | 'pending'
+}
+
+/** 操作取消信息（operation:cancelled 事件 payload） */
+export interface CancelledPayload {
+  reason: string
+}
+
 export interface OperationResult {
   result: string
   detail?: string

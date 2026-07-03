@@ -102,6 +102,19 @@
     "operationInProgress": "Operation in Progress",
     "processing": "Processing...",
     "filesProcessed": "{count} files processed",
-    "cancelling": "Cancelling..."
+    "cancelling": "Cancelling...",
+    "cancelConfirmed": "작업이 취소되었습니다",
+    "connecting": "서버에 연결 중...",
+    "completed": "작업이 완료되었습니다",
+    "error": "작업에 실패했습니다",
+    "autoClose": "완료 시 자동으로 닫힙니다",
+    "downloadSpeed": "속도",
+    "completedCount": "완료",
+    "pendingCount": "대기 중",
+    "elapsed": "경과 시간",
+    "pendingEstimate": "~{count} 대기 중",
+    "fileLineCompleted": "완료",
+    "fileLineInProgress": "처리 중",
+    "fileLinePending": "대기 중"
   }
 }

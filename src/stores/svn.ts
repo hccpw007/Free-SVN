@@ -3,7 +3,8 @@ import { ref } from 'vue'
 import { listen } from '@tauri-apps/api/event'
 import { getErrorMessage } from '@/types/error-codes'
 import type {
-  FileItem, RepoInfo, DiffResult, OperationProgress,
+  FileItem, RepoInfo, DiffResult, OperationProgress, OperationLine,
+  CancelledPayload, OperationResult,
   BlameLine, LogEntry, SvnCredentials,
 } from '@/types/svn'
 import type { AppSettings } from '@/types/settings'
@@ -47,6 +48,7 @@ export const useSvnStore = defineStore('svn', () => {
   const progress = ref<OperationProgress | null>(null)
   const isLoading = ref(false)
   const isOperationRunning = ref(false)
+  const fileLines = ref<OperationLine[]>([])  // v3 新增：文件行列表
   let initialized = false
   const unlistenFns: Array<() => void> = []
 
@@ -91,14 +93,25 @@ export const useSvnStore = defineStore('svn', () => {
       listen<OperationProgress>('operation:progress', e => { progress.value = e.payload }),
       listen('operation:started', () => {
         isOperationRunning.value = true
+        fileLines.value = []
         useFileListStore().isOperationRunning = true
       }),
-      listen('operation:completed', () => {
+      listen<OperationLine>('operation:line', e => {
+        // v3 新增：operation:line 事件，携带单行文件信息
+        fileLines.value.push(e.payload)
+      }),
+      listen<CancelledPayload>('operation:cancelled', () => {
+        // v3 新增：operation:cancelled 事件，替代 operation:completed + result:"cancelled"
+        isOperationRunning.value = false; progress.value = null
+        useFileListStore().isOperationRunning = false
+      }),
+      listen<OperationResult>('operation:completed', () => {
         isOperationRunning.value = false; progress.value = null
         useFileListStore().isOperationRunning = false
       }),
       listen('operation:error', () => {
         isOperationRunning.value = false; progress.value = null
+        fileLines.value = []
         useFileListStore().isOperationRunning = false
       }),
     ]).then(fns => { unlistenFns.push(...fns) })
@@ -205,7 +218,7 @@ export const useSvnStore = defineStore('svn', () => {
   async function clearCredentials(url: string) { return call(() => servicesClearCredentials(url), 'clear_credentials', { url }) }
 
   return {
-    progress, isLoading, isOperationRunning, authFailed, authContext, showUpdateRevisionDialog,
+    progress, isLoading, isOperationRunning, fileLines, authFailed, authContext, showUpdateRevisionDialog,
     getStatus, getInfo, getDiff, getLog, getBlame,
     checkoutRepo, updateWorkspace, commit, addFiles, deleteFiles, revertFiles,
     resolveConflict, setIgnore,

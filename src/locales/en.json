@@ -257,7 +257,10 @@
     "completedCount": "Completed",
     "pendingCount": "Pending",
     "elapsed": "Elapsed",
-    "pendingEstimate": "~{count} pending"
+    "pendingEstimate": "~{count} pending",
+    "fileLineCompleted": "Completed",
+    "fileLineInProgress": "In Progress",
+    "fileLinePending": "Pending"
   },
   "dialog": {
     "checkout": "Checkout Repository",

@@ -33,10 +33,9 @@ pub async fn cancel_operation(
     // 6. 释放写操作锁
     state.unlock();
 
-    // 7. 通知前端
-    app_handle.emit("operation:completed", serde_json::json!({
-        "result": "cancelled",
-        "detail": "operation cancelled"
+    // 7. 通知前端（使用 operation:cancelled 事件替代 operation:completed + result:"cancelled"）
+    app_handle.emit("operation:cancelled", serde_json::json!({
+        "reason": "operation cancelled by user"
     })).ok();
 
     log::info!("operation cancelled");

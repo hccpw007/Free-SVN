@@ -15,6 +15,22 @@ pub struct OperationProgress {
     pub current_lines: Vec<String>,
 }
 
+/// 单行文件操作信息（通过 operation:line 事件推送）
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct OperationLine {
+    pub operation: String,
+    pub file_path: String,
+    /// "completed" | "in_progress" | "pending"
+    pub status: String,
+}
+
+/// 操作取消信息（通过 operation:cancelled 事件推送）
+#[derive(Debug, Clone, Serialize)]
+pub struct CancelledPayload {
+    pub reason: String,
+}
+
 /// 长操作完成结果
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct OperationResult {
