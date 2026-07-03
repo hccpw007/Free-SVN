@@ -1,7 +1,7 @@
 use serde::Deserialize;
 use crate::models::error::AppError;
 use crate::svn;
-use crate::svn::parser::{BlameLine, LogEntry};
+use crate::svn::parser_extra::{BlameLine, LogEntry};
 
 /// 日志查询参数
 #[derive(Debug, Deserialize)]
@@ -58,7 +58,7 @@ pub async fn get_log(params: LogParams) -> Result<Vec<LogEntry>, AppError> {
     )
     .await?;
 
-    svn::parser::parse_log(&xml)
+    svn::parser_extra::parse_log(&xml)
 }
 
 /// 获取文件注解（大文件单独超时 120s）
@@ -80,7 +80,7 @@ pub async fn get_blame(params: BlameParams) -> Result<Vec<BlameLine>, AppError> 
     )
     .await?;
 
-    svn::parser::parse_blame(&xml)
+    svn::parser_extra::parse_blame(&xml)
 }
 
 #[cfg(test)]

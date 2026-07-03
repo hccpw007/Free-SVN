@@ -57,7 +57,7 @@ pub async fn get_diff(params: DiffParams) -> Result<DiffResult, AppError> {
     )
     .await?;
 
-    let content = svn::parser::parse_diff(&diff_text)?;
+    let content = svn::parser_extra::parse_diff(&diff_text)?;
     Ok(DiffResult { content, is_binary: false, mime_type: None })
 }
 
