@@ -2,8 +2,10 @@
 import { useRouter } from 'vue-router'
 import { useWorkspaceStore } from '@/stores/workspace'
 import { useI18n } from 'vue-i18n'
+import { watch } from 'vue'
 import { open } from '@tauri-apps/plugin-dialog'
 import { X } from 'lucide-vue-next'
+import { getInfo } from '@/services/svn'
 
 const router = useRouter()
 const { t } = useI18n()
@@ -13,12 +15,27 @@ function handleCheckout() {
   workspaceStore.showCheckoutDialog = true
 }
 
+// 检出成功后自动导航到工作区
+watch(() => workspaceStore.isWorkingCopy, (isWc) => {
+  if (isWc) {
+    router.replace('/workspace')
+  }
+})
+
 async function handleOpenWorkspace() {
   try {
     const selected = await open({ directory: true })
     if (selected && typeof selected === 'string') {
-      await workspaceStore.switchWorkspace(selected)
-      await router.push('/workspace')
+      // 先检测是否为 SVN 工作副本
+      try {
+        await getInfo(selected)
+        // 是工作副本 → 切换并进入工作区
+        await workspaceStore.switchWorkspace(selected)
+      } catch {
+        // 非工作副本 → 弹出检出对话框（路径预填），检出成功后自动进入工作区
+        workspaceStore.checkoutInitialPath = selected
+        workspaceStore.showCheckoutDialog = true
+      }
     }
   } catch (e: unknown) {
     console.warn('[WelcomePage] 打开工作副本失败:', e)
@@ -26,8 +43,14 @@ async function handleOpenWorkspace() {
 }
 
 async function handleRecentWorkspaceClick(wp: string) {
-  await workspaceStore.switchWorkspace(wp)
-  await router.push('/workspace')
+  try {
+    await getInfo(wp)
+    // 依然有效的工作副本 → 直接进入
+    await workspaceStore.switchWorkspace(wp)
+  } catch {
+    // 路径已失效（删除、权限变更等）→ 移除出最近列表
+    workspaceStore.removeRecent(wp)
+  }
 }
 </script>
 
