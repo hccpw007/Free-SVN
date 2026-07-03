@@ -6,6 +6,7 @@ import { useRouter, useRoute, RouterView } from 'vue-router'
 import { listen } from '@tauri-apps/api/event'
 import { useSettingsStore } from '@/stores/settings'
 import { useSvnStore } from '@/stores/svn'
+import { useSvnEventsStore } from '@/stores/svnEvents'
 import { useWorkspaceStore } from '@/stores/workspace'
 import { useKeyboardShortcuts, setOperationRunning } from '@/composables/useKeyboardShortcuts'
 import { useFileListStore } from '@/stores/fileList'
@@ -16,6 +17,7 @@ import CheckoutDialog from '@/components/dialogs/CheckoutDialog.vue'
 const { locale, t } = useI18n()
 const settingsStore = useSettingsStore()
 const svnStore = useSvnStore()
+const svnEventsStore = useSvnEventsStore()
 const workspaceStore = useWorkspaceStore()
 const router = useRouter()
 const route = useRoute()
@@ -28,14 +30,14 @@ provide('openCommitDialog', () => { showCommitDialog.value = true })
 // ── 认证失败→AuthDialog 自动弹窗 ──
 const showAuthDialog = ref(false)
 
-watch(() => svnStore.authFailed, (val) => {
+watch(() => svnEventsStore.authFailed, (val) => {
   showAuthDialog.value = val
 })
 
 async function handleAuthRetry(username: string, password: string, saveToCache: boolean): Promise<boolean> {
   // 在 retryAuth 清除 authContext 前捕获上下文
-  const ctx = svnStore.authContext
-  const ok = await svnStore.retryAuth(username, password, saveToCache)
+  const ctx = svnEventsStore.authContext
+  const ok = await svnEventsStore.retryAuth(username, password, saveToCache)
   if (ok) {
     showAuthDialog.value = false
     // 重试成功且为检出操作 → 切换到工作区（同时会关闭 CheckoutDialog）
@@ -50,7 +52,7 @@ async function handleAuthRetry(username: string, password: string, saveToCache: 
 
 function handleAuthClose() {
   showAuthDialog.value = false
-  svnStore.cancelAuth()
+  svnEventsStore.cancelAuth()
 }
 
 /** 根据 settings.language 字段设置 vue-i18n locale，支持 'system' 自动检测 */
@@ -111,7 +113,7 @@ async function handleShellCommand(command: string, files: string[]) {
       case 'checkout':
       case 'export':
       case 'update-rev':
-        svnStore.showUpdateRevisionDialog = true
+        svnEventsStore.showUpdateRevisionDialog = true
         break
     }
     return
@@ -205,7 +207,7 @@ onMounted(async () => {
   <!-- 认证失败时弹出 -->
   <AuthDialog
     v-if="showAuthDialog"
-    :repo-url="svnStore.authContext?.args?.url as string || ''"
+    :repo-url="svnEventsStore.authContext?.args?.url as string || ''"
     :on-retry="handleAuthRetry"
     @close="handleAuthClose"
     @success="showAuthDialog = false"

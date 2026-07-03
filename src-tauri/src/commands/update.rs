@@ -50,7 +50,7 @@ pub async fn update_workspace(
     }
     args.push(params.path.clone());
 
-    let result = svn::executor::run_svn_with_progress(
+    let result = svn::progress::run_svn_with_progress(
         &args.iter().map(String::as_str).collect::<Vec<&str>>(),
         &params.path,
         params.credentials.as_ref(),

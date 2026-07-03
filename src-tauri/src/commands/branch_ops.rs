@@ -56,7 +56,7 @@ pub async fn switch_branch(
     }
     args.push(params.path.clone());
 
-    let result = svn::executor::run_svn_with_progress(
+    let result = svn::progress::run_svn_with_progress(
         &args.iter().map(String::as_str).collect::<Vec<&str>>(),
         &params.path,
         params.credentials.as_ref(),
@@ -89,7 +89,7 @@ pub async fn copy_branch_tag(
         args.push("-r".to_string()); args.push(rev.to_string());
     }
 
-    let result = svn::executor::run_svn_with_progress(
+    let result = svn::progress::run_svn_with_progress(
         &args.iter().map(String::as_str).collect::<Vec<&str>>(), ".",
         params.credentials.as_ref(),
         app_handle,
@@ -120,7 +120,7 @@ pub async fn merge_branch(
     args.push(params.src_url.clone());
     args.push(params.target_path.clone());
 
-    let result = svn::executor::run_svn_with_progress(
+    let result = svn::progress::run_svn_with_progress(
         &args.iter().map(String::as_str).collect::<Vec<&str>>(),
         &params.target_path,
         params.credentials.as_ref(),

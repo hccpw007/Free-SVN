@@ -2,5 +2,6 @@
 
 pub mod executor;
 pub mod parser;
+pub mod progress;
 pub mod queue;
 pub mod types;

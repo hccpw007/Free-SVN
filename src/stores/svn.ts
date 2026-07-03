@@ -1,14 +1,12 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
-import { listen } from '@tauri-apps/api/event'
-import { getErrorMessage } from '@/types/error-codes'
 import type {
-  FileItem, RepoInfo, DiffResult, OperationProgress, OperationLine,
-  CancelledPayload, OperationResult,
+  FileItem, RepoInfo, DiffResult,
   BlameLine, LogEntry, SvnCredentials,
 } from '@/types/svn'
 import type { AppSettings } from '@/types/settings'
 import { useFileListStore } from './fileList'
+import { useSvnEventsStore } from './svnEvents'
 // ── 统一从 services/svn.ts 导入（唯一 invoke 入口） ──
 import {
   wrappedInvoke,
@@ -44,92 +42,10 @@ import {
   clearCredentials as servicesClearCredentials,
 } from '@/services/svn'
 
-/** SVN 主 Store——封装所有 SVN 操作（CRUD + 事件监听 + 认证联动） */
+/** SVN 主 Store——封装所有 SVN 操作（CRUD + 认证检测联动 svnEvents store） */
 export const useSvnStore = defineStore('svn', () => {
-  const progress = ref<OperationProgress | null>(null)
+  const eventsStore = useSvnEventsStore()
   const isLoading = ref(false)
-  const isOperationRunning = ref(false)
-  const fileLines = ref<OperationLine[]>([])  // 文件行列表（IPC 通信数据）
-  let initialized = false
-  const unlistenFns: Array<() => void> = []
-
-  // ── 操作进行中守卫（防抖双保险：svnStore 层） ──
-  /** 检查是否有操作正在运行。供操作发起方在调用前检查，防止绕过 composable 直接调用 store */
-  function checkOperationRunning(): boolean {
-    return isOperationRunning.value
-  }
-
-  // ── 认证失败→AuthDialog 联动状态 ──
-  interface AuthFailedContext {
-    command: string
-    args?: Record<string, unknown>
-    errorMessage: string
-  }
-  const authFailed = ref(false)
-  const authContext = ref<AuthFailedContext | null>(null)
-  const showUpdateRevisionDialog = ref(false)
-
-  /** 使用凭据重试上次失败的操作 */
-  async function retryAuth(username: string, password: string, saveToCache: boolean): Promise<boolean> {
-    if (!authContext.value) return false
-    const ctx = authContext.value
-    try {
-      // 通过 services/svn.ts 的 wrappedInvoke 重试（经由唯一 invoke 入口）
-      // 注意：Tauri 2 要求参数 key 匹配 Rust 参数名（params:），因此需要 { params: ... } 包裹
-      const retryArgs = { ...(ctx.args || {}), credentials: { username, password, saveToCache } }
-      await wrappedInvoke(ctx.command, { params: retryArgs })
-      authFailed.value = false
-      authContext.value = null
-      return true
-    } catch (e) {
-      // 抛出实际错误，让 AuthDialog 能显示具体失败原因而非通用提示
-      const detail = typeof e === 'string' ? e : e instanceof Error ? e.message : String(e)
-      throw new Error(detail)
-    }
-  }
-
-  function cancelAuth() {
-    authFailed.value = false
-    authContext.value = null
-  }
-
-  function initEventListeners() {
-    if (initialized) return
-    initialized = true
-    Promise.all([
-      listen<OperationProgress>('operation:progress', e => { progress.value = e.payload }),
-      listen('operation:started', () => {
-        isOperationRunning.value = true
-        fileLines.value = []
-        useFileListStore().isOperationRunning = true
-      }),
-      listen<OperationLine>('operation:line', e => {
-        // v3 新增：operation:line 事件，携带单行文件信息
-        fileLines.value.push(e.payload)
-      }),
-      listen<CancelledPayload>('operation:cancelled', () => {
-        // v3 新增：operation:cancelled 事件，替代 operation:completed + result:"cancelled"
-        isOperationRunning.value = false; progress.value = null
-        useFileListStore().isOperationRunning = false
-      }),
-      listen<OperationResult>('operation:completed', () => {
-        isOperationRunning.value = false; progress.value = null
-        useFileListStore().isOperationRunning = false
-      }),
-      listen('operation:error', () => {
-        isOperationRunning.value = false; progress.value = null
-        fileLines.value = []
-        useFileListStore().isOperationRunning = false
-      }),
-    ]).then(fns => { unlistenFns.push(...fns) })
-      .catch(err => console.error('[svn store] Failed to register event listeners:', err))
-  }
-
-  function destroyEventListeners() {
-    unlistenFns.forEach(fn => fn())
-    unlistenFns.length = 0
-    initialized = false
-  }
 
   /** 统一调用包装：捕获服务端错误、检测认证失败、翻译错误码
    * 仅 stores/svn.ts 内部使用，外部 page/component 通过 store 方法调用 */
@@ -148,8 +64,8 @@ export const useSvnStore = defineStore('svn', () => {
         || rawMsg.includes('E175013')
         || rawMsg.includes('Authentication failed') || rawMsg.includes('认证失败')
         || rawMsg.includes('authorization failed') || rawMsg.includes('No credentials')) {
-        authContext.value = { command: command || '', args: args || {}, errorMessage: rawMsg }
-        authFailed.value = true
+        eventsStore.authContext = { command: command || '', args: args || {}, errorMessage: rawMsg }
+        eventsStore.authFailed = true
       }
       // SVN_OPERATION_IN_PROGRESS → 队列冲突
       if (rawMsg.includes('SVN_OPERATION_IN_PROGRESS')) {
@@ -225,7 +141,7 @@ export const useSvnStore = defineStore('svn', () => {
   async function clearCredentials(url: string) { return call(() => servicesClearCredentials(url), 'clear_credentials', { url }) }
 
   return {
-    progress, isLoading, isOperationRunning, fileLines, authFailed, authContext, showUpdateRevisionDialog,
+    isLoading,
     getStatus, getInfo, getDiff, getLog, getBlame,
     checkoutRepo, updateWorkspace, commit, addFiles, deleteFiles, revertFiles,
     resolveConflict, setIgnore,
@@ -234,7 +150,5 @@ export const useSvnStore = defineStore('svn', () => {
     cancelOperation, getLogs, exportLogs,
     loadSettings, saveSettings,
     testConnection, saveCredentials, clearCredentials,
-    retryAuth, cancelAuth, initEventListeners, destroyEventListeners,
-    checkOperationRunning,
   }
 })

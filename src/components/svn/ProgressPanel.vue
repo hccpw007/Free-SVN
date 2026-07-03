@@ -6,13 +6,13 @@
  */
 import { ref, computed, watch, watchEffect, onUnmounted } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { useSvnStore } from '@/stores/svn'
+import { useSvnEventsStore } from '@/stores/svnEvents'
 import { useProgressOverlay } from '@/composables/useProgressOverlay'
 import { formatNumber } from '@/utils/format'
 import FileLineRow from './FileLineRow.vue'
 
 const { t } = useI18n()
-const svnStore = useSvnStore()
+const svnEventsStore = useSvnEventsStore()
 
 // -- 从 composable 获取 UI 状态和方法 --
 const {
@@ -34,8 +34,8 @@ let autoCloseTimer: ReturnType<typeof setTimeout> | null = null
 let connectingTimer: ReturnType<typeof setTimeout> | null = null
 
 // -- 进度与文件行 --
-const progress = computed(() => svnStore.progress)
-const fileLines = computed(() => svnStore.fileLines)
+const progress = computed(() => svnEventsStore.progress)
+const fileLines = computed(() => svnEventsStore.fileLines)
 
 // -- 10 秒无响应定时器 --
 function clearConnectingTimer() {

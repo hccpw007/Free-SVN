@@ -3,7 +3,7 @@
 import { useRouter } from 'vue-router'
 import { useWorkspaceStore } from '@/stores/workspace'
 import { useFileListStore } from '@/stores/fileList'
-import { useSvnStore } from '@/stores/svn'
+import { useSvnEventsStore } from '@/stores/svnEvents'
 import { useNetworkStatus } from '@/composables/useNetworkStatus'
 import { ref, computed, onMounted, watch, inject } from 'vue'
 import { useI18n } from 'vue-i18n'
@@ -19,7 +19,7 @@ const router = useRouter()
 const { t } = useI18n()
 const workspaceStore = useWorkspaceStore()
 const fileListStore = useFileListStore()
-const svnStore = useSvnStore()
+const svnEventsStore = useSvnEventsStore()
 
 // 从 App.vue 注入的打开提交弹窗函数
 const openCommitDialog = inject<() => void>('openCommitDialog', () => {})
@@ -88,10 +88,10 @@ onMounted(async () => {
   }
 })
 
-// 监听 svnStore.showUpdateRevisionDialog（由 App.vue handleShellCommand 触发）
-watch(() => svnStore.showUpdateRevisionDialog, (val) => {
+// 监听 svnEventsStore.showUpdateRevisionDialog（由 App.vue handleShellCommand 触发）
+watch(() => svnEventsStore.showUpdateRevisionDialog, (val) => {
   showUpdateRevisionDialog.value = val
-  if (val) svnStore.showUpdateRevisionDialog = false // 消费后重置
+  if (val) svnEventsStore.showUpdateRevisionDialog = false // 消费后重置
 })
 
 // 切换工作副本后自动刷新 workspace 信息（isWorkingCopy 由 workspaceStore.switchWorkspace 负责检测）

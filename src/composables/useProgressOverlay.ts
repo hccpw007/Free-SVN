@@ -1,8 +1,9 @@
 // useProgressOverlay composable — 仅管理弹窗本地 UI 状态
-// 跨组件共享的前后端通信状态（进度数据、事件监听）保持在 svnStore 中
+// 跨组件共享的前后端通信状态（进度数据、事件监听）保持在 svnEventsStore 中
 
 import { ref, computed } from 'vue'
 import { useSvnStore } from '@/stores/svn'
+import { useSvnEventsStore } from '@/stores/svnEvents'
 
 /**
  * 进度弹窗 UI 状态管理 composable
@@ -10,6 +11,7 @@ import { useSvnStore } from '@/stores/svn'
  */
 export function useProgressOverlay(scrollThreshold = 20) {
   const svnStore = useSvnStore()
+  const svnEventsStore = useSvnEventsStore()
 
   // ── 弹窗本地 UI 状态 ──
 
@@ -22,18 +24,18 @@ export function useProgressOverlay(scrollThreshold = 20) {
   const dragStartOffset = ref({ x: 0, y: 0 })  // 拖拽起始面板偏移
   const fileListRef = ref<HTMLElement | null>(null)
 
-  // ── 从 svnStore 读取 IPC 通信数据 ──
+  // ── 从 svnEventsStore 读取 IPC 通信数据 ──
 
-  const isVisible = computed(() => svnStore.isOperationRunning)
-  const progress = computed(() => svnStore.progress)
-  const fileLines = computed(() => svnStore.fileLines)
+  const isVisible = computed(() => svnEventsStore.isOperationRunning)
+  const progress = computed(() => svnEventsStore.progress)
+  const fileLines = computed(() => svnEventsStore.fileLines)
 
   // ── 操作请求防抖 ──
   const operationRequested = ref(false)
 
-  /** 尝试请求操作（防抖双保险：composable 层 + svnStore 层） */
+  /** 尝试请求操作（防抖双保险：composable 层 + svnEventsStore 层） */
   function tryRequestOperation(): boolean {
-    if (operationRequested.value || svnStore.isOperationRunning || svnStore.checkOperationRunning()) {
+    if (operationRequested.value || svnEventsStore.isOperationRunning || svnEventsStore.checkOperationRunning()) {
       return false  // 已有操作在进行中
     }
     operationRequested.value = true

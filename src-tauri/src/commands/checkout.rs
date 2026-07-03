@@ -58,7 +58,7 @@ pub async fn checkout_repo(
         args.push("--ignore-externals".to_string());
     }
 
-    let result = svn::executor::run_svn_with_progress(
+    let result = svn::progress::run_svn_with_progress(
         &args.iter().map(String::as_str).collect::<Vec<&str>>(),
         ".",
         params.credentials.as_ref(),
