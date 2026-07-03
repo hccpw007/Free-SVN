@@ -41,52 +41,13 @@ pub async fn checkout_repo(
     svn::executor::check_network(&params.url).await?;
     state.try_lock()?;
 
-    app_handle.emit("operation:started", serde_json::json!({
-        "operation": "checkout"
-    })).ok();
-
-    // BASE_SVN_ARGS: 由 run_svn() 统一追加，包含 --non-interactive
-    // 和 --trust-server-cert-failures=unknown-ca,cn-mismatch,expired,...
-    // 命令特定的 args 中不要再加 --trust-server-cert-failures（会覆盖 BASE_SVN_ARGS 的完整列表）
-    // --non-interactive 在此显式添加以确保始终存在（run_svn 传凭据时会移除 BASE_SVN_ARGS 中的它）
-    let mut args = vec![
-        "checkout".to_string(),
-        "--non-interactive".to_string(),
-    ];
-    args.push(params.url.clone());
-    args.push(params.target_path.clone());
-    if let Some(ref depth) = params.depth {
-        if !depth.is_empty() {
-            args.push("--depth".to_string()); args.push(depth.clone());
-        }
-    }
-    if params.ignore_externals.unwrap_or(false) {
-        args.push("--ignore-externals".to_string());
-    }
-
-    let result = svn::executor::run_svn(
+    let result = svn::executor::run_svn_with_progress(
         &args.iter().map(String::as_str).collect::<Vec<&str>>(),
         ".",
         params.credentials.as_ref(),
+        app_handle,
+        "checkout",
     ).await;
-
-    match &result {
-        Ok(output) => {
-            let rev = output.lines()
-                .find(|l| l.contains("revision"))
-                .and_then(|l| l.split_whitespace().last())
-                .and_then(|s| s.trim_end_matches('.').parse::<u64>().ok())
-                .unwrap_or(0);
-            app_handle.emit("operation:completed", serde_json::json!({
-                "result": "success", "detail": format!("Checked out revision {}", rev)
-            })).ok();
-        }
-        Err(e) => {
-            app_handle.emit("operation:error", serde_json::json!({
-                "errorCode": format!("{}", e), "message": format!("{}", e)
-            })).ok();
-        }
-    }
 
     state.unlock();
     result
