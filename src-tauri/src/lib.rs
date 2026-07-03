@@ -1,3 +1,7 @@
+//! Free-SVN 应用主入口。
+//! 负责 Tauri 插件注册、系统托盘构建、错误处理流程编排。
+//! 由 main.rs 调用 run() 启动。
+
 mod commands;
 mod svn;
 mod models;

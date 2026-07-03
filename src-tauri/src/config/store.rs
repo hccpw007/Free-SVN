@@ -10,15 +10,25 @@ use tauri_plugin_store::StoreExt;
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Settings {
+    /// 默认检出目录路径
     pub default_checkout_dir: String,
+    /// 全局忽略模式（glob 格式，每行一个）
     pub global_ignore_pattern: String,
+    /// 外部差异对比工具名称
     pub diff_tool: String,
+    /// 外部合并工具名称
     pub merge_tool: String,
+    /// 差异命令模板（支持 {file1} {file2} 占位符）
     pub diff_command_template: String,
+    /// 合并命令模板（支持 {mine} {base} {theirs} {output} 占位符）
     pub merge_command_template: String,
+    /// 外部工具失败时回退到内置工具
     pub fallback_to_builtin: bool,
+    /// 界面语言（system/zh-CN/en/ja/ko）
     pub language: String,
+    /// 开机自启动
     pub auto_start: bool,
+    /// 暗色模式
     pub dark_mode: bool,
 }
 

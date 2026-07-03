@@ -3,7 +3,9 @@ use serde::{Deserialize, Serialize};
 /// 单个文件状态条目（对应 `svn status --xml` 输出中的每个 entry）
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct FileItem {
+    /// 文件路径（相对于工作副本根目录）
     pub path: String,
+    /// 文件状态码（modified/added/deleted/conflicted/unversioned 等）
     pub status: String,
     #[serde(default)]
     pub wc_status: Option<String>,

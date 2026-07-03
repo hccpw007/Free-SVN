@@ -1,3 +1,5 @@
+//! 操作系统 Shell 集成——注册/卸载右键菜单（macOS / Windows / Linux）。
+
 pub mod macos;
 pub mod windows;
 pub mod linux;
