@@ -7,6 +7,7 @@ import { open } from '@tauri-apps/plugin-dialog'
 import { useWorkspaceStore } from '@/stores/workspace'
 import { useSettingsStore } from '@/stores/settings'
 import { useI18n } from 'vue-i18n'
+import { getInfo } from '@/services/svn'
 
 const { t } = useI18n()
 const router = useRouter()
@@ -52,7 +53,16 @@ async function handleSwitchWorkspace() {
   try {
     const selected = await open({ directory: true })
     if (selected && typeof selected === 'string') {
-      await workspaceStore.switchWorkspace(selected)
+      // 先检测是否为 SVN 工作副本
+      try {
+        await getInfo(selected)
+        // 是工作副本 → 正常切换
+        await workspaceStore.switchWorkspace(selected)
+      } catch {
+        // 非工作副本 → 打开检出对话框（预填路径，不切换）
+        workspaceStore.checkoutInitialPath = selected
+        workspaceStore.showCheckoutDialog = true
+      }
     }
   } catch (e: unknown) {
     console.warn('[TopBar] 切换工作空间失败:', e)
