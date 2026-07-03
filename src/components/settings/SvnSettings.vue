@@ -57,10 +57,12 @@ async function browseDir() {
           <el-option label="自定义" value="custom" />
         </el-select>
       </div>
+      <!-- 自定义差异命令 -->
       <div v-if="showDiffCustom">
         <label class="text-xs text-slate-500 dark:text-slate-400">{{ t('settings.diffCommandTemplate') }}</label>
         <el-input v-model="diffCommandTemplate" size="default" placeholder="code --diff <file1> <file2>" class="mt-1" @input="markChanged" />
       </div>
+      <!-- 合并工具选择 -->
       <div>
         <label class="text-xs text-slate-500 dark:text-slate-400">{{ t('settings.mergeTool') }}</label>
         <el-select v-model="mergeTool" size="default" class="!w-full mt-1" @change="markChanged">
@@ -71,10 +73,12 @@ async function browseDir() {
           <el-option label="自定义" value="custom" />
         </el-select>
       </div>
+      <!-- 自定义合并命令 -->
       <div v-if="showMergeCustom">
         <label class="text-xs text-slate-500 dark:text-slate-400">{{ t('settings.mergeCommandTemplate') }}</label>
         <el-input v-model="mergeCommandTemplate" size="default" placeholder="bcomp <mine> <base> <theirs> <output>" class="mt-1" @input="markChanged" />
       </div>
+      <!-- 回退到内置工具 -->
       <el-checkbox v-model="fallbackToBuiltin" @change="markChanged">
         <span class="text-xs">{{ t('settings.fallbackToBuiltin') }}</span>
       </el-checkbox>

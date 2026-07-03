@@ -97,6 +97,7 @@ onMounted(loadCachedCredentials)
 <template>
   <div class="max-w-2xl">
     <div>
+        <!-- 标题栏与添加按钮 -->
       <div class="flex items-center justify-between mb-4">
         <h3 class="text-base font-medium text-slate-800 dark:text-slate-200">{{ t('settings.account') }}</h3>
         <el-button size="small" type="primary" class="focus:ring-2 focus:ring-offset-2 focus:ring-blue-400 focus:outline-none" @click="openAddDialog">
@@ -104,14 +105,17 @@ onMounted(loadCachedCredentials)
         </el-button>
       </div>
 
+      <!-- 加载中 -->
       <div v-if="isLoadingAccounts" class="py-12 text-center text-sm text-slate-400 dark:text-slate-500">
         {{ t('common.loading') }}
       </div>
 
+      <!-- 无凭据空状态 -->
       <div v-else-if="cachedCredentials.length === 0" class="py-12 text-center text-sm text-slate-400 dark:text-slate-500">
         {{ t('settings.noSavedAccounts') }}
       </div>
 
+      <!-- 凭据表格 -->
       <div v-else class="border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden">
         <table class="w-full text-sm">
           <thead>
