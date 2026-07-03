@@ -15,7 +15,6 @@ export const useSettingsStore = defineStore('settings', () => {
   const diffCommandTemplate = ref(DEFAULT_SETTINGS.diffCommandTemplate)
   const mergeCommandTemplate = ref(DEFAULT_SETTINGS.mergeCommandTemplate)
   const fallbackToBuiltin = ref(DEFAULT_SETTINGS.fallbackToBuiltin)
-  const isDirty = ref(false)
 
   /**
    * 模板字段格式说明：
@@ -51,7 +50,6 @@ export const useSettingsStore = defineStore('settings', () => {
       diffCommandTemplate.value = s.diffCommandTemplate || ''
       mergeCommandTemplate.value = s.mergeCommandTemplate || ''
       fallbackToBuiltin.value = s.fallbackToBuiltin ?? true
-      isDirty.value = false
     } catch (e: unknown) {
       console.error('[settings store] loadSettings 失败，使用默认值:', e)
     }
@@ -88,7 +86,6 @@ export const useSettingsStore = defineStore('settings', () => {
       autoStart: autoStart.value,
       darkMode: darkMode.value,
     })
-    isDirty.value = false
   }
 
   return {
@@ -96,6 +93,6 @@ export const useSettingsStore = defineStore('settings', () => {
     diffTool, mergeTool, language, autoStart,
     darkMode,
     diffCommandTemplate, mergeCommandTemplate, fallbackToBuiltin,
-    isDirty, load, save,
+    load, save,
   }
 })
