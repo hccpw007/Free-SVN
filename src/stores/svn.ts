@@ -167,10 +167,7 @@ export const useSvnStore = defineStore('svn', () => {
     }, 'update_workspace', params as unknown as Record<string, unknown>)
   }
   async function commit(params: { paths: string[]; message: string; keepLocks?: boolean }) {
-    return call(async () => {
-      const rev = await servicesCreateCommit(params)
-      return { result: 'success', detail: `Committed revision ${rev}` } as OperationResult
-    }, 'create_commit', params as unknown as Record<string, unknown>)
+    return call(() => servicesCreateCommit(params), 'create_commit', params as unknown as Record<string, unknown>)
   }
   async function addFiles(paths: string[]) { return call(() => servicesAddFiles(paths), 'add_files', { paths }) }
   async function deleteFiles(params: { paths: string[]; keepLocal?: boolean }) { return call(() => servicesDeleteFiles(params), 'delete_files', params as unknown as Record<string, unknown>) }

@@ -154,8 +154,8 @@ export async function checkoutRepo(params: { url: string; targetPath: string; de
 export async function updateWorkspace(params: { path: string; revision?: number; depth?: string; ignoreExternals?: boolean; credentials?: SvnCredentials }): Promise<{ revision: number; conflicts: number }> {
   return invokeWithParams('update_workspace', params)
 }
-export async function createCommit(params: { paths: string[]; message: string; keepLocks?: boolean }): Promise<number> {
-  return invokeWithParams<number>('create_commit', params)
+export async function createCommit(params: { paths: string[]; message: string; keepLocks?: boolean }): Promise<OperationResult> {
+  return invokeWithParams<OperationResult>('create_commit', params)
 }
 export async function addFiles(paths: string[]): Promise<string> {
   return invokeWithParams<string>('add_files', { paths })
