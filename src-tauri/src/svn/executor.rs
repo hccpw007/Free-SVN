@@ -66,7 +66,7 @@ const AUTH_KEYWORDS: &[&str] = &[
 ];
 
 /// 基础 SVN 参数（防止交互式认证对话框弹出）
-const BASE_SVN_ARGS: &[&str] = &[
+pub(crate) const BASE_SVN_ARGS: &[&str] = &[
     "--non-interactive",
     "--trust-server-cert-failures",
     "unknown-ca,cn-mismatch,expired,not-yet-valid,other",
@@ -228,7 +228,7 @@ pub async fn check_network(server_url: &str) -> Result<(), AppError> {
 // ── 认证检测（v5 新增） ─────────────────────────────
 
 /// 判断 stderr 是否为认证错误
-fn is_auth_error(stderr: &str) -> bool {
+pub(crate) fn is_auth_error(stderr: &str) -> bool {
     AUTH_ERROR_KEYWORDS.iter().any(|kw| stderr.contains(kw))
 }
 

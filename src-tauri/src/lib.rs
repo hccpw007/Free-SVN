@@ -10,12 +10,12 @@ mod tools;
 mod shell_integration;
 mod logging;
 mod config;
+mod tray;
 
 use tauri::{
-    AppHandle, Manager, Emitter,
+    Manager, Emitter,
     tray::{TrayIconBuilder, TrayIconEvent, MouseButton, MouseButtonState},
 };
-use tauri_plugin_notification::NotificationExt;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -123,9 +123,9 @@ pub fn run() {
                                     ).await;
                                     match result {
                                         Ok(rev) => {
-                                            send_os_notification(&handle, "SVN Update", &format!("完成，版本 {}", rev));
+                                            crate::tray::send_os_notification(&handle, "SVN Update", &format!("完成，版本 {}", rev));
                                         }
-                                        Err(_) => send_os_notification(&handle, "SVN Update", "失败"),
+                                        Err(_) => crate::tray::send_os_notification(&handle, "SVN Update", "失败"),
                                     }
                                     #[cfg(target_os = "macos")]
                                     crate::commands::tray::set_dock_badge(false);
@@ -147,8 +147,8 @@ pub fn run() {
                                         cwd,
                                         handle.state::<crate::svn::queue::SvnQueue>(),
                                     ).await {
-                                        Ok(_) => send_os_notification(&handle, "SVN Cleanup", "完成"),
-                                        Err(_) => send_os_notification(&handle, "SVN Cleanup", "失败"),
+                                        Ok(_) => crate::tray::send_os_notification(&handle, "SVN Cleanup", "完成"),
+                                        Err(_) => crate::tray::send_os_notification(&handle, "SVN Cleanup", "失败"),
                                     }
                                     #[cfg(target_os = "macos")]
                                     crate::commands::tray::set_dock_badge(false);
@@ -272,9 +272,9 @@ pub fn run() {
             commands::auth::test_connection,
             commands::auth::save_credentials,
             commands::auth::clear_credentials,
-            commands::auth::list_cached_credentials,
-            commands::auth::delete_cached_credential,
-            commands::auth::update_cached_credential_password,
+            commands::auth_account::list_cached_credentials,
+            commands::auth_account::delete_cached_credential,
+            commands::auth_account::update_cached_credential_password,
             // 3F — 系统托盘 badge 命令
             commands::tray::set_tray_badge,
             // 3G — 开机自启动命令
@@ -282,13 +282,4 @@ pub fn run() {
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
-}
-
-/// 发送操作系统通知
-fn send_os_notification(app: &AppHandle, title: &str, body: &str) {
-    let _ = app.notification()
-        .builder()
-        .title("Free-SVN")
-        .body(format!("{}: {}", title, body))
-        .show();
 }
