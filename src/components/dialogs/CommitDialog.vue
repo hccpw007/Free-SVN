@@ -94,6 +94,7 @@ async function handleCommit() {
 </script>
 
 <template>
+  <!-- 提交对话框 -->
   <el-dialog
     :model-value="true"
     :title="t('dialog.commitTitle', { count: fileListStore.selectedPaths.size })"
@@ -102,6 +103,7 @@ async function handleCommit() {
     :close-on-press-escape="!isSubmitting"
     @close="emit('close')"
   >
+    <!-- 提交表单区 -->
     <div class="flex flex-col gap-3">
       <!-- 多行提交信息输入 -->
       <textarea
@@ -116,6 +118,7 @@ async function handleCommit() {
       </div>
     </div>
 
+    <!-- 底部操作按钮 -->
     <template #footer>
       <el-button
         size="default"

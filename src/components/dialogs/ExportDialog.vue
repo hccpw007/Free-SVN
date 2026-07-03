@@ -46,8 +46,10 @@ async function handleExport() {
 </script>
 
 <template>
+  <!-- 导出对话框 -->
   <el-dialog :model-value="true" :title="t('dialog.exportDialog')" width="480px"
     :close-on-click-modal="false" @close="emit('close')">
+    <!-- 表单主体 -->
     <div class="flex flex-col gap-4">
       <!-- 工作副本路径 -->
       <div>
@@ -75,6 +77,7 @@ async function handleExport() {
       <el-checkbox v-model="ignoreExternals" size="small">{{ t('dialog.ignoreExternals') }}</el-checkbox>
     </div>
 
+    <!-- 底部操作栏 -->
     <template #footer>
       <el-button size="default" class="focus:ring-2 focus:ring-offset-2 focus:ring-blue-400 focus:outline-none" @click="emit('close')" :disabled="isExporting">
         {{ t('dialog.cancel') }}

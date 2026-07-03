@@ -116,14 +116,17 @@ async function handleCheckout() {
 </script>
 
 <template>
+  <!-- 检出对话框 -->
   <el-dialog :model-value="true" :title="t('dialog.checkout')" width="480px"
     :close-on-click-modal="false" :close-on-press-escape="!isCheckingOut"
     @close="emit('close')">
+    <!-- 表单内容区 -->
     <div class="flex flex-col gap-3">
       <!-- 仓库 URL -->
       <div>
         <label class="text-xs font-medium text-slate-700 dark:text-slate-300 mb-1 block">{{ t('dialog.repoUrl') }}</label>
         <el-input v-model="repoUrl" size="small" :placeholder="t('dialog.repoUrlPlaceholder')" />
+        <!-- URL 格式错误提示 -->
         <p v-if="urlError" class="text-xs text-red-500 mt-1">{{ urlError }}</p>
       </div>
 
@@ -149,7 +152,9 @@ async function handleCheckout() {
         </div>
       </div>
 
+      <!-- 忽略外部引用 -->
       <el-checkbox v-model="ignoreExternals" size="small">{{ t('dialog.ignoreExternals') }}</el-checkbox>
+      <!-- 仅检出当前目录 -->
       <el-checkbox v-model="emptyOnly" size="small">{{ t('dialog.currentDirOnly') }}</el-checkbox>
 
       <!-- 认证区域 -->
@@ -157,6 +162,7 @@ async function handleCheckout() {
         <label class="text-xs font-medium mb-2 block" :class="authRetryVisible ? 'text-red-600 dark:text-red-400' : 'text-slate-700 dark:text-slate-300'">
           {{ authRetryVisible ? t('error.SVN_AUTH_FAILED') : t('dialog.authOptional') }}
         </label>
+        <!-- 认证失败提示 -->
         <div v-if="authRetryVisible" class="text-xs text-red-500 dark:text-red-400 mb-2">
           {{ t('auth.authFailedTitle') }}
         </div>

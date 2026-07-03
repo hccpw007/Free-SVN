@@ -46,8 +46,10 @@ async function handleUpdate() {
 </script>
 
 <template>
+  <!-- 更新到指定版本的对话框 -->
   <el-dialog :model-value="true" :title="t('dialog.updateRevision')" width="420px"
     :close-on-click-modal="false" @close="emit('close')">
+    <!-- 版本更新表单字段 -->
     <div class="flex flex-col gap-4">
       <!-- 当前版本 -->
       <div>
@@ -72,6 +74,7 @@ async function handleUpdate() {
       </div>
     </div>
 
+    <!-- 底部按钮区域 -->
     <template #footer>
       <el-button size="default" class="focus:ring-2 focus:ring-offset-2 focus:ring-blue-400 focus:outline-none" @click="emit('close')" :disabled="isUpdating">
         {{ t('dialog.cancel') }}

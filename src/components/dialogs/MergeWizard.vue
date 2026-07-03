@@ -78,8 +78,10 @@ async function handleMerge() {
 </script>
 
 <template>
+  <!-- 合并向导弹窗 -->
   <el-dialog :model-value="true" :title="t('workspace.mergeTitle')" width="520px"
     :close-on-click-modal="false" @close="emit('close')">
+    <!-- 步骤指示器 -->
     <el-steps :active="currentStep" align-center class="mb-6" :space="120">
       <el-step
         v-for="(stepTitle, i) in [t('workspace.mergeStep1Title'), t('workspace.mergeStep2Title'), t('workspace.mergeStep3Title'), t('workspace.mergeStep4Title')]"
@@ -125,21 +127,27 @@ async function handleMerge() {
         <p class="text-slate-500">{{ t('workspace.mergeTargetLabel') }}: {{ workspaceStore.currentPath }}</p>
         <p class="text-slate-500">{{ t('workspace.mergeSourceLabel') }}: {{ sourceUrl }}</p>
       </div>
+      <!-- 执行合并操作 -->
       <el-button size="default" type="primary" :loading="isMerging" :disabled="!sourceUrl"
         class="focus:ring-2 focus:ring-offset-2 focus:ring-blue-400 focus:outline-none" @click="handleMerge">
         {{ t('workspace.executeMerge') }}
       </el-button>
+      <!-- 合并结果状态提示 -->
       <div v-if="resultStatus !== 'idle'"
         class="rounded-md p-3 text-xs"
         :class="resultStatus === 'success' ? 'bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-400' : resultStatus === 'conflict' ? 'bg-amber-50 text-amber-700 dark:bg-amber-900/20 dark:text-amber-400' : 'bg-red-50 text-red-700 dark:bg-red-900/20 dark:text-red-400'">
         {{ resultMessage }}
       </div>
+      <!-- 查看冲突 -->
       <el-button v-if="resultStatus === 'conflict'" size="small" type="warning" class="focus:ring-2 focus:ring-offset-2 focus:ring-blue-400 focus:outline-none" @click="emit('close')">{{ t('dialog.viewConflicts') }}</el-button>
     </div>
 
+    <!-- 底部操作栏 -->
     <template #footer>
       <div class="flex justify-between">
+        <!-- 取消关闭对话框 -->
         <el-button size="default" class="focus:ring-2 focus:ring-offset-2 focus:ring-blue-400 focus:outline-none" @click="emit('close')">{{ t('common.cancel') }}</el-button>
+        <!-- 步骤切换按钮组 -->
         <div class="flex gap-2">
           <el-button v-if="currentStep > 1" size="default" class="focus:ring-2 focus:ring-offset-2 focus:ring-blue-400 focus:outline-none" @click="prevStep">{{ t('common.prev') }}</el-button>
           <el-button v-if="currentStep < totalSteps" size="default" type="primary" class="focus:ring-2 focus:ring-offset-2 focus:ring-blue-400 focus:outline-none" @click="nextStep">{{ t('common.next') }}</el-button>

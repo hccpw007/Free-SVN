@@ -200,7 +200,9 @@ onMounted(async () => {
 </script>
 
 <template>
+  <!-- 路由视图出口 -->
   <RouterView />
+  <!-- 认证失败时弹出 -->
   <AuthDialog
     v-if="showAuthDialog"
     :repo-url="svnStore.authContext?.args?.url as string || ''"
@@ -208,7 +210,9 @@ onMounted(async () => {
     @close="handleAuthClose"
     @success="showAuthDialog = false"
   />
+  <!-- 提交弹窗 -->
   <CommitDialog v-if="showCommitDialog" @close="showCommitDialog = false" />
+  <!-- 检出弹窗 -->
   <CheckoutDialog
     v-if="workspaceStore.showCheckoutDialog"
     :initialPath="workspaceStore.checkoutInitialPath"
