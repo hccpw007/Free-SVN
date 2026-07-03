@@ -41,6 +41,22 @@ pub async fn checkout_repo(
     svn::executor::check_network(&params.url).await?;
     state.try_lock()?;
 
+    // 构造 SVN args
+    let mut args = vec![
+        "checkout".to_string(),
+        "--non-interactive".to_string(),
+    ];
+    args.push(params.url.clone());
+    args.push(params.target_path.clone());
+    if let Some(ref depth) = params.depth {
+        if !depth.is_empty() {
+            args.push("--depth".to_string()); args.push(depth.clone());
+        }
+    }
+    if params.ignore_externals.unwrap_or(false) {
+        args.push("--ignore-externals".to_string());
+    }
+
     let result = svn::executor::run_svn_with_progress(
         &args.iter().map(String::as_str).collect::<Vec<&str>>(),
         ".",

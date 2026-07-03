@@ -214,7 +214,7 @@ pub fn run() {
                 let app_handle = window.app_handle();
                 let state: tauri::State<crate::svn::queue::SvnQueue> = app_handle.state();
                 if state.is_locked() || crate::svn::executor::is_cancelled() {
-                    api.prevent_default();
+                    api.prevent_close();
                     let handle = app_handle.clone();
                     let cwd = crate::config::store::current_workspace().unwrap_or_default();
                     tauri::async_runtime::spawn(async move {

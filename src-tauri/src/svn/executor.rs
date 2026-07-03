@@ -447,6 +447,7 @@ pub async fn run_svn_with_progress(
     let cwd_str = cwd.to_string();
     let creds = credentials.cloned();
     let operation_owned = operation.to_string();
+    let ah = app_handle.clone();
 
     let result = spawn_blocking(move || {
         let start = Instant::now();
@@ -481,14 +482,14 @@ pub async fn run_svn_with_progress(
             }
         }
 
-        // 将子进程句柄存入全局
+        // 先获取 stdout/stderr 句柄（必须在存储 child 之前）
+        let stdout_handle = child.stdout.take();
+        let stderr_handle = child.stderr.take();
+
+        // 然后在全局存储子进程句柄
         if let Ok(mut guard) = CURRENT_CHILD.lock() {
             *guard = Some(child);
         }
-
-        // 获取 stdout/stderr
-        let stdout_handle = child.stdout.take();
-        let stderr_handle = child.stderr.take();
 
         // channel 通信
         let (tx_stdout, rx_stdout) = mpsc::channel::<String>();
@@ -561,19 +562,19 @@ pub async fn run_svn_with_progress(
         let mut combined_stdout = String::new();
 
         // ── 主循环开始前声明文件行判定函数 ──
-        let is_file_line = |line: &str| -> Option<&str> {
+        let is_file_line = |line: &str| -> Option<String> {
             let op = operation_owned.as_str();
             if op == "checkout" || op == "export" {
                 let trimmed = line.trim_start();
                 if trimmed.starts_with('A') || trimmed.starts_with('U') {
                     let rest = trimmed[1..].trim_start();
-                    if !rest.is_empty() { return Some(rest); }
+                    if !rest.is_empty() { return Some(rest.to_string()); }
                 }
             } else if op == "commit" {
                 if line.trim_start().starts_with("Sending") {
                     if let Some(path) = line.trim_start().strip_prefix("Sending") {
                         let rest = path.trim_start();
-                        if !rest.is_empty() { return Some(rest); }
+                        if !rest.is_empty() { return Some(rest.to_string()); }
                     }
                 }
             } else {
@@ -582,7 +583,7 @@ pub async fn run_svn_with_progress(
                     let c = trimmed.as_bytes()[0];
                     if c == b'A' || c == b'U' || c == b'D' || c == b'C' {
                         let rest = trimmed[1..].trim_start();
-                        if !rest.is_empty() { return Some(rest); }
+                        if !rest.is_empty() { return Some(rest.to_string()); }
                     }
                 }
             }
@@ -631,7 +632,7 @@ pub async fn run_svn_with_progress(
 
                         // 检测 stdout 关闭标记
                         if line.starts_with("__STDOUT_CLOSED__:") {
-                            app_handle.emit("operation:line", serde_json::json!({
+                            ah.emit("operation:line", serde_json::json!({
                                 "operation": operation_owned,
                                 "filePath": "[管道中断，部分文件列表可能不完整]",
                                 "status": "completed"
@@ -643,7 +644,7 @@ pub async fn run_svn_with_progress(
                         if let Some(file_path) = is_file_line(&line) {
                             file_count += 1;
                             completed_count += 1;
-                            app_handle.emit("operation:line", serde_json::json!({
+                            ah.emit("operation:line", serde_json::json!({
                                 "operation": operation_owned,
                                 "filePath": file_path,
                                 "status": "completed"
@@ -669,7 +670,7 @@ pub async fn run_svn_with_progress(
                             // throttle: 首条立即发送 + 200ms 窗口
                             if last_progress_time.elapsed() >= Duration::from_millis(200) {
                                 last_progress_time = now;
-                                app_handle.emit("operation:progress", serde_json::json!({
+                                ah.emit("operation:progress", serde_json::json!({
                                     "operation": operation_owned,
                                     "percent": pct,
                                     "stage": "processing",
@@ -734,7 +735,7 @@ pub async fn run_svn_with_progress(
                     c.wait_with_output().unwrap_or_else(|e| {
                         log::error!("wait_with_output 失败: {}", e);
                         std::process::Output {
-                            status: std::process::ExitStatus::from_raw(-1),
+                            status: std::process::ExitStatus::default(),
                             stdout: combined_stdout.clone().into_bytes(),
                             stderr: Vec::new(),
                         }
@@ -751,7 +752,7 @@ pub async fn run_svn_with_progress(
                 Err(e) => {
                     log::error!("try_wait 错误: {}", e);
                     std::process::Output {
-                        status: std::process::ExitStatus::from_raw(-1),
+                        status: std::process::ExitStatus::default(),
                         stdout: combined_stdout.clone().into_bytes(),
                         stderr: Vec::new(),
                     }
@@ -760,7 +761,7 @@ pub async fn run_svn_with_progress(
         } else {
             log::error!("子进程句柄丢失");
             std::process::Output {
-                status: std::process::ExitStatus::from_raw(-1),
+                status: std::process::ExitStatus::default(),
                 stdout: combined_stdout.clone().into_bytes(),
                 stderr: Vec::new(),
             }
