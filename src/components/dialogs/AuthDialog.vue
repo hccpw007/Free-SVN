@@ -60,6 +60,7 @@ async function handleRetry() {
 </script>
 
 <template>
+  <!-- 认证对话框 -->
   <el-dialog
     :model-value="true"
     :title="t('auth.authFailedTitle')"
@@ -68,7 +69,9 @@ async function handleRetry() {
     :close-on-press-escape="true"
     @close="emit('close')"
   >
+    <!-- 表单区域 -->
     <div class="space-y-4">
+      <!-- 仓库信息提示 -->
       <div v-if="repoUrl" class="text-sm text-slate-600 dark:text-slate-400">
         <div class="font-medium text-slate-800 dark:text-slate-200">{{ t('auth.serverRequiresAuth') }}</div>
         <div class="mt-1 font-mono text-xs">{{ repoUrl }}</div>
@@ -77,6 +80,7 @@ async function handleRetry() {
         </div>
       </div>
 
+      <!-- 用户名输入 -->
       <div>
         <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{{ t('auth.username') }}</label>
         <el-input
@@ -88,6 +92,7 @@ async function handleRetry() {
         />
       </div>
 
+      <!-- 密码输入 -->
       <div>
         <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{{ t('auth.password') }}</label>
         <div class="relative">
@@ -110,10 +115,12 @@ async function handleRetry() {
         </div>
       </div>
 
+      <!-- 保存凭据 -->
       <el-checkbox v-model="saveToCache" :disabled="isProcessing">
         <span class="text-sm">{{ t('auth.saveToCache') }}</span>
       </el-checkbox>
 
+      <!-- 操作结果状态 -->
       <div
         v-if="statusMessage"
         role="alert"
@@ -128,6 +135,7 @@ async function handleRetry() {
       </div>
     </div>
 
+    <!-- 底部按钮区 -->
     <template #footer>
       <div class="flex items-center justify-end gap-2">
         <el-button class="focus:ring-2 focus:ring-offset-2 focus:ring-blue-400 focus:outline-none" @click="emit('close')" :disabled="isProcessing">

@@ -59,17 +59,22 @@ function viewDiff(filePath: string) {
 </script>
 
 <template>
+  <!-- 冲突解决对话框 -->
   <el-dialog :model-value="true" :title="t('dialog.resolveConflict')" width="460px"
     :close-on-click-modal="false" @close="emit('close')">
+    <!-- 冲突文件选择 -->
     <div class="text-sm mb-3">
       <span class="text-slate-400 dark:text-slate-500 text-xs">{{ t('file.conflictFile') }}:</span>
+      <!-- 冲突文件下拉选择 -->
       <el-select v-model="selectedFile" size="small" class="!w-72 ml-2">
+        <!-- 遍历冲突文件选项 -->
         <el-option v-for="f in conflictFiles" :key="f.path" :label="f.path" :value="f.path" />
       </el-select>
     </div>
     <p class="text-xs text-slate-500 dark:text-slate-400 mb-4">
       {{ t('dialog.conflictType') }}: text conflict
     </p>
+    <!-- 单文件操作按钮组 -->
     <div class="flex gap-2 mb-4">
       <el-button size="small" class="focus:ring-2 focus:ring-offset-2 focus:ring-blue-400 focus:outline-none" @click="viewDiff(selectedFile)">
         {{ t('dialog.viewDiff') }}
@@ -83,6 +88,7 @@ function viewDiff(filePath: string) {
         {{ t('dialog.useTheirs') }}
       </el-button>
     </div>
+    <!-- 批量操作按钮组 -->
     <div class="flex gap-2 mb-4">
       <el-button size="small" type="primary" :loading="isResolving"
         class="focus:ring-2 focus:ring-offset-2 focus:ring-blue-400 focus:outline-none" @click="handleBatchResolve('mine-full')">
@@ -96,6 +102,7 @@ function viewDiff(filePath: string) {
     <p class="text-xs text-slate-400 dark:text-slate-500 mb-4">
       {{ t('dialog.resolveHint') }}
     </p>
+    <!-- 底部按钮区 -->
     <template #footer>
       <el-button size="default" class="focus:ring-2 focus:ring-offset-2 focus:ring-blue-400 focus:outline-none" @click="emit('close')">{{ t('dialog.cancel') }}</el-button>
       <el-button size="default" type="danger" :loading="isResolving"

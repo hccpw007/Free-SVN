@@ -46,13 +46,16 @@ async function handleSwitch() {
 </script>
 
 <template>
+  <!-- 切换对话框 -->
   <el-dialog :model-value="true" :title="t('workspace.switchTitle')" width="460px"
     :close-on-click-modal="false" @close="emit('close')">
+    <!-- 表单区域 -->
     <div class="space-y-3">
       <div>
         <label class="text-xs text-slate-500 dark:text-slate-400">{{ t('workspace.switchCurrentPath') }}</label>
         <p class="text-xs font-mono text-slate-700 dark:text-slate-300 mt-1">{{ workspaceStore.currentPath }}</p>
       </div>
+      <!-- 目标分支选择 -->
       <div>
         <label class="text-xs text-slate-500 dark:text-slate-400">{{ t('workspace.switchTarget') }}</label>
         <el-select v-model="targetUrl" filterable allow-create size="default" class="!w-full mt-1" :placeholder="t('workspace.switchTargetPlaceholder')">
@@ -62,8 +65,10 @@ async function handleSwitch() {
           </template>
         </el-select>
       </div>
+      <!-- 忽略祖先开关 -->
       <el-checkbox v-model="ignoreAncestry"><span class="text-xs">{{ t('workspace.ignoreAncestry') }}</span></el-checkbox>
     </div>
+    <!-- 底部按钮栏 -->
     <template #footer>
       <el-button size="default" class="focus:ring-2 focus:ring-offset-2 focus:ring-blue-400 focus:outline-none" @click="emit('close')">{{ t('common.cancel') }}</el-button>
       <el-button size="default" type="primary" :loading="isSwitching" :disabled="!targetUrl" class="focus:ring-2 focus:ring-offset-2 focus:ring-blue-400 focus:outline-none" @click="handleSwitch">{{ t('workspace.switch') }}</el-button>

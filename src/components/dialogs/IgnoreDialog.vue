@@ -43,25 +43,31 @@ async function handleAddIgnore() {
 }
 </script>
 
+<!-- 忽略规则对话框 -->
 <template>
   <el-dialog :model-value="true" :title="t('dialog.ignoreDialog')" width="420px"
     :close-on-click-modal="false" @close="emit('close')">
     <p class="text-xs text-slate-500 dark:text-slate-400 mb-3 font-mono">
       {{ filePath }}
     </p>
+    <!-- 忽略模式选择 -->
     <el-radio-group v-model="mode" class="flex flex-col gap-2 mb-4">
       <el-radio value="file">{{ t('file.ignoreThisFile', { name: props.filePath.split('/').pop() }) }}</el-radio>
       <el-radio value="ext">{{ t('file.ignoreExt', { ext: props.filePath.split('.').pop() }) }}</el-radio>
       <el-radio value="dir">{{ t('file.ignoreDirectory', { dir: props.filePath.split('/')[0] }) }}</el-radio>
       <el-radio value="custom">{{ t('file.ignoreCustom') }}</el-radio>
     </el-radio-group>
+    <!-- 自定义模式：规则输入框 -->
     <el-input v-if="mode === 'custom'" v-model="customPattern"
       size="small" class="mb-3" :placeholder="t('file.ignorePlaceholder')" />
     <p class="text-xs text-slate-400 dark:text-slate-500 font-mono bg-slate-50 dark:bg-slate-900 px-2 py-1 rounded">
       svn propset svn:ignore "{{ computedPattern }}" {{ props.filePath }}
     </p>
+    <!-- 底部操作栏 -->
     <template #footer>
+      <!-- 取消关闭对话框 -->
       <el-button size="default" class="focus:ring-2 focus:ring-offset-2 focus:ring-blue-400 focus:outline-none" @click="emit('close')">{{ t('dialog.cancel') }}</el-button>
+      <!-- 确认添加忽略规则 -->
       <el-button size="default" type="primary" :loading="isAdding"
         :disabled="!computedPattern" class="focus:ring-2 focus:ring-offset-2 focus:ring-blue-400 focus:outline-none" @click="handleAddIgnore">
         {{ t('dialog.addIgnore') }}
