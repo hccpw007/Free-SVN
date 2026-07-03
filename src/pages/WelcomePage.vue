@@ -54,8 +54,9 @@ async function handleRecentWorkspaceClick(wp: string) {
   }
 }
 </script>
-
+<!-- 欢迎页 -->
 <template>
+  <!-- 欢迎页主容器 -->
   <div class="h-full flex items-center justify-center">
     <div class="text-center max-w-md px-8">
       <h1 class="text-3xl font-bold text-slate-800 dark:text-slate-100">
@@ -64,6 +65,7 @@ async function handleRecentWorkspaceClick(wp: string) {
       <p class="mt-2 text-sm text-slate-500 dark:text-slate-400">
         {{ t('app.welcomeSubtitle') }}
       </p>
+      <!-- 操作按钮组 -->
       <div class="mt-8 flex flex-col items-center gap-3">
         <button
           class="w-56 px-4 py-2.5 rounded-md bg-green-500 hover:bg-green-600 text-white text-sm font-medium transition-colors duration-150 focus:ring-2 focus:ring-offset-2 focus:ring-blue-400 focus:outline-none"
@@ -78,13 +80,16 @@ async function handleRecentWorkspaceClick(wp: string) {
           {{ t('workspace.openExisting') }}
         </button>
       </div>
+      <!-- 最近工作副本区 -->
       <div class="mt-8 text-left">
         <p class="text-xs font-medium text-slate-400 dark:text-slate-500 mb-2 uppercase tracking-wider">
           {{ t('workspace.recentWorkspaces') }}
         </p>
+        <!-- 无最近工作副本时的提示 -->
         <div v-if="workspaceStore.recentWorkspaces.length === 0" class="text-xs text-slate-400 dark:text-slate-500 italic">
           {{ t('workspace.noRecentWorkspaces') }}
         </div>
+        <!-- 最近工作副本列表 -->
         <div v-else class="space-y-1">
           <div
             v-for="wp in workspaceStore.recentWorkspaces" :key="wp"
@@ -92,6 +97,7 @@ async function handleRecentWorkspaceClick(wp: string) {
             @click="handleRecentWorkspaceClick(wp)"
           >
             <span class="truncate">{{ wp }}</span>
+            <!-- 移出该工作副本 -->
             <button
               class="opacity-0 group-hover:opacity-100 text-slate-400 hover:text-red-500 transition-opacity duration-150 focus:ring-2 focus:ring-offset-2 focus:ring-blue-400 focus:outline-none rounded"
               :title="t('common.remove')"
