@@ -44,7 +44,9 @@ pub async fn run_svn_with_progress(
         }
     }
     for arg in args.iter() {
-        all_args.push(arg.to_string());
+        if arg != &"--non-interactive" {
+            all_args.push(arg.to_string());
+        }
     }
 
     let cwd_str = cwd.to_string();
@@ -323,6 +325,8 @@ pub async fn run_svn_with_progress(
             if !stderr_done {
                 match rx_stderr.try_recv() {
                     Ok(line) => {
+                        // 调试：打印所有 stderr 行（含非进度行）
+                        log::info!("[progress_debug] stderr行: {:?}", line);
                         // 解析百分比
                         let percent = extract_percentage(&line);
 
