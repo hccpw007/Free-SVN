@@ -8,6 +8,7 @@ import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { listen } from '@tauri-apps/api/event'
 import { getCurrentWebviewWindow } from '@tauri-apps/api/webviewWindow'
+import { LogicalSize } from '@tauri-apps/api/dpi'
 import { invoke } from '@tauri-apps/api/core'
 import type { OperationProgress, OperationLine, CancelledPayload, OperationResult } from '@/types/svn'
 import { formatNumber } from '@/utils/format'
@@ -108,6 +109,9 @@ const unlistenFns: Array<() => void> = []
 
 onMounted(async () => {
   const appWindow = getCurrentWebviewWindow()
+
+  // 确保窗口尺寸正确（macOS Retina 屏下构造参数可能不生效）
+  await appWindow.setSize(new LogicalSize(880, 587)).catch(() => {})
 
   // 窗口关闭请求（原生 X 按钮）：先取消操作，再关闭窗口
   appWindow.onCloseRequested(async (event) => {
