@@ -1,11 +1,12 @@
 <script setup lang="ts">
 /** 更新到版本对话框——选择目标版本号和深度。 */
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useSvnStore } from '@/stores/svn'
 import { useWorkspaceStore } from '@/stores/workspace'
 import { useFileListStore } from '@/stores/fileList'
 import { useI18n } from 'vue-i18n'
 import { ElMessage } from 'element-plus'
+import type { LogEntry } from '@/types/svn'
 
 const { t } = useI18n()
 const svnStore = useSvnStore()
@@ -19,6 +20,7 @@ const currentRevision = ref(workspaceStore.currentRevision)
 const targetRevision = ref<number | undefined>(undefined)
 const updateDepth = ref('') // '' = 不修改
 const isUpdating = ref(false)
+const recentRevisions = ref<LogEntry[]>([])
 
 const SUPPORTED_DEPTHS = [
   { value: '', label: 'dialog.depthUnchanged' },
@@ -27,6 +29,24 @@ const SUPPORTED_DEPTHS = [
   { value: 'children', label: 'dialog.depthChildren' },
   { value: 'empty', label: 'dialog.depthEmpty' },
 ]
+
+/** 格式化修订版本标签 */
+function formatRevision(entry: LogEntry): string {
+  const rev = `r${entry.revision}`
+  const msg = entry.msg ? entry.msg.replace(/\n.*$/s, '').substring(0, 60) : ''
+  return `${rev}  ${msg}`
+}
+
+// 挂载时获取最近日志
+onMounted(async () => {
+  if (!workspaceStore.currentPath) return
+  try {
+    const logResult = await svnStore.getLog({ path: workspaceStore.currentPath, limit: 30 })
+    recentRevisions.value = (logResult && Array.isArray(logResult) ? logResult : logResult?.entries) ?? []
+  } catch {
+    // 日志获取失败不影响对话框使用
+  }
+})
 
 async function handleUpdate() {
   if (!workspaceStore.currentPath) return
@@ -63,9 +83,12 @@ async function handleUpdate() {
       <!-- 目标版本 -->
       <div>
         <label class="text-xs font-medium text-slate-700 dark:text-slate-300 mb-1 block">{{ t('dialog.targetRevision') }}</label>
-        <el-input-number v-model="targetRevision" :min="1" size="small"
-          :placeholder="t('common.optional')" class="!w-32" controls-position="right" />
-        <p class="text-xs text-slate-400 dark:text-slate-500 mt-1">{{ t('dialog.revisionOptional') }}</p>
+        <el-select v-model="targetRevision" size="small" class="!w-full" clearable :placeholder="t('dialog.latestVersion')">
+          <!-- HEAD 选项 -->
+          <el-option :value="undefined" :label="t('dialog.latestVersion')" />
+          <el-option disabled :value="0" label="──────────" style="pointer-events: none;" />
+          <el-option v-for="entry in recentRevisions" :key="entry.revision" :value="entry.revision" :label="formatRevision(entry)" />
+        </el-select>
       </div>
 
       <!-- 深度 -->
