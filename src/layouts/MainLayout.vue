@@ -9,6 +9,7 @@ import ToolBar from '@/components/common/ToolBar.vue'
 import StatusBar from '@/components/common/StatusBar.vue'
 
 const route = useRoute()
+const svnEventsStore = useSvnEventsStore()
 
 // 窗口焦点变化时自动刷新文件列表（300ms 防抖）
 useAutoRefresh()
@@ -20,7 +21,6 @@ const isWelcomePage = computed(() => {
 
 /** 处理 ToolBar 对话框打开事件 */
 function handleOpenDialog(dialog: string) {
-  const svnEventsStore = useSvnEventsStore()
   switch (dialog) {
     case 'update-to-revision':
       svnEventsStore.showUpdateRevisionDialog = true
