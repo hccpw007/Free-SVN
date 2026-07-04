@@ -73,50 +73,22 @@ export const useSvnEventsStore = defineStore('svnEvents', () => {
     // ── 预枚举文件模式标记（来自 checkout.rs 的 svn list） ──
     let hasEnumeratedFiles = false
 
-    // ── 1 秒定时器：标记当前正在下载的文件 ──
-    let inProgressTimer: ReturnType<typeof setInterval> | null = null
-
-    function stopInProgressTimer() {
-      if (inProgressTimer !== null) {
-        clearInterval(inProgressTimer)
-        inProgressTimer = null
-      }
-    }
-
-    function startInProgressTimer() {
-      stopInProgressTimer()
-      inProgressTimer = setInterval(() => {
-        // 先将所有非 completed 文件重置为 pending
-        for (const line of fileLines.value) {
-          if (line.status !== 'completed') {
-            line.status = 'pending'
-          }
-        }
-        // 再标记第一个 pending 文件为 in_progress
-        for (const line of fileLines.value) {
-          if (line.status === 'pending') {
-            line.status = 'in_progress'
-            break
-          }
-        }
-      }, 1000)
-    }
-
     /** 根据 operation:progress 的 completedCount 更新文件行状态 */
     function markCompletedFiles() {
       if (!hasEnumeratedFiles) return
       const count = progress.value?.completedCount ?? 0
-      // 重置所有文件为 pending
+      // 全部文件重置为 pending
       for (let i = 0; i < fileLines.value.length; i++) {
         fileLines.value[i].status = 'pending'
       }
-      // 将前 N 个标记为 completed
-      for (let i = 0; i < count && i < fileLines.value.length; i++) {
-        fileLines.value[i].status = 'completed'
-      }
-      // 下一个标记为 in_progress
-      if (count < fileLines.value.length) {
-        fileLines.value[count].status = 'in_progress'
+      // 前 count 个标记为 completed，下标 count 标记为 in_progress
+      for (let i = 0; i < fileLines.value.length; i++) {
+        if (i < count) {
+          fileLines.value[i].status = 'completed'
+        } else if (i === count) {
+          fileLines.value[i].status = 'in_progress'
+          break // 只标记第一个待下载的，后面的保持 pending
+        }
       }
     }
 
@@ -132,8 +104,6 @@ export const useSvnEventsStore = defineStore('svnEvents', () => {
         isOperationRunning.value = true
         fileLines.value = []
         hasEnumeratedFiles = false
-        stopInProgressTimer()
-        startInProgressTimer()
         useFileListStore().isOperationRunning = true
       }),
       listen<OperationLine>('operation:line', e => {
@@ -158,12 +128,10 @@ export const useSvnEventsStore = defineStore('svnEvents', () => {
       }),
       listen<CancelledPayload>('operation:cancelled', () => {
         isOperationRunning.value = false; progress.value = null
-        stopInProgressTimer()
         useFileListStore().isOperationRunning = false
       }),
       listen<OperationResult>('operation:completed', () => {
         isOperationRunning.value = false; progress.value = null
-        stopInProgressTimer()
         // 操作完成时，将所有剩余文件标记为 completed
         for (const line of fileLines.value) {
           if (line.status !== 'completed') {
@@ -174,7 +142,6 @@ export const useSvnEventsStore = defineStore('svnEvents', () => {
       }),
       listen('operation:error', () => {
         isOperationRunning.value = false; progress.value = null
-        stopInProgressTimer()
         fileLines.value = []
         useFileListStore().isOperationRunning = false
       }),
