@@ -27,6 +27,12 @@ async function handleOpenWorkspace() {
   try {
     const selected = await open({ directory: true })
     if (selected && typeof selected === 'string') {
+      // 已知的不完整检出目录，直接切换（跳过 getInfo）
+      if (selected === workspaceStore.incompleteCheckoutPath) {
+        workspaceStore.clearIncompleteCheckout()
+        await workspaceStore.switchWorkspace(selected)
+        return
+      }
       // 先检测是否为 SVN 工作副本
       try {
         await getInfo(selected)
@@ -44,6 +50,12 @@ async function handleOpenWorkspace() {
 }
 
 async function handleRecentWorkspaceClick(wp: string) {
+  // 已知的不完整检出目录，直接进入
+  if (wp === workspaceStore.incompleteCheckoutPath) {
+    workspaceStore.clearIncompleteCheckout()
+    await workspaceStore.switchWorkspace(wp)
+    return
+  }
   try {
     await getInfo(wp)
     // 依然有效的工作副本 → 直接进入

@@ -110,6 +110,12 @@ pub async fn checkout_repo(
     svn::executor::check_network(&params.url).await?;
     state.try_lock()?;
 
+    // 立即设置操作上下文，覆盖整个检出流程（含阶段1预枚举）
+    svn::executor::set_current_operation(svn::executor::OperationContext {
+        operation: "checkout".to_string(),
+        target_path: params.target_path.clone(),
+    });
+
     // ── 阶段 1：枚举文件列表 ──
     // 在真正检出前，先 svn list --recursive 获取所有文件并展示在弹窗中
     app_handle.emit("operation:started", serde_json::json!({
@@ -149,12 +155,6 @@ pub async fn checkout_repo(
     })).ok();
 
     // ── 阶段 2：实际检出 ──
-    // 设置当前操作上下文（取消时用于 cleanup 目标目录）
-    svn::executor::set_current_operation(svn::executor::OperationContext {
-        operation: "checkout".to_string(),
-        target_path: params.target_path.clone(),
-    });
-
     // 构造 SVN args
     let mut args = vec![
         "checkout".to_string(),
