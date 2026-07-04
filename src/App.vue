@@ -14,6 +14,7 @@ import AuthDialog from '@/components/dialogs/AuthDialog.vue'
 import CommitDialog from '@/components/dialogs/CommitDialog.vue'
 import CheckoutDialog from '@/components/dialogs/CheckoutDialog.vue'
 import { WebviewWindow } from '@tauri-apps/api/webviewWindow'
+import { LogicalSize } from '@tauri-apps/api/dpi'
 
 const { locale, t } = useI18n()
 const settingsStore = useSettingsStore()
@@ -39,6 +40,7 @@ async function openProgressWindow() {
   const existing = await WebviewWindow.getByLabel('progress').catch(() => null)
   if (existing) {
     progressWindow = existing
+    await existing.setSize(new LogicalSize(880, 587))
     await existing.show()
     await existing.setFocus()
     return
