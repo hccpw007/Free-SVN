@@ -6,36 +6,32 @@
  */
 import { ref, computed, watch, watchEffect, onUnmounted } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { useSvnEventsStore } from '@/stores/svnEvents'
 import { useProgressOverlay } from '@/composables/useProgressOverlay'
 import { formatNumber } from '@/utils/format'
 import FileLineRow from './FileLineRow.vue'
 
 const { t } = useI18n()
-const svnEventsStore = useSvnEventsStore()
 
-// -- 从 composable 获取 UI 状态和方法 --
+// -- 从 composable 获取 UI 状态、进度数据和方法 --
 const {
-  isVisible,
-  isCancelling,
-  panelOffset,
-  onDragStart,
-  onDragMove,
-  onDragEnd,
-  cancelOperation,
-  autoScrollToBottom,
-  fileListRef,
+  isVisible, isCancelling, panelOffset,
+  onDragStart, onDragMove, onDragEnd,
+  cancelOperation, autoScrollToBottom, fileListRef,
+  progress, fileLines,
 } = useProgressOverlay()
+
+// -- 标题栏格式化 --
+const titleText = computed(() => {
+  const op = progress.value?.operation || t('progress.operationInProgress')
+  const pct = progress.value?.percent ?? 0
+  return `${op}${t('progress.inProgress')} (${pct}%)`
+})
 
 // -- 本地 UI 状态 --
 const overlayVisible = ref(false)       // 弹窗显示控制（含 500ms 延迟关闭）
 const showConnecting = ref(false)        // 10 秒无响应提示
 let autoCloseTimer: ReturnType<typeof setTimeout> | null = null
 let connectingTimer: ReturnType<typeof setTimeout> | null = null
-
-// -- 进度与文件行 --
-const progress = computed(() => svnEventsStore.progress)
-const fileLines = computed(() => svnEventsStore.fileLines)
 
 // -- 10 秒无响应定时器 --
 function clearConnectingTimer() {
@@ -125,10 +121,7 @@ onUnmounted(() => {
           @mouseup="onDragEnd"
         >
           <span class="text-sm font-semibold text-slate-100 truncate">
-            {{ progress?.operation || t('progress.operationInProgress') }}
-          </span>
-          <span class="text-sm tabular-nums text-slate-400 ml-3 shrink-0">
-            {{ progress?.percent ?? 0 }}%
+            {{ titleText }}
           </span>
         </div>
 

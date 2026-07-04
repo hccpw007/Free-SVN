@@ -49,6 +49,7 @@ pub async fn run_svn_with_progress(
 
     let result = spawn_blocking(move || {
         let start = Instant::now();
+        let mut was_cancelled = false;
 
         // 日志
         let log_args = all_args.join(" ");
@@ -66,9 +67,9 @@ pub async fn run_svn_with_progress(
             Ok(c) => c,
             Err(e) => {
                 return if e.kind() == std::io::ErrorKind::NotFound {
-                    Err(AppError::SvnNotFound)
+                    (Err(AppError::SvnNotFound), false)
                 } else {
-                    Err(AppError::Io(e))
+                    (Err(AppError::Io(e)), false)
                 };
             }
         };
@@ -245,6 +246,7 @@ pub async fn run_svn_with_progress(
         loop {
             // 检查取消
             if is_cancelled() {
+                was_cancelled = true;
                 break;
             }
 
@@ -405,34 +407,38 @@ pub async fn run_svn_with_progress(
         let elapsed = start.elapsed();
         log::info!("svn_with_progress 完成 (耗时: {:?}, 退出码: {:?})", elapsed, output.status.code());
 
-        if output.status.success() || is_cancelled() {
-            Ok(String::from_utf8_lossy(&output.stdout).to_string())
+        if output.status.success() || was_cancelled {
+            (Ok(String::from_utf8_lossy(&output.stdout).to_string()), was_cancelled)
         } else {
             let stderr = String::from_utf8_lossy(&output.stderr);
             log::warn!("svn_with_progress stderr: {}", stderr);
 
             if is_auth_error(&stderr) {
-                Err(AppError::SvnAuthFailed(stderr.to_string()))
+                (Err(AppError::SvnAuthFailed(stderr.to_string())), was_cancelled)
             } else {
-                Err(AppError::SvnCommand(stderr.to_string()))
+                (Err(AppError::SvnCommand(stderr.to_string())), was_cancelled)
             }
         }
     }).await;
 
     match result {
-        Ok(inner) => {
+        Ok((inner, was_cancelled)) => {
             let r = inner.map_err(|e| AppError::Repo(format!("spawn_blocking error: {}", e)))?;
+            if was_cancelled {
+                // 取消后不再 emit 新事件（cancelled 事件已由 cancel.rs 推送）
+                return Ok(r);
+            }
             // emit operation:completed
             app_handle.emit("operation:completed", serde_json::json!({
                 "result": "success", "detail": ""
             })).ok();
             Ok(r)
         }
-        Err(_elapsed) => {
+        Err(join_err) => {
             app_handle.emit("operation:error", serde_json::json!({
                 "errorCode": "TIMEOUT", "message": "SVN operation timed out"
             })).ok();
-            Err(AppError::Timeout("SVN operation timed out".into()))
+            Err(AppError::Repo(format!("spawn_blocking error: {}", join_err)))
         }
     }
 }

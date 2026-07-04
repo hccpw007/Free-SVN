@@ -78,7 +78,26 @@ export const useSvnEventsStore = defineStore('svnEvents', () => {
       }),
       listen<OperationLine>('operation:line', e => {
         // v3 新增：operation:line 事件，携带单行文件信息
-        fileLines.value.push(e.payload)
+        const line = e.payload
+        // 待传输行计数优化：首行显示总计数，后续简化
+        if (line.status === 'pending') {
+          const pendingCount = fileLines.value.filter(l => l.status === 'pending').length
+          if (pendingCount === 0 && progress.value?.pendingCount && progress.value.pendingCount > 0) {
+            line.filePath = `(等待中，${progress.value.pendingCount} 个文件)`
+          } else if (pendingCount > 0) {
+            line.filePath = '(等待中...)'
+          }
+        }
+        fileLines.value.push(line)
+        // 文件列表淘汰策略：超过 1000 行时淘汰最旧的 200 行已完成
+        if (fileLines.value.length > 1000) {
+          let evictCount = 200
+          fileLines.value = fileLines.value.filter(
+            (line, i, arr) =>
+              line.status !== 'completed' ||
+              arr.slice(0, i).filter(l => l.status === 'completed').length > evictCount
+          )
+        }
       }),
       listen<CancelledPayload>('operation:cancelled', () => {
         // v3 新增：operation:cancelled 事件，替代 operation:completed + result:"cancelled"

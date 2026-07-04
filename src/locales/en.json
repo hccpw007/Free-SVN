@@ -245,6 +245,7 @@
   },
   "progress": {
     "operationInProgress": "Operation in Progress",
+    "inProgress": "in progress",
     "processing": "Processing...",
     "filesProcessed": "{count} files processed",
     "cancelling": "Cancelling...",
