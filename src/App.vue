@@ -36,7 +36,7 @@ let progressWindow: WebviewWindow | null = null
 
 async function openProgressWindow() {
   // 如果窗口已存在，激活并返回
-  const existing = await WebviewWindow.getByLabel('progress')
+  const existing = await WebviewWindow.getByLabel('progress').catch(() => null)
   if (existing) {
     progressWindow = existing
     await existing.show()
@@ -44,7 +44,7 @@ async function openProgressWindow() {
     return
   }
   // 创建新窗口
-  progressWindow = new WebviewWindow('progress', {
+  const win = new WebviewWindow('progress', {
     url: '/progress-window',
     width: 520,
     height: 460,
@@ -52,6 +52,11 @@ async function openProgressWindow() {
     decorations: true,
     center: true,
   })
+  // 监听窗口创建失败事件
+  win.once('tauri://error', (e) => {
+    console.error('[App] 进度窗口创建失败:', e)
+  })
+  progressWindow = win
 }
 
 function closeProgressWindow() {
