@@ -23,6 +23,7 @@ const isOperationRunning = ref(false)
 const isCancelling = ref(false)
 const hasEnumeratedFiles = ref(false)
 const isOperationCompleted = ref(false)
+const wasCancelled = ref(false)
 // ── 本地计时器 ──
 const elapsedTime = ref('00:00')
 let elapsedStartTime = 0
@@ -56,6 +57,11 @@ const effectivePendingCount = computed(() =>
 const progressPercent = computed(() => {
   const total = fileLines.value.length
   return total > 0 ? Math.round((effectiveCompletedCount.value / total) * 100) : 0
+})
+// 进度条颜色：取消后为灰色
+const progressBarColor = computed(() => {
+  if (wasCancelled.value) return '#9ca3af'
+  return undefined
 })
 
 const sortedFileLines = computed(() => {
@@ -133,6 +139,7 @@ onMounted(async () => {
       if (isOperationRunning.value) return
       isOperationRunning.value = true
       isOperationCompleted.value = false
+      wasCancelled.value = false
       fileLines.value = []
       hasEnumeratedFiles.value = false
       isCancelling.value = false
@@ -170,6 +177,7 @@ onMounted(async () => {
     }),
     listen<CancelledPayload>('operation:cancelled', () => {
       isOperationRunning.value = false
+      wasCancelled.value = true
       progress.value = null
       stopElapsedTimer()
       // 将尚未完成的所有文件标记为已取消
@@ -184,8 +192,9 @@ onMounted(async () => {
       isOperationCompleted.value = true
       progress.value = null
       stopElapsedTimer()
+      // 仅将未完成（pending/in_progress）改为 completed，不覆盖已取消的文件
       for (const line of fileLines.value) {
-        if (line.status !== 'completed') {
+        if (line.status === 'pending' || line.status === 'in_progress') {
           line.status = 'completed'
         }
       }
@@ -256,8 +265,9 @@ watch(() => fileLines.value.length, () => {
         :percentage="progressPercent"
         :stroke-width="12"
         striped
-        striped-flow
+        :striped-flow="isOperationRunning"
         :duration="0.3"
+        :color="progressBarColor"
       />
     </div>
 
