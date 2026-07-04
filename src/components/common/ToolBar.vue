@@ -65,7 +65,11 @@ const buttons = computed<ToolbarButton[]>(() => [
   },
   {
     key: 'update', label: 'toolbar.update', desc: 'toolbar.descUpdate', iconKey: 'RefreshCw',
-    action: () => emit('open-dialog', 'update'), priority: 7,
+    action: async () => {
+        if (!workspaceStore.currentPath) return
+        await svnStore.updateWorkspace({ path: workspaceStore.currentPath })
+        await fileListStore.refresh()
+      }, priority: 7,
     getDisabledTooltip: () => globallyDisabled.value ? t('toolbar.operationInProgress') : t('toolbar.noWorkingCopy'),
   },
   {

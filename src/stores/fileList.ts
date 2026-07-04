@@ -105,10 +105,18 @@ export const useFileListStore = defineStore('fileList', () => {
     filterStatus.value = 'all'
   }
 
+  /** 将相对路径转为绝对路径（拼接工作副本根目录） */
+  async function resolvePaths(paths: string[]): Promise<string[]> {
+    const { useWorkspaceStore } = await import('./workspace')
+    const ws = useWorkspaceStore()
+    if (!ws.currentPath) return paths
+    return paths.map(p => `${ws.currentPath}/${p}`)
+  }
+
   /** 还原文件修改 */
   async function revertFile(path: string) {
     try {
-      await svnRevertFiles([path])
+      await svnRevertFiles(await resolvePaths([path]))
       await refresh()
     } catch (e: unknown) {
       console.error('[fileList store] revertFile 失败:', e)
@@ -120,7 +128,7 @@ export const useFileListStore = defineStore('fileList', () => {
     const paths = Array.from(selectedPaths.value)
     if (paths.length === 0) return
     try {
-      await svnRevertFiles(paths)
+      await svnRevertFiles(await resolvePaths(paths))
       selectedPaths.value = new Set()
       await refresh()
     } catch (e: unknown) {

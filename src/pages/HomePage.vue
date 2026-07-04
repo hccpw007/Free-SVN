@@ -59,6 +59,7 @@ watch(() => fileListStore.searchQuery, () => {
 // 工作副本切换后自动刷新
 watch(() => workspaceStore.currentPath, async (newPath) => {
   if (newPath) {
+    fileListStore.clearSelection()
     await refreshWorkspaceInfo()
     await fileListStore.refresh()
   } else {
