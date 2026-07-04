@@ -145,6 +145,9 @@ onMounted(async () => {
   applyLanguage(settingsStore.language)
   applyDarkMode(settingsStore.darkMode)
 
+  // 初始化 SVN 事件监听（监听 operation:started/progress/line/cancelled/completed/error）
+  svnEventsStore.initEventListeners()
+
   // 全局焦点跟踪：同步 fileListStore.isOperationRunning 到 useKeyboardShortcuts
   watch(() => fileListStore.isOperationRunning, (v) => {
     setOperationRunning(v)
