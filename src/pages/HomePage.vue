@@ -42,6 +42,8 @@ const selectedCommitCount = computed(() =>
 
 const showUpdateRevisionDialog = ref(false)
 const showSwitchDialog = ref(false)
+// 不完整检出横幅是否被手动关闭（路径保留供后续切换使用）
+const incompleteBannerDismissed = ref(false)
 
 // 搜索框 300ms 防抖
 let searchTimer: ReturnType<typeof setTimeout>
@@ -122,7 +124,7 @@ async function handleResumeUpdate() {
 
 /** 忽略不完整检出提示 */
 function handleDismissIncomplete() {
-  workspaceStore.clearIncompleteCheckout()
+  incompleteBannerDismissed.value = true
 }
 </script>
 
@@ -136,7 +138,7 @@ function handleDismissIncomplete() {
   <div class="h-full flex flex-col">
     <!-- 不完整检出提示横幅 -->
     <div
-      v-if="workspaceStore.incompleteCheckoutPath"
+      v-if="workspaceStore.incompleteCheckoutPath && !incompleteBannerDismissed"
       class="mx-4 mt-2 px-4 py-3 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700"
     >
       <div class="flex items-start gap-3">
