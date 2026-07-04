@@ -73,19 +73,6 @@ export const useSvnEventsStore = defineStore('svnEvents', () => {
     // ── 预枚举文件模式标记（来自 checkout.rs 的 svn list） ──
     let hasEnumeratedFiles = false
 
-    /** 将第一个 pending 文件标记为 in_progress，其余非 completed 重置为 pending */
-    function markNextInProgress() {
-      for (const l of fileLines.value) {
-        if (l.status === 'in_progress') l.status = 'pending'
-      }
-      for (const l of fileLines.value) {
-        if (l.status === 'pending') {
-          l.status = 'in_progress'
-          break
-        }
-      }
-    }
-
     Promise.all([
       listen<OperationProgress>('operation:progress', e => { progress.value = e.payload }),
       listen('operation:started', () => {
@@ -103,16 +90,20 @@ export const useSvnEventsStore = defineStore('svnEvents', () => {
           // 来自 checkout.rs 的 svn list 预枚举 → 追加到文件列表
           hasEnumeratedFiles = true
           fileLines.value.push(line)
-          if (fileLines.value.length === 1) {
-            fileLines.value[0].status = 'in_progress'
-          }
         } else if (line.status === 'completed' && hasEnumeratedFiles) {
-          // 从 progress.rs 的检出 stdout 匹配路径更新状态
+          // 从 progress.rs 的检出 stdout 匹配路径 → 短暂 in_progress 后 completed
           const match = fileLines.value.find(
             l => l.status !== 'completed' && line.filePath.endsWith(l.filePath)
           )
-          if (match) match.status = 'completed'
-          markNextInProgress()
+          if (match) {
+            // 清除旧的 in_progress
+            for (const l of fileLines.value) {
+              if (l.status === 'in_progress') l.status = 'pending'
+            }
+            // 刚完成的文件短暂显示为 in_progress（闪烁效果）
+            match.status = 'in_progress'
+            setTimeout(() => { match.status = 'completed' }, 300)
+          }
         } else if (line.status === 'completed' && !hasEnumeratedFiles) {
           // 非 checkout 操作（update/commit/switch）：直接追加 completed 行
           fileLines.value.push(line)
