@@ -54,18 +54,18 @@ async function handleSwitchWorkspace() {
   try {
     const selected = await open({ directory: true })
     if (selected && typeof selected === 'string') {
+      // 如果是已知的不完整检出目录，直接切换（跳过 getInfo 检测）
+      if (selected === workspaceStore.incompleteCheckoutPath) {
+        workspaceStore.clearIncompleteCheckout()
+        await workspaceStore.switchWorkspace(selected)
+        return
+      }
       // 先检测是否为 SVN 工作副本
       try {
         await getInfo(selected)
         // 是工作副本 → 正常切换
         await workspaceStore.switchWorkspace(selected)
       } catch {
-        // 如果是已知的不完整检出目录，仍然切换进去（首页会显示继续更新提示）
-        if (selected === workspaceStore.incompleteCheckoutPath) {
-          workspaceStore.clearIncompleteCheckout()
-          await workspaceStore.switchWorkspace(selected)
-          return
-        }
         // 非工作副本 → 打开检出对话框（预填路径，不切换）
         workspaceStore.checkoutInitialPath = selected
         workspaceStore.showCheckoutDialog = true
