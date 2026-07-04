@@ -32,9 +32,9 @@ pub async fn update_workspace(
 
     // BASE_SVN_ARGS: 由 run_svn_with_progress() 统一追加（含完整 --trust-server-cert-failures）
     // 命令特定 args 中不加 --trust-server-cert-failures 以免覆盖 BASE_SVN_ARGS 的完整列表
+    // 注意：svn update 不支持 --xml 参数，进度由 run_svn_with_progress 自动处理
     let mut args = vec![
         "update".to_string(),
-        "--xml".to_string(),
         "--non-interactive".to_string(),
     ];
     if let Some(rev) = params.revision {
@@ -63,15 +63,6 @@ pub async fn update_workspace(
     result
 }
 
-fn extract_update_revision(xml: &str) -> u64 {
-    xml.lines()
-        .find(|l| l.contains("revision=\""))
-        .and_then(|l| l.split("revision=\"").nth(1))
-        .and_then(|s| s.split('"').next())
-        .and_then(|s| s.parse::<u64>().ok())
-        .unwrap_or(0)
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -82,20 +73,5 @@ mod tests {
         let params: UpdateParams = serde_json::from_str(json).unwrap();
         assert_eq!(params.path, "/tmp/repo");
         assert_eq!(params.revision, Some(100));
-    }
-
-    #[test]
-    fn test_extract_update_revision_from_xml() {
-        let xml = r#"<?xml version="1.0"?>
-<update>
-<target revision="42" path=".">
-</target>
-</update>"#;
-        assert_eq!(extract_update_revision(xml), 42);
-    }
-
-    #[test]
-    fn test_extract_update_revision_no_match() {
-        assert_eq!(extract_update_revision("<foo></foo>"), 0);
     }
 }
