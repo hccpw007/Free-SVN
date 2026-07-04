@@ -47,7 +47,7 @@ async function openProgressWindow() {
   const win = new WebviewWindow('progress', {
     url: '/progress-window',
     width: 880,
-    height: 500,
+    height: 587,
     minWidth: 480,
     minHeight: 360,
     resizable: true,
