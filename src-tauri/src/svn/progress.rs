@@ -35,9 +35,14 @@ pub async fn run_svn_with_progress(
     let svn_path = get_svn_path();
     let svn_path_str = svn_path.to_string_lossy().to_string();
 
-    // 构建 args
+    // 构建 args — 移除 --non-interactive 让 svn 输出进度信息（速度/百分比）
+    // 进度行格式: "   45%   1234K   1.2MB/s   00:12"
     let mut all_args: Vec<String> = Vec::new();
-    all_args.extend(BASE_SVN_ARGS.iter().map(|s| s.to_string()));
+    for s in BASE_SVN_ARGS.iter() {
+        if *s != "--non-interactive" {
+            all_args.push(s.to_string());
+        }
+    }
     for arg in args.iter() {
         all_args.push(arg.to_string());
     }
