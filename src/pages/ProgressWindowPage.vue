@@ -56,6 +56,17 @@ async function cancelOperation() {
   }
 }
 
+// ── 窗口拖拽 ──
+async function startDrag(e: MouseEvent) {
+  if (e.button !== 0) return // 仅左键
+  const appWindow = getCurrentWebviewWindow()
+  try {
+    await appWindow.startDragging()
+  } catch (err) {
+    console.error('[ProgressWindow] 拖拽失败:', err)
+  }
+}
+
 // ── 关闭窗口 ──
 async function handleClose() {
   const appWindow = getCurrentWebviewWindow()
@@ -162,7 +173,10 @@ watch(() => fileLines.value.length, () => {
 <template>
   <div class="h-screen flex flex-col bg-slate-900 select-none overflow-hidden">
     <!-- 标题栏 -->
-    <div class="flex items-center justify-between px-4 py-3 bg-slate-800 shrink-0">
+    <div
+      class="flex items-center justify-between px-4 py-3 bg-slate-800 shrink-0"
+      @mousedown.prevent="startDrag"
+    >
       <span class="text-sm font-semibold text-slate-100 truncate">
         {{ titleText }}
       </span>
