@@ -233,7 +233,11 @@ onMounted(async () => {
       startElapsedTimer()
       if (data.fileLines?.length > 0) {
         fileLines.value = data.fileLines
-        hasEnumeratedFiles.value = true
+        // 仅当被补发的行包含 pending 状态（预枚举场景）时才标记 hasEnumeratedFiles，
+        // 否则 update/revert/switch 等非预枚举操作的后续 completed 行会被错误丢弃
+        if (data.fileLines.some(l => l.status === 'pending')) {
+          hasEnumeratedFiles.value = true
+        }
       }
       if (data.progress) {
         progress.value = data.progress

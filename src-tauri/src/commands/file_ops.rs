@@ -2,6 +2,7 @@ use serde::Deserialize;
 use crate::models::error::AppError;
 use crate::svn;
 use std::path::Path;
+use tauri::AppHandle;
 
 /// 从文件路径提取父目录作为 cwd，文件位于根目录时返回自身
 fn get_cwd(path: &str) -> String {
@@ -63,17 +64,26 @@ pub async fn delete_files(
     state.unlock(); r
 }
 
+/// 批量还原文件——使用 run_svn_with_progress 推送进度事件
 #[tauri::command]
 pub async fn revert_files(
+    app_handle: AppHandle,
     params: FileOpsParams,
     state: tauri::State<'_, crate::svn::queue::SvnQueue>,
 ) -> Result<String, AppError> {
     if params.paths.is_empty() { return Err(AppError::InvalidInput("至少指定一个文件".into())); }
     svn::executor::validate_path(&params.paths[0])?;
     state.try_lock()?;
-    let mut args = vec!["revert".to_string()];
+    let mut args = vec!["revert".to_string(), "--verbose".to_string()];
     args.extend(params.paths.clone());
-    let r = svn::executor::run_svn(&args.iter().map(String::as_str).collect::<Vec<&str>>(), &get_cwd(&params.paths[0]), None).await;
+    let r = svn::progress::run_svn_with_progress(
+        &args.iter().map(String::as_str).collect::<Vec<&str>>(),
+        &get_cwd(&params.paths[0]),
+        None,
+        app_handle,
+        "revert",
+        None,
+    ).await;
     state.unlock(); r
 }
 

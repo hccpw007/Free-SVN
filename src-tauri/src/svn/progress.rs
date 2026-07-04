@@ -228,12 +228,20 @@ pub async fn run_svn_with_progress(
                         if !rest.is_empty() { return Some(rest.to_string()); }
                     }
                 }
-            } else {
+            } else if op == "revert" {
+                // svn revert --verbose 输出: "Reverted '/path/to/file'"
                 let trimmed = line.trim_start();
-                if !trimmed.is_empty() {
+                if let Some(rest) = trimmed.strip_prefix("Reverted") {
+                    let path = rest.trim_start().trim_matches('\'');
+                    if !path.is_empty() { return Some(path.to_string()); }
+                }
+            } else {
+                // update/switch/merge/copy: "A    path/to/file" (status letter + 4 空格)
+                let trimmed = line.trim_start();
+                if trimmed.len() >= 2 && trimmed.as_bytes().get(1) == Some(&b' ') {
                     let c = trimmed.as_bytes()[0];
                     if c == b'A' || c == b'U' || c == b'D' || c == b'C' {
-                        let rest = trimmed[1..].trim_start();
+                        let rest = trimmed[2..].trim_start();
                         if !rest.is_empty() { return Some(rest.to_string()); }
                     }
                 }
