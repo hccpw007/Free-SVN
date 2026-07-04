@@ -34,6 +34,14 @@ const effectivePendingCount = computed(() => {
   return Math.max(0, total - completed)
 })
 
+// -- 已完成的文件排在顶部，in_progress 次之，pending 在底部 --
+const sortedFileLines = computed(() => {
+  return [...fileLines.value].sort((a, b) => {
+    const order = { completed: 0, in_progress: 1, pending: 2 }
+    return (order[a.status] ?? 2) - (order[b.status] ?? 2)
+  })
+})
+
 // -- 本地 UI 状态 --
 const overlayVisible = ref(false)       // 弹窗显示控制（含 500ms 延迟关闭）
 let autoCloseTimer: ReturnType<typeof setTimeout> | null = null
@@ -145,10 +153,10 @@ onUnmounted(() => {
           >
             {{ progress?.stage || t('progress.processing') }}
           </div>
-          <!-- 文件行循环 -->
+          <!-- 文件行循环（已完成排顶部，待传输排底部） -->
           <FileLineRow
-            v-for="(line, index) in fileLines"
-            :key="index"
+            v-for="(line) in sortedFileLines"
+            :key="line.filePath"
             :filePath="line.filePath"
             :status="line.status"
           />

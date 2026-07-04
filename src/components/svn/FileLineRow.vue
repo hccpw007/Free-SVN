@@ -1,6 +1,6 @@
 <script setup lang="ts">
 /** 操作文件行——进度面板中单行文件的图标/状态/路径展示。 */
-import { Check, Loader, MoveRight } from 'lucide-vue-next'
+import { Check, Loader } from 'lucide-vue-next'
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 
@@ -35,19 +35,17 @@ const statusLabel = computed(() => {
   <div
     class="flex items-center gap-2 px-3 py-0.5 font-mono text-sm transition-colors duration-150"
     :class="{
-      'text-slate-600 dark:text-slate-600 line-through': status === 'completed',
+      'text-green-500': status === 'completed',
       'text-amber-600 dark:text-amber-400 bg-slate-100 dark:bg-slate-700': status === 'in_progress',
-      'text-slate-600 dark:text-slate-300': status === 'pending',
+      'text-slate-100': status === 'pending',
     }"
     :title="filePath"
     :aria-label="`${statusLabel}: ${filePath}`"
   >
-    <!-- 已完成图标 -->
-    <Check v-if="status === 'completed'" class="shrink-0 w-4 h-4 text-slate-400 dark:text-slate-600" aria-hidden="true" />
-    <!-- 进行中图标（旋转动画） -->
-    <Loader v-else-if="status === 'in_progress'" class="shrink-0 w-4 h-4 text-amber-600 dark:text-amber-400 animate-spin" aria-hidden="true" />
-    <!-- 待传输图标 -->
-    <MoveRight v-else class="shrink-0 w-4 h-4 text-slate-500 dark:text-slate-400" aria-hidden="true" />
+    <!-- 已完成：绿色打钩 -->
+    <Check v-if="status === 'completed'" class="shrink-0 w-4 h-4 text-green-500" aria-hidden="true" />
+    <!-- 正在下载 / 待传输：转圈圈动画 -->
+    <Loader v-else class="shrink-0 w-4 h-4 animate-spin" :class="status === 'in_progress' ? 'text-amber-600 dark:text-amber-400' : 'text-slate-400 dark:text-slate-500'" aria-hidden="true" />
     <!-- 文件路径 -->
     <span class="truncate">{{ truncatedPath }}</span>
   </div>
