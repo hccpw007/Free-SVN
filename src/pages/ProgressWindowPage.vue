@@ -22,6 +22,22 @@ const isOperationRunning = ref(false)
 const isCancelling = ref(false)
 const hasEnumeratedFiles = ref(false)
 const isOperationCompleted = ref(false)
+// ── 本地计时器 ──
+const elapsedTime = ref('00:00')
+let elapsedStartTime = 0
+let elapsedTimer: ReturnType<typeof setInterval> | null = null
+
+function startElapsedTimer() {
+  stopElapsedTimer()
+  elapsedStartTime = Date.now()
+  elapsedTimer = setInterval(() => {
+    const seconds = Math.floor((Date.now() - elapsedStartTime) / 1000)
+    elapsedTime.value = `${String(Math.floor(seconds / 60)).padStart(2, '0')}:${String(seconds % 60).padStart(2, '0')}`
+  }, 1000)
+}
+function stopElapsedTimer() {
+  if (elapsedTimer !== null) { clearInterval(elapsedTimer); elapsedTimer = null }
+}
 
 // ── 计算属性 ──
 const titleText = computed(() => {
@@ -30,11 +46,13 @@ const titleText = computed(() => {
   return `${op}${t('progress.inProgress')} (${pct}%)`
 })
 
-const effectivePendingCount = computed(() => {
-  const total = fileLines.value.length
-  const completed = progress.value?.completedCount ?? 0
-  return Math.max(0, total - completed)
-})
+// 从文件列表直接统计已完成和待处理数量
+const effectiveCompletedCount = computed(() =>
+  fileLines.value.filter(l => l.status === 'completed').length
+)
+const effectivePendingCount = computed(() =>
+  fileLines.value.filter(l => l.status === 'pending' || l.status === 'in_progress').length
+)
 
 const sortedFileLines = computed(() => {
   return [...fileLines.value].sort((a, b) => {
@@ -111,6 +129,8 @@ onMounted(async () => {
       fileLines.value = []
       hasEnumeratedFiles.value = false
       isCancelling.value = false
+      elapsedTime.value = '00:00'
+      startElapsedTimer()
     }),
     listen<OperationLine>('operation:line', (e) => {
       const line = e.payload
@@ -144,6 +164,7 @@ onMounted(async () => {
     listen<CancelledPayload>('operation:cancelled', () => {
       isOperationRunning.value = false
       progress.value = null
+      stopElapsedTimer()
       // 将尚未完成的所有文件标记为已取消
       for (const line of fileLines.value) {
         if (line.status !== 'completed') {
@@ -155,6 +176,7 @@ onMounted(async () => {
       isOperationRunning.value = false
       isOperationCompleted.value = true
       progress.value = null
+      stopElapsedTimer()
       for (const line of fileLines.value) {
         if (line.status !== 'completed') {
           line.status = 'completed'
@@ -165,6 +187,7 @@ onMounted(async () => {
       isOperationRunning.value = false
       isOperationCompleted.value = true
       progress.value = null
+      stopElapsedTimer()
       fileLines.value = []
     }),
   ])
@@ -182,6 +205,7 @@ onMounted(async () => {
     }
     if (data.isOperationRunning) {
       isOperationRunning.value = true
+      startElapsedTimer()
       if (data.fileLines?.length > 0) {
         fileLines.value = data.fileLines
         hasEnumeratedFiles.value = true
@@ -238,7 +262,7 @@ watch(() => fileLines.value.length, () => {
       </div>
       <div class="truncate">
         <span class="text-slate-500">{{ t('progress.completedCount') }}:</span>
-        {{ formatNumber(progress?.completedCount ?? 0) }}
+        {{ formatNumber(effectiveCompletedCount) }}
       </div>
       <div class="truncate">
         <span class="text-slate-500">{{ t('progress.pendingCount') }}:</span>
@@ -246,7 +270,7 @@ watch(() => fileLines.value.length, () => {
       </div>
       <div class="truncate">
         <span class="text-slate-500">{{ t('progress.elapsed') }}:</span>
-        {{ progress?.elapsed || '00:00' }}
+        {{ elapsedTime }}
       </div>
     </div>
 
