@@ -46,9 +46,11 @@ async function openProgressWindow() {
   // 创建新窗口
   const win = new WebviewWindow('progress', {
     url: '/progress-window',
-    width: 520,
-    height: 460,
-    resizable: false,
+    width: 720,
+    height: 500,
+    minWidth: 480,
+    minHeight: 360,
+    resizable: true,
     decorations: true,
     center: true,
   })

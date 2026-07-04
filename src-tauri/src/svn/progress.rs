@@ -190,24 +190,21 @@ pub async fn run_svn_with_progress(
         };
 
         // 检测 stderr 进度百分比
+        // SVN 进度行格式: "...  45%"  或   "...  45%   1234K   1.2MB/s   00:12"
         let extract_percentage = |line: &str| -> Option<u8> {
             let trimmed = line.trim_start();
-            if trimmed.starts_with("...") {
-                let after_dots = trimmed.trim_start_matches("...").trim_start();
-                if let Some(pct_str) = after_dots.strip_suffix('%') {
-                    return pct_str.trim().parse::<u8>().ok();
-                }
+            // 去掉前导的 "..."
+            let content = if trimmed.starts_with("...") {
+                trimmed.trim_start_matches("...").trim_start()
+            } else {
+                trimmed
+            };
+            // 找到 % 位置并提取前面的数字
+            if let Some(pct_end) = content.find('%') {
+                content[..pct_end].trim().parse::<u8>().ok()
+            } else {
+                None
             }
-            if trimmed.contains('%') {
-                if let Some(pct_end) = trimmed.find('%') {
-                    let pct_part = &trimmed[..pct_end];
-                    let num_part = pct_part.trim();
-                    if num_part.chars().all(|c| c.is_ascii_digit()) {
-                        return num_part.parse::<u8>().ok();
-                    }
-                }
-            }
-            None
         };
 
         // 从 stderr 行提取传输速度和已耗时间

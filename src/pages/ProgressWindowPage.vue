@@ -23,6 +23,9 @@ const isCancelling = ref(false)
 const hasEnumeratedFiles = ref(false)
 const isOperationCompleted = ref(false)
 
+// ── 关闭防重入（防止 close() 触发 onCloseRequested 循环） ──
+let closingProgrammatically = false
+
 // ── 计算属性 ──
 const titleText = computed(() => {
   const op = progress.value?.operation || t('progress.operationInProgress')
@@ -69,12 +72,15 @@ async function startDrag(e: MouseEvent) {
 
 // ── 关闭窗口 ──
 async function handleClose() {
+  if (closingProgrammatically) return
+  closingProgrammatically = true
   const appWindow = getCurrentWebviewWindow()
   // 如果操作仍在运行，先取消
   if (isOperationRunning.value) {
     await cancelOperation()
   }
   await appWindow.close()
+  closingProgrammatically = false
 }
 
 // ── 事件监听 ──
@@ -84,12 +90,16 @@ onMounted(async () => {
   const appWindow = getCurrentWebviewWindow()
 
   // 窗口关闭请求：如果操作还在运行则取消操作
+  // 使用 closingProgrammatically 防重入（close() 会再次触发此事件）
   appWindow.onCloseRequested(async (event) => {
     event.preventDefault()
+    if (closingProgrammatically) return
+    closingProgrammatically = true
     if (isOperationRunning.value) {
       await cancelOperation()
     }
     await appWindow.close()
+    closingProgrammatically = false
   })
 
   const fns = await Promise.all([
