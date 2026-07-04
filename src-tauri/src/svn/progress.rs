@@ -209,6 +209,39 @@ pub async fn run_svn_with_progress(
             None
         };
 
+        // 从 stderr 行提取传输速度和已耗时间
+        fn extract_speed(line: &str) -> (Option<String>, Option<String>) {
+            // SVN 进度行格式示例:
+            //   "   45%   1234K   1.2MB/s   00:12"
+            //   "   85%   2.3MB/s   00:05"
+            let trimmed = line.trim_start();
+            // 跳过百分比部分（如 "45%" 或 "... 45%"）
+            let after_pct = if trimmed.starts_with("...") {
+                trimmed.trim_start_matches("...").trim_start()
+            } else {
+                trimmed
+            };
+            // 找到 % 位置，取之后的部分
+            let rest = match after_pct.find('%') {
+                Some(pos) => after_pct[pos + 1..].trim(),
+                None => return (None, None),
+            };
+            if rest.is_empty() {
+                return (None, None);
+            }
+            let parts: Vec<&str> = rest.split_whitespace().collect();
+            let mut speed: Option<String> = None;
+            let mut elapsed: Option<String> = None;
+            for part in &parts {
+                if part.ends_with("/s") || part.ends_with("/S") {
+                    speed = Some(part.to_string());
+                } else if part.contains(':') {
+                    elapsed = Some(part.to_string());
+                }
+            }
+            (speed, elapsed)
+        }
+
         loop {
             // 检查取消
             if is_cancelled() {
@@ -269,16 +302,19 @@ pub async fn run_svn_with_progress(
                             // throttle: 首条立即发送 + 200ms 窗口
                             if last_progress_time.elapsed() >= Duration::from_millis(200) {
                                 last_progress_time = now;
-                                ah.emit("operation:progress", serde_json::json!({
-                                    "operation": operation_owned,
-                                    "percent": pct,
-                                    "stage": "processing",
-                                    "fileCount": file_count,
-                                    "completedCount": completed_count,
-                                    "pendingCount": 0u32,
-                                    "speed": "",
-                                    "elapsed": "",
-                                })).ok();
+                                let (speed_str, elapsed_str) = extract_speed(&line);
+                                let progress = crate::svn::types::OperationProgress {
+                                    operation: operation_owned.clone(),
+                                    percent: pct,
+                                    stage: "processing".into(),
+                                    file_count,
+                                    completed_count,
+                                    pending_count: 0,
+                                    speed: speed_str,
+                                    elapsed: elapsed_str,
+                                    current_lines: vec![],
+                                };
+                                ah.emit("operation:progress", &progress).ok();
                             }
                         }
                     }

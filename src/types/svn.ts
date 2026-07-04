@@ -76,8 +76,8 @@ export interface OperationProgress {
   fileCount: number
   completedCount: number
   pendingCount: number
-  speed: string
-  elapsed: string
+  speed: string | null
+  elapsed: string | null
   currentLines: string[]
 }
 
