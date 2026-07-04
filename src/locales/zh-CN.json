@@ -288,6 +288,7 @@
     "updateRevision": "更新到版本",
     "currentRevision": "当前版本",
     "targetRevision": "目标版本",
+    "latestVersion": "最新版本",
     "revisionOptional": "留空将更新到最新版本",
     "update": "更新",
     "exportDialog": "导出",

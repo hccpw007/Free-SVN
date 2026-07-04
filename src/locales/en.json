@@ -288,6 +288,7 @@
     "updateRevision": "Update to Revision",
     "currentRevision": "Current Revision",
     "targetRevision": "Target Revision",
+    "latestVersion": "Latest revision",
     "revisionOptional": "Leave empty to update to latest revision",
     "update": "Update",
     "exportDialog": "Export",
