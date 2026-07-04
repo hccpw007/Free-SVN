@@ -93,6 +93,8 @@ export interface OperationLine {
 /** 操作取消信息（operation:cancelled 事件 payload） */
 export interface CancelledPayload {
   reason: string
+  operation?: string
+  targetPath?: string
 }
 
 export interface OperationResult {

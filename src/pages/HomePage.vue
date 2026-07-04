@@ -8,9 +8,10 @@ import { useNetworkStatus } from '@/composables/useNetworkStatus'
 import { ref, computed, onMounted, watch, inject } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { ElMessage } from 'element-plus'
-import { RefreshCw, CheckCircle, Search, GitCommit, RotateCcw } from 'lucide-vue-next'
+import { AlertTriangle, RefreshCw, CheckCircle, Search, GitCommit, RotateCcw } from 'lucide-vue-next'
 import { exists } from '@tauri-apps/plugin-fs'
 import { getInfo as fetchInfo } from '@/services/svn'
+import { useSvnStore } from '@/stores/svn'
 import FileListTable from '@/components/svn/FileListTable.vue'
 import UpdateRevisionDialog from '@/components/dialogs/UpdateRevisionDialog.vue'
 import SwitchDialog from '@/components/dialogs/SwitchDialog.vue'
@@ -20,6 +21,7 @@ const { t } = useI18n()
 const workspaceStore = useWorkspaceStore()
 const fileListStore = useFileListStore()
 const svnEventsStore = useSvnEventsStore()
+const svnStore = useSvnStore()
 
 // 从 App.vue 注入的打开提交弹窗函数
 const openCommitDialog = inject<() => void>('openCommitDialog', () => {})
@@ -108,6 +110,20 @@ async function refreshWorkspaceInfo() {
     console.warn('[HomePage] refreshWorkspaceInfo 失败:', e)
   }
 }
+
+/** 继续更新不完整的检出目录 */
+async function handleResumeUpdate() {
+  const path = workspaceStore.incompleteCheckoutPath
+  if (!path) return
+  workspaceStore.clearIncompleteCheckout()
+  await workspaceStore.switchWorkspace(path)
+  await svnStore.updateWorkspace({ path })
+}
+
+/** 忽略不完整检出提示 */
+function handleDismissIncomplete() {
+  workspaceStore.clearIncompleteCheckout()
+}
 </script>
 
 <template>
@@ -118,6 +134,37 @@ async function refreshWorkspaceInfo() {
 
   <!-- 工作副本：变更列表视图 -->
   <div class="h-full flex flex-col">
+    <!-- 不完整检出提示横幅 -->
+    <div
+      v-if="workspaceStore.incompleteCheckoutPath"
+      class="mx-4 mt-2 px-4 py-3 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700"
+    >
+      <div class="flex items-start gap-3">
+        <AlertTriangle class="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
+        <div class="flex-1 min-w-0">
+          <p class="text-sm font-medium text-amber-800 dark:text-amber-300">
+            检出操作已取消
+          </p>
+          <p class="text-xs text-amber-600 dark:text-amber-400 mt-1 break-all font-mono">
+            {{ workspaceStore.incompleteCheckoutPath }}
+          </p>
+          <p class="text-xs text-amber-600 dark:text-amber-400 mt-1">
+            此目录已包含部分文件，更新后可继续同步剩余文件
+          </p>
+        </div>
+        <div class="flex gap-2 shrink-0">
+          <button
+            class="px-3 py-1.5 text-xs font-medium rounded-md bg-amber-600 text-white hover:bg-amber-700 transition-colors focus:ring-2 focus:ring-amber-400 focus:outline-none"
+            @click="handleResumeUpdate"
+          >继续更新</button>
+          <button
+            class="px-3 py-1.5 text-xs font-medium rounded-md text-amber-700 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-800/30 transition-colors focus:ring-2 focus:ring-amber-400 focus:outline-none"
+            @click="handleDismissIncomplete"
+          >忽略</button>
+        </div>
+      </div>
+    </div>
+
     <!-- 操作栏：左（提交 + 批量还原）右（搜索 + 筛选 + 刷新） -->
     <div class="px-4 py-2 flex items-center gap-3 bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
       <!-- 提交 -->

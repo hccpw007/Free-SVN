@@ -149,6 +149,12 @@ pub async fn checkout_repo(
     })).ok();
 
     // ── 阶段 2：实际检出 ──
+    // 设置当前操作上下文（取消时用于 cleanup 目标目录）
+    svn::executor::set_current_operation(svn::executor::OperationContext {
+        operation: "checkout".to_string(),
+        target_path: params.target_path.clone(),
+    });
+
     // 构造 SVN args
     let mut args = vec![
         "checkout".to_string(),
@@ -174,6 +180,7 @@ pub async fn checkout_repo(
         Some(&params.target_path),
     ).await;
 
+    svn::executor::clear_current_operation();
     state.unlock();
     result
 }

@@ -12,30 +12,40 @@ pub async fn cancel_operation(
 ) -> Result<String, AppError> {
     log::info!("取消操作请求");
 
-    // 1. 设置取消标志
+    // 1. 获取当前操作上下文（用于确定 cleanup 目标目录）
+    let ctx = svn::executor::get_current_operation();
+
+    // 2. 设置取消标志
     svn::executor::set_cancelled(true);
 
-    // 2. 获取当前工作副本路径（用于 cleanup）
-    let cwd = crate::config::store::current_workspace()
-        .unwrap_or_default();
+    // 3. 获取当前工作副本路径（用于 cleanup）
+    let cwd = if let Some(ref c) = ctx {
+        c.target_path.clone()
+    } else {
+        crate::config::store::current_workspace()
+            .unwrap_or_default()
+    };
 
-    // 3. 终止子进程
+    // 4. 终止子进程
     svn::executor::kill_current_process();
 
-    // 4. cleanup 恢复工作副本状态
+    // 5. cleanup 恢复工作副本状态
     if !cwd.is_empty() {
         let _ = svn::executor::run_svn(&["cleanup"], &cwd, None).await;
     }
 
-    // 5. 重置取消标志
+    // 6. 重置取消标志
     svn::executor::set_cancelled(false);
+    svn::executor::clear_current_operation();
 
-    // 6. 释放写操作锁
+    // 7. 释放写操作锁
     state.unlock();
 
-    // 7. 通知前端（使用 CancelledPayload 结构体替代 operation:completed + result:"cancelled"）
+    // 8. 通知前端（附带操作类型和目标目录）
     app_handle.emit("operation:cancelled", &crate::svn::types::CancelledPayload {
         reason: "operation cancelled by user".to_string(),
+        operation: ctx.as_ref().map(|c| c.operation.clone()),
+        target_path: ctx.as_ref().map(|c| c.target_path.clone()),
     }).ok();
 
     log::info!("operation cancelled");

@@ -29,6 +29,15 @@ export const useWorkspaceStore = defineStore('workspace', () => {
   const showCheckoutDialog = ref(false)
   // 检出的预填路径（由 TopBar 非工作副本时设置）
   const checkoutInitialPath = ref('')
+  // 检出中途取消后，目标目录作为不完整工作副本的路径
+  const incompleteCheckoutPath = ref('')
+
+  function setIncompleteCheckout(path: string) {
+    incompleteCheckoutPath.value = path
+  }
+  function clearIncompleteCheckout() {
+    incompleteCheckoutPath.value = ''
+  }
 
   function reset() {
     url.value = ''
@@ -97,6 +106,8 @@ export const useWorkspaceStore = defineStore('workspace', () => {
     currentPath, recentWorkspaces, url, sourceUrl, branchName, currentRevision,
     lastCommitTime, svnVersion, isOffline, isLoading,
     isWorkingCopy, showCheckoutDialog, checkoutInitialPath,
+    incompleteCheckoutPath,
     reset, switchWorkspace, addRecent, removeRecent,
+    setIncompleteCheckout, clearIncompleteCheckout,
   }
 })

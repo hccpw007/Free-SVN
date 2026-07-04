@@ -32,6 +32,10 @@ pub struct OperationLine {
 #[derive(Debug, Clone, Serialize)]
 pub struct CancelledPayload {
     pub reason: String,
+    #[serde(default)]
+    pub operation: Option<String>,
+    #[serde(default, rename = "targetPath")]
+    pub target_path: Option<String>,
 }
 
 /// 长操作完成结果

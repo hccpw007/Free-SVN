@@ -118,7 +118,7 @@ export const useSvnEventsStore = defineStore('svnEvents', () => {
           )
         }
       }),
-      listen<CancelledPayload>('operation:cancelled', () => {
+      listen<CancelledPayload>('operation:cancelled', (e) => {
         isOperationRunning.value = false; progress.value = null
         useFileListStore().isOperationRunning = false
         // 将尚未完成的所有文件标记为已取消
@@ -126,6 +126,13 @@ export const useSvnEventsStore = defineStore('svnEvents', () => {
           if (line.status !== 'completed') {
             line.status = 'cancelled'
           }
+        }
+        // 检出取消后，标记目标目录为不完整工作副本（用于首页提示用户更新）
+        const payload = e.payload
+        if (payload.operation === 'checkout' && payload.targetPath) {
+          const { useWorkspaceStore } = await import('@/stores/workspace')
+          const ws = useWorkspaceStore()
+          ws.setIncompleteCheckout(payload.targetPath)
         }
       }),
       listen<OperationResult>('operation:completed', () => {

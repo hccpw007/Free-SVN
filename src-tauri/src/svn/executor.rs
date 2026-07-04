@@ -52,6 +52,30 @@ pub static CANCELLED: AtomicBool = AtomicBool::new(false);
 /// - 无论哪种情况，进程都能被正常终止（kill 或超时机制兜底）。
 pub static CURRENT_CHILD: Mutex<Option<std::process::Child>> = Mutex::new(None);
 
+/// 当前操作上下文（用于 cancel 时获取目标目录信息）
+#[derive(Clone, Debug)]
+pub struct OperationContext {
+    pub operation: String,
+    pub target_path: String,
+}
+static CURRENT_OPERATION: Mutex<Option<OperationContext>> = Mutex::new(None);
+
+pub fn set_current_operation(ctx: OperationContext) {
+    if let Ok(mut guard) = CURRENT_OPERATION.lock() {
+        *guard = Some(ctx);
+    }
+}
+
+pub fn clear_current_operation() {
+    if let Ok(mut guard) = CURRENT_OPERATION.lock() {
+        *guard = None;
+    }
+}
+
+pub fn get_current_operation() -> Option<OperationContext> {
+    CURRENT_OPERATION.lock().ok().and_then(|g| g.clone())
+}
+
 const DEFAULT_TIMEOUT_SECS: u64 = 60;
 const BLAME_TIMEOUT_SECS: u64 = 120;
 
