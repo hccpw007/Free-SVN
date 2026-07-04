@@ -24,6 +24,8 @@ const isCancelling = ref(false)
 const hasEnumeratedFiles = ref(false)
 const isOperationCompleted = ref(false)
 const wasCancelled = ref(false)
+// 取消瞬间的待传输数量（取消后保留显示，不清零）
+const cancelledPendingCount = ref(0)
 // ── 本地计时器 ──
 const elapsedTime = ref('00:00')
 let elapsedStartTime = 0
@@ -51,7 +53,9 @@ const effectiveCompletedCount = computed(() =>
   fileLines.value.filter(l => l.status === 'completed').length
 )
 const effectivePendingCount = computed(() =>
-  fileLines.value.filter(l => l.status === 'pending' || l.status === 'in_progress').length
+  wasCancelled.value
+    ? cancelledPendingCount.value
+    : fileLines.value.filter(l => l.status === 'pending' || l.status === 'in_progress').length
 )
 // 进度百分比：已完成文件 / 总文件数
 const progressPercent = computed(() => {
@@ -140,6 +144,7 @@ onMounted(async () => {
       isOperationRunning.value = true
       isOperationCompleted.value = false
       wasCancelled.value = false
+      cancelledPendingCount.value = 0
       fileLines.value = []
       hasEnumeratedFiles.value = false
       isCancelling.value = false
@@ -178,6 +183,10 @@ onMounted(async () => {
     listen<CancelledPayload>('operation:cancelled', () => {
       isOperationRunning.value = false
       wasCancelled.value = true
+      // 保存取消瞬间的待传输数量，不清零
+      cancelledPendingCount.value = fileLines.value.filter(
+        l => l.status === 'pending' || l.status === 'in_progress'
+      ).length
       progress.value = null
       stopElapsedTimer()
       // 将尚未完成的所有文件标记为已取消
