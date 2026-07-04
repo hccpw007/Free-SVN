@@ -11,17 +11,33 @@ use std::time::{Duration, Instant};
 use tauri::Emitter;
 use tokio::task::spawn_blocking;
 
+/// 格式化字节速度为人类可读字符串
+fn format_speed(bytes_per_sec: f64) -> String {
+    if bytes_per_sec >= 1_000_000_000.0 {
+        format!("{:.1} GB/s", bytes_per_sec / 1_000_000_000.0)
+    } else if bytes_per_sec >= 1_000_000.0 {
+        format!("{:.1} MB/s", bytes_per_sec / 1_000_000.0)
+    } else if bytes_per_sec >= 1_000.0 {
+        format!("{:.1} KB/s", bytes_per_sec / 1_000.0)
+    } else {
+        format!("{:.0} B/s", bytes_per_sec)
+    }
+}
+
 /// 带进度推送的 SVN 命令执行。
 ///
 /// 与 `run_svn` 不同，此函数通过双管道逐行读取 stdout/stderr，
 /// 实时解析进度并通过 Tauri event 推送到前端。
 /// 使用场景：checkout / update / commit / switch / merge / export
+///
+/// `target_dir`：可选，指定后跟踪已完成文件的实际磁盘大小用于计算字节传输速度
 pub async fn run_svn_with_progress(
     args: &[&str],
     cwd: &str,
     credentials: Option<&crate::svn::types::SvnCredentials>,
     app_handle: tauri::AppHandle,
     operation: &str,
+    target_dir: Option<&str>,
 ) -> Result<String, AppError> {
     if is_cancelled() {
         return Err(AppError::Cancelled);
@@ -52,11 +68,13 @@ pub async fn run_svn_with_progress(
     let cwd_str = cwd.to_string();
     let creds = credentials.cloned();
     let operation_owned = operation.to_string();
+    let target_dir_owned = target_dir.map(|s| s.to_string());
     let ah = app_handle.clone();
 
     let result = spawn_blocking(move || {
         let start = Instant::now();
         let mut was_cancelled = false;
+        let target_dir = target_dir_owned.as_deref();
 
         // 日志
         let log_args = all_args.join(" ");
@@ -191,6 +209,8 @@ pub async fn run_svn_with_progress(
         let mut combined_stdout = String::new();
         // 缓存上一次解析到的速度，心跳发射时保持该值不让前端闪烁消失
         let mut last_known_speed: Option<String> = None;
+        // 已完成文件的实际磁盘字节总数，用于计算精确传输速度
+        let mut total_bytes: u64 = 0;
 
         // ── 主循环开始前声明文件行判定函数 ──
         let is_file_line = |line: &str| -> Option<String> {
@@ -307,6 +327,13 @@ pub async fn run_svn_with_progress(
                         if let Some(file_path) = is_file_line(&line) {
                             file_count += 1;
                             completed_count += 1;
+                            // 跟踪实际磁盘大小用于字节传输速度
+                            if let Some(td) = target_dir {
+                                let full = format!("{}/{}", td, file_path);
+                                if let Ok(meta) = std::fs::metadata(&full) {
+                                    total_bytes += meta.len();
+                                }
+                            }
                             ah.emit("operation:line", serde_json::json!({
                                 "operation": operation_owned,
                                 "filePath": file_path,
@@ -375,8 +402,13 @@ pub async fn run_svn_with_progress(
                     let elapsed_str = Some(format!(
                         "{:02}:{:02}", elapsed.as_secs() / 60, elapsed.as_secs() % 60
                     ));
-                    // 速度：优先使用 stderr 解析值，无则根据文件完成率估算
-                    let display_speed = last_known_speed.clone().or_else(|| {
+                    // 速度（优先级）：stderr 解析速度 > 字节传输速度 > 文件完成率
+                    let byte_speed = if total_bytes > 0 && elapsed_secs > 0.0 {
+                        Some(format_speed(total_bytes as f64 / elapsed_secs))
+                    } else {
+                        None
+                    };
+                    let display_speed = last_known_speed.clone().or(byte_speed).or_else(|| {
                         if completed_count > 0 && elapsed_secs > 0.0 {
                             Some(format!("{:.1} files/s", completed_count as f64 / elapsed_secs))
                         } else {

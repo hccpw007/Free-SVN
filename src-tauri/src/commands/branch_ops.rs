@@ -62,6 +62,7 @@ pub async fn switch_branch(
         params.credentials.as_ref(),
         app_handle,
         "switch",
+        None,
     ).await;
 
     state.unlock();
@@ -94,6 +95,7 @@ pub async fn copy_branch_tag(
         params.credentials.as_ref(),
         app_handle,
         "copy",
+        None,
     ).await;
 
     state.unlock();
@@ -126,6 +128,7 @@ pub async fn merge_branch(
         params.credentials.as_ref(),
         app_handle,
         "merge",
+        None,
     ).await;
 
     // 合并完成后读取 status 获取冲突数

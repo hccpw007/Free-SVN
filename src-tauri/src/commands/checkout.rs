@@ -171,6 +171,7 @@ pub async fn checkout_repo(
         params.credentials.as_ref(),
         app_handle,
         "checkout",
+        Some(&params.target_path),
     ).await;
 
     state.unlock();

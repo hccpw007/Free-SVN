@@ -55,6 +55,7 @@ pub async fn export_workspace(
         params.credentials.as_ref(),
         app_handle,
         "export",
+        None,
     ).await;
 
     state.unlock(); result

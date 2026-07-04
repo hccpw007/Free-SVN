@@ -56,6 +56,7 @@ pub async fn update_workspace(
         params.credentials.as_ref(),
         app_handle,
         "update",
+        None,
     ).await;
 
     state.unlock();
