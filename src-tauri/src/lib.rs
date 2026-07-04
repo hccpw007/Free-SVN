@@ -283,6 +283,7 @@ pub fn run() {
             commands::auto_start::set_auto_start,
             // 3H — 进度窗口同步命令
             commands::progress::progress_window_ready,
+            commands::progress::close_progress_window,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

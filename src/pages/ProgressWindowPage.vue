@@ -69,13 +69,16 @@ async function startDrag(e: MouseEvent) {
 
 // ── 关闭窗口 ──
 async function handleClose() {
-  const appWindow = getCurrentWebviewWindow()
-  // 如果操作仍在运行，先取消
-  if (isOperationRunning.value) {
-    await cancelOperation()
+  try {
+    // 如果操作仍在运行，先取消
+    if (isOperationRunning.value) {
+      await cancelOperation()
+    }
+    // 通过 Rust 端按 label 查找并销毁窗口，避免自销毁问题
+    await invoke('close_progress_window')
+  } catch (e) {
+    console.error('[ProgressWindow] 关闭失败:', e)
   }
-  // 使用 destroy 强制关闭，不触发 closeRequested 事件
-  await appWindow.destroy()
 }
 
 // ── 事件监听 ──
@@ -84,14 +87,14 @@ const unlistenFns: Array<() => void> = []
 onMounted(async () => {
   const appWindow = getCurrentWebviewWindow()
 
-  // 窗口关闭请求（原生 X 按钮）：先取消操作，再用 destroy 强制关闭
+  // 窗口关闭请求（原生 X 按钮）：先取消操作，再关闭窗口
   appWindow.onCloseRequested(async (event) => {
     event.preventDefault()
     if (isOperationRunning.value) {
       await cancelOperation()
     }
-    // destroy 不触发 closeRequested，避免循环
-    await appWindow.destroy()
+    // 通过 Rust 端按 label 查找并销毁窗口
+    await invoke('close_progress_window')
   })
 
   const fns = await Promise.all([
