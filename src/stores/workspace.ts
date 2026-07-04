@@ -7,6 +7,7 @@ import { getInfo } from '@/services/svn'
 
 const STORAGE_KEY_PATH = 'free-svn:currentPath'
 const STORAGE_KEY_WC = 'free-svn:isWorkingCopy'
+const STORAGE_KEY_ICP = 'free-svn:incompleteCheckoutPath'
 
 export const useWorkspaceStore = defineStore('workspace', () => {
   // 尝试从 sessionStorage 恢复 path 和 isWorkingCopy（页面刷新时保留）
@@ -29,14 +30,17 @@ export const useWorkspaceStore = defineStore('workspace', () => {
   const showCheckoutDialog = ref(false)
   // 检出的预填路径（由 TopBar 非工作副本时设置）
   const checkoutInitialPath = ref('')
-  // 检出中途取消后，目标目录作为不完整工作副本的路径
-  const incompleteCheckoutPath = ref('')
+  // 检出中途取消后，目标目录作为不完整工作副本的路径（持久化至 sessionStorage）
+  const savedIcp = sessionStorage.getItem(STORAGE_KEY_ICP) || ''
+  const incompleteCheckoutPath = ref(savedIcp)
 
   function setIncompleteCheckout(path: string) {
     incompleteCheckoutPath.value = path
+    sessionStorage.setItem(STORAGE_KEY_ICP, path)
   }
   function clearIncompleteCheckout() {
     incompleteCheckoutPath.value = ''
+    sessionStorage.removeItem(STORAGE_KEY_ICP)
   }
 
   function reset() {
@@ -52,6 +56,7 @@ export const useWorkspaceStore = defineStore('workspace', () => {
     showCheckoutDialog.value = false
     sessionStorage.removeItem(STORAGE_KEY_PATH)
     sessionStorage.removeItem(STORAGE_KEY_WC)
+    sessionStorage.removeItem(STORAGE_KEY_ICP)
   }
 
   async function switchWorkspace(path: string) {

@@ -111,7 +111,8 @@ pub fn parse_info(xml: &str) -> Result<RepoInfo, AppError> {
         repository: Repository,
         #[serde(default)]
         wc_info: Option<WcInfo>,
-        commit: CommitAuthorInfo,
+        #[serde(default)]
+        commit: Option<CommitAuthorInfo>,
         #[serde(default)]
         lock: Option<LockEntry>,
     }
@@ -163,9 +164,9 @@ pub fn parse_info(xml: &str) -> Result<RepoInfo, AppError> {
         repository_uuid: entry.repository.uuid,
         revision: entry.revision,
         node_kind: entry.kind,
-        last_changed_revision: entry.commit.revision,
-        last_changed_author: entry.commit.author.unwrap_or_default(),
-        last_changed_date: entry.commit.date.unwrap_or_default(),
+        last_changed_revision: entry.commit.as_ref().map(|c| c.revision).unwrap_or(0),
+        last_changed_author: entry.commit.as_ref().and_then(|c| c.author.clone()).unwrap_or_default(),
+        last_changed_date: entry.commit.as_ref().and_then(|c| c.date.clone()).unwrap_or_default(),
         schedule: entry.wc_info.as_ref().and_then(|w| w.schedule.clone()),
         depth: entry.wc_info.as_ref().and_then(|w| w.depth.clone()),
         checksum: entry.wc_info.as_ref().and_then(|w| w.checksum.clone()),
