@@ -85,7 +85,7 @@ export interface OperationProgress {
 export interface OperationLine {
   operation: string
   filePath: string
-  status: 'completed' | 'in_progress' | 'pending'
+  status: 'completed' | 'in_progress' | 'pending' | 'cancelled'
   /** 是否是标记行（如管道中断提示），前端可据此判断是否展示 */
   isMarker?: boolean
 }

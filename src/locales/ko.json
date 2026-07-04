@@ -115,6 +115,7 @@
     "pendingEstimate": "~{count} 대기 중",
     "fileLineCompleted": "완료",
     "fileLineInProgress": "처리 중",
-    "fileLinePending": "대기 중"
+    "fileLinePending": "대기 중",
+    "fileLineCancelled": "취소됨"
   }
 }

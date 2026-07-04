@@ -92,8 +92,8 @@ onMounted(async () => {
   // 窗口关闭请求：如果操作还在运行则取消操作
   // 使用 closingProgrammatically 防重入（close() 会再次触发此事件）
   appWindow.onCloseRequested(async (event) => {
-    event.preventDefault()
     if (closingProgrammatically) return
+    event.preventDefault()
     closingProgrammatically = true
     if (isOperationRunning.value) {
       await cancelOperation()
@@ -148,6 +148,12 @@ onMounted(async () => {
     listen<CancelledPayload>('operation:cancelled', () => {
       isOperationRunning.value = false
       progress.value = null
+      // 将尚未完成的所有文件标记为已取消
+      for (const line of fileLines.value) {
+        if (line.status !== 'completed') {
+          line.status = 'cancelled'
+        }
+      }
     }),
     listen<OperationResult>('operation:completed', () => {
       isOperationRunning.value = false

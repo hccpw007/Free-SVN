@@ -121,6 +121,12 @@ export const useSvnEventsStore = defineStore('svnEvents', () => {
       listen<CancelledPayload>('operation:cancelled', () => {
         isOperationRunning.value = false; progress.value = null
         useFileListStore().isOperationRunning = false
+        // 将尚未完成的所有文件标记为已取消
+        for (const line of fileLines.value) {
+          if (line.status !== 'completed') {
+            line.status = 'cancelled'
+          }
+        }
       }),
       listen<OperationResult>('operation:completed', () => {
         isOperationRunning.value = false; progress.value = null

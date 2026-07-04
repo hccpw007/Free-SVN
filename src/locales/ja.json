@@ -115,6 +115,7 @@
     "pendingEstimate": "~{count} 保留中",
     "fileLineCompleted": "完了",
     "fileLineInProgress": "処理中",
-    "fileLinePending": "待機中"
+    "fileLinePending": "待機中",
+    "fileLineCancelled": "キャンセル済み"
   }
 }

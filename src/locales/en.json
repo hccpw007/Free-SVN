@@ -260,7 +260,8 @@
     "pendingEstimate": "~{count} pending",
     "fileLineCompleted": "Completed",
     "fileLineInProgress": "In Progress",
-    "fileLinePending": "Pending"
+    "fileLinePending": "Pending",
+    "fileLineCancelled": "Cancelled"
   },
   "dialog": {
     "checkout": "Checkout Repository",
