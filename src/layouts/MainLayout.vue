@@ -3,6 +3,7 @@
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { useAutoRefresh } from '@/composables/useAutoRefresh'
+import { useSvnEventsStore } from '@/stores/svnEvents'
 import TopBar from '@/components/common/TopBar.vue'
 import ToolBar from '@/components/common/ToolBar.vue'
 import StatusBar from '@/components/common/StatusBar.vue'
@@ -16,6 +17,16 @@ useAutoRefresh()
 const isWelcomePage = computed(() => {
   return route.name === 'WelcomePage'
 })
+
+/** 处理 ToolBar 对话框打开事件 */
+function handleOpenDialog(dialog: string) {
+  const svnEventsStore = useSvnEventsStore()
+  switch (dialog) {
+    case 'update-to-revision':
+      svnEventsStore.showUpdateRevisionDialog = true
+      break
+  }
+}
 </script>
 
 <template>
@@ -24,7 +35,7 @@ const isWelcomePage = computed(() => {
     <TopBar class="shrink-0" />
 
     <!-- ToolBar: 40px 固定高度，欢迎页模式隐藏 -->
-    <ToolBar v-if="!isWelcomePage" class="shrink-0" />
+    <ToolBar v-if="!isWelcomePage" class="shrink-0" @open-dialog="handleOpenDialog" />
 
     <!-- RouterView: 弹性填充，溢出滚动 -->
     <main class="flex-1 min-h-0 overflow-auto text-slate-900 dark:text-slate-100 p-4">

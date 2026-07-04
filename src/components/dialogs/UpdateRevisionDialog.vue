@@ -3,12 +3,14 @@
 import { ref } from 'vue'
 import { useSvnStore } from '@/stores/svn'
 import { useWorkspaceStore } from '@/stores/workspace'
+import { useFileListStore } from '@/stores/fileList'
 import { useI18n } from 'vue-i18n'
 import { ElMessage } from 'element-plus'
 
 const { t } = useI18n()
 const svnStore = useSvnStore()
 const workspaceStore = useWorkspaceStore()
+const fileListStore = useFileListStore()
 
 const emit = defineEmits<{ close: [] }>()
 
@@ -36,6 +38,7 @@ async function handleUpdate() {
       depth: updateDepth.value || undefined,
     })
     emit('close')
+    fileListStore.refresh()
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : String(err)
     ElMessage.error(msg)
