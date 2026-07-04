@@ -3,7 +3,7 @@ use crate::svn::executor::{
     get_svn_env, get_svn_path, is_cancelled, is_auth_error, BASE_SVN_ARGS, CURRENT_CHILD,
 };
 use log;
-use std::io::{BufRead, BufReader, Write};
+use std::io::{BufRead, BufReader, Read, Write};
 use std::process::{Command, Stdio};
 use std::sync::mpsc;
 use std::thread;
@@ -126,20 +126,43 @@ pub async fn run_svn_with_progress(
         });
 
         // stderr 线程
+        // 注意：SVN 进度行以 \r 结尾（原地覆写），非进度行以 \n 结尾。
+        // 因此不能使用 BufReader::lines()（只按 \n 分割），改为字节级读取按 \r/\n 双分割。
         let tx_e = tx_stderr.clone();
         let tx_p2 = tx_panic.clone();
         let op_e = operation_owned.clone();
         let stderr_thread = thread::spawn(move || {
             let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
                 if let Some(handle) = stderr_handle {
-                    let reader = BufReader::new(handle);
-                    for line in reader.lines() {
+                    let mut reader = BufReader::new(handle);
+                    let mut line_buf = Vec::new();
+                    loop {
                         if is_cancelled() {
                             break;
                         }
-                        if let Ok(text) = line {
-                            let _ = tx_e.send(text);
+                        let mut byte = [0u8; 1];
+                        match reader.read(&mut byte) {
+                            Ok(0) => break, // EOF
+                            Ok(_) => {
+                                let b = byte[0];
+                                if b == b'\n' || b == b'\r' {
+                                    if !line_buf.is_empty() {
+                                        let text = String::from_utf8_lossy(&line_buf).to_string();
+                                        line_buf.clear();
+                                        let _ = tx_e.send(text);
+                                    }
+                                } else {
+                                    line_buf.push(b);
+                                }
+                            }
+                            Err(ref e) if e.kind() == std::io::ErrorKind::Interrupted => continue,
+                            Err(_) => break,
                         }
+                    }
+                    // 发送缓冲区剩余的未闭合行
+                    if !line_buf.is_empty() {
+                        let text = String::from_utf8_lossy(&line_buf).to_string();
+                        let _ = tx_e.send(text);
                     }
                 }
             }));
