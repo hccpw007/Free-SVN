@@ -330,8 +330,14 @@ pub async fn run_svn_with_progress(
                             // 跟踪实际磁盘大小用于字节传输速度
                             if let Some(td) = target_dir {
                                 let full = format!("{}/{}", td, file_path);
-                                if let Ok(meta) = std::fs::metadata(&full) {
-                                    total_bytes += meta.len();
+                                match std::fs::metadata(&full) {
+                                    Ok(meta) => {
+                                        log::info!("[stat_debug] {} 大小={}", file_path, meta.len());
+                                        total_bytes += meta.len();
+                                    }
+                                    Err(e) => {
+                                        log::info!("[stat_debug] {} 失败: {}", full, e);
+                                    }
                                 }
                             }
                             ah.emit("operation:line", serde_json::json!({
