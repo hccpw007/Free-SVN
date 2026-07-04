@@ -266,7 +266,7 @@ watch(() => fileLines.value.length, () => {
       </div>
       <div class="truncate">
         <span class="text-slate-500">{{ t('progress.pendingCount') }}:</span>
-        {{ t('progress.pendingEstimate', { count: formatNumber(effectivePendingCount) }) }}
+        {{ formatNumber(effectivePendingCount) }}
       </div>
       <div class="truncate">
         <span class="text-slate-500">{{ t('progress.elapsed') }}:</span>
