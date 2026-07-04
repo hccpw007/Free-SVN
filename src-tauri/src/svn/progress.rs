@@ -327,11 +327,14 @@ pub async fn run_svn_with_progress(
                         let percent = extract_percentage(&line);
 
                         if let Some(pct) = percent {
+                            // 调试：打印原始 stderr 行和解析结果
+                            log::info!("[progress_debug] stderr行: {:?} | 百分比: {} | 原始行长: {}", line.trim(), pct, line.len());
                             let now = Instant::now();
                             // throttle: 首条立即发送 + 200ms 窗口
                             if last_progress_time.elapsed() >= Duration::from_millis(200) {
                                 last_progress_time = now;
                                 let (speed_str, elapsed_str) = extract_speed(&line);
+                                log::info!("[progress_debug] 速度: {:?} | 已耗时: {:?}", speed_str, elapsed_str);
                                 if speed_str.is_some() {
                                     last_known_speed = speed_str.clone();
                                 }
