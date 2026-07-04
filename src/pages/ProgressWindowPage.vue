@@ -53,6 +53,11 @@ const effectiveCompletedCount = computed(() =>
 const effectivePendingCount = computed(() =>
   fileLines.value.filter(l => l.status === 'pending' || l.status === 'in_progress').length
 )
+// 进度百分比：已完成文件 / 总文件数
+const progressPercent = computed(() => {
+  const total = fileLines.value.length
+  return total > 0 ? Math.round((effectiveCompletedCount.value / total) * 100) : 0
+})
 
 const sortedFileLines = computed(() => {
   return [...fileLines.value].sort((a, b) => {
@@ -246,7 +251,7 @@ watch(() => fileLines.value.length, () => {
     <!-- 进度条 -->
     <div class="px-4 pt-4 pb-2">
       <el-progress
-        :percentage="progress?.percent ?? 0"
+        :percentage="progressPercent"
         :stroke-width="12"
         striped
         striped-flow
