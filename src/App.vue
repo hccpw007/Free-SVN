@@ -1,6 +1,6 @@
 <script setup lang="ts">
 /** 应用根组件——全局弹窗管理（认证、提交、检出）及 Shell 命令监听。 */
-import { ref, onMounted, watch, provide } from 'vue'
+import { ref, onMounted, onUnmounted, watch, provide } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter, useRoute, RouterView } from 'vue-router'
 import { listen } from '@tauri-apps/api/event'
@@ -13,6 +13,7 @@ import { useFileListStore } from '@/stores/fileList'
 import AuthDialog from '@/components/dialogs/AuthDialog.vue'
 import CommitDialog from '@/components/dialogs/CommitDialog.vue'
 import CheckoutDialog from '@/components/dialogs/CheckoutDialog.vue'
+import { WebviewWindow } from '@tauri-apps/api/webviewWindow'
 
 const { locale, t } = useI18n()
 const settingsStore = useSettingsStore()
@@ -29,6 +30,36 @@ provide('openCommitDialog', () => { showCommitDialog.value = true })
 
 // ── 认证失败→AuthDialog 自动弹窗 ──
 const showAuthDialog = ref(false)
+
+// ── 进度独立窗口管理 ──
+let progressWindow: WebviewWindow | null = null
+
+async function openProgressWindow() {
+  // 如果窗口已存在，激活并返回
+  const existing = await WebviewWindow.getByLabel('progress')
+  if (existing) {
+    progressWindow = existing
+    await existing.show()
+    await existing.setFocus()
+    return
+  }
+  // 创建新窗口
+  progressWindow = new WebviewWindow('progress', {
+    url: '/progress-window',
+    width: 520,
+    height: 460,
+    resizable: false,
+    decorations: true,
+    center: true,
+  })
+}
+
+function closeProgressWindow() {
+  if (progressWindow) {
+    try { progressWindow.close() } catch { /* ignore */ }
+    progressWindow = null
+  }
+}
 
 watch(() => svnEventsStore.authFailed, (val) => {
   showAuthDialog.value = val
@@ -153,6 +184,13 @@ onMounted(async () => {
     setOperationRunning(v)
   })
 
+  // 操作进行中时创建/关闭进度独立窗口
+  watch(() => svnEventsStore.isOperationRunning, (running) => {
+    if (running) {
+      openProgressWindow()
+    }
+  })
+
   // 注册 8 组全局键盘快捷键
   const { register } = useKeyboardShortcuts()
   register([
@@ -201,6 +239,10 @@ onMounted(async () => {
   } catch (e: unknown) {
     console.warn('[App] Tauri event listener 不可用（浏览器环境）:', e)
   }
+})
+
+onUnmounted(() => {
+  closeProgressWindow()
 })
 </script>
 

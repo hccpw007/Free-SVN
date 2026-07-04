@@ -7,6 +7,8 @@
   ],
   "permissions": [
     "core:default",
+    "core:window:allow-create",
+    "core:window:allow-close",
     "store:default",
     "dialog:default"
   ]

@@ -43,6 +43,11 @@ const routes: RouteRecordRaw[] = [
     name: 'SettingsPage',
     component: () => import('@/pages/SettingsPage.vue'),
   },
+  {
+    path: '/progress-window',
+    name: 'ProgressWindow',
+    component: () => import('@/pages/ProgressWindowPage.vue'),
+  },
 ]
 
 export default createRouter({

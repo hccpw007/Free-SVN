@@ -215,6 +215,8 @@ pub fn run() {
         })
         .on_window_event(|window, event| {
             if let tauri::WindowEvent::CloseRequested { api, .. } = event {
+                // 只处理主窗口关闭（进度窗口由前端管理）
+                if window.label() != "main" { return; }
                 let app_handle = window.app_handle();
                 let state: tauri::State<crate::svn::queue::SvnQueue> = app_handle.state();
                 if state.is_locked() || crate::svn::executor::is_cancelled() {

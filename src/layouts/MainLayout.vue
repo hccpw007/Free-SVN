@@ -1,12 +1,11 @@
 <script setup lang="ts">
-/** 主布局组件——TopBar + 可选 ToolBar/StatusBar + RouterView + ProgressPanel。 */
+/** 主布局组件——TopBar + 可选 ToolBar/StatusBar + RouterView。 */
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { useAutoRefresh } from '@/composables/useAutoRefresh'
 import TopBar from '@/components/common/TopBar.vue'
 import ToolBar from '@/components/common/ToolBar.vue'
 import StatusBar from '@/components/common/StatusBar.vue'
-import ProgressPanel from '@/components/svn/ProgressPanel.vue'
 
 const route = useRoute()
 
@@ -34,8 +33,5 @@ const isWelcomePage = computed(() => {
 
     <!-- StatusBar: 28px 固定高度，欢迎页模式隐藏 -->
     <StatusBar v-if="!isWelcomePage" class="shrink-0" />
-
-    <!-- ProgressPanel: 全屏遮罩，通过 v-if 控制显示 -->
-    <ProgressPanel />
   </div>
 </template>
