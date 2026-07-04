@@ -143,8 +143,8 @@ pub async fn checkout_repo(
         "fileCount": total_count,
         "completedCount": 0,
         "pendingCount": total_count,
-        "speed": null as Option<String>,
-        "elapsed": null as Option<String>,
+        "speed": null,
+        "elapsed": null,
         "currentLines": []
     })).ok();
 
