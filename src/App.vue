@@ -55,11 +55,6 @@ async function openProgressWindow() {
     resizable: true,
     decorations: true,
   })
-  // 监听窗口创建成功事件，显式设置尺寸和居中
-  win.once('tauri://created', async () => {
-    await win.setSize(new LogicalSize(880, 587))
-    await win.center()
-  })
   // 监听窗口创建失败事件
   win.once('tauri://error', (e) => {
     console.error('[App] 进度窗口创建失败:', e)
