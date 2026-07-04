@@ -352,6 +352,31 @@ pub async fn run_svn_with_progress(
                 break;
             }
 
+            // 定期进度推送（500ms 节流，不依赖 stderr 百分比行）
+            // 即使 SVN 在管道模式下不输出进度行，也能统计已完成的文件数
+            if file_count > 0 || (!stdout_done || !stderr_done) {
+                let now = Instant::now();
+                if last_progress_time.elapsed() >= Duration::from_millis(500) {
+                    last_progress_time = now;
+                    let elapsed = now.duration_since(start);
+                    let elapsed_str = Some(format!(
+                        "{:02}:{:02}", elapsed.as_secs() / 60, elapsed.as_secs() % 60
+                    ));
+                    let progress = crate::svn::types::OperationProgress {
+                        operation: operation_owned.clone(),
+                        percent: 0,
+                        stage: "processing".into(),
+                        file_count,
+                        completed_count,
+                        pending_count: 0,
+                        speed: None,
+                        elapsed: elapsed_str,
+                        current_lines: vec![],
+                    };
+                    ah.emit("operation:progress", &progress).ok();
+                }
+            }
+
             // 避免忙等
             thread::sleep(Duration::from_millis(10));
         }
