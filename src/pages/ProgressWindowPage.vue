@@ -41,9 +41,7 @@ function stopElapsedTimer() {
 
 // ── 计算属性 ──
 const titleText = computed(() => {
-  const op = progress.value?.operation || t('progress.operationInProgress')
-  const pct = progress.value?.percent ?? 0
-  return `${op}${t('progress.inProgress')} (${pct}%)`
+  return progress.value?.operation || t('progress.operationInProgress')
 })
 
 // 从文件列表直接统计已完成和待处理数量
