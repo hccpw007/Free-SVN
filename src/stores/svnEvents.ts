@@ -9,6 +9,7 @@ import type {
   OperationProgress, OperationLine, CancelledPayload, OperationResult,
 } from '@/types/svn'
 import { useFileListStore } from './fileList'
+import { useWorkspaceStore } from './workspace'
 import { wrappedInvoke } from '@/services/svn'
 
 export interface AuthFailedContext {
@@ -130,7 +131,6 @@ export const useSvnEventsStore = defineStore('svnEvents', () => {
         // 检出取消后，标记目标目录为不完整工作副本（用于首页提示用户更新）
         const payload = e.payload
         if (payload.operation === 'checkout' && payload.targetPath) {
-          const { useWorkspaceStore } = await import('@/stores/workspace')
           const ws = useWorkspaceStore()
           ws.setIncompleteCheckout(payload.targetPath)
         }
