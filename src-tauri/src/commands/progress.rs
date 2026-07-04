@@ -1,0 +1,10 @@
+use tauri::Emitter;
+
+/// 进度窗口已就绪信号——当 ProgressWindowPage.vue 挂载并完成监听器注册后调用。
+/// 后端收到后发出全局事件，主窗口（App.vue）接收后会将当前操作状态
+/// （待操作文件列表、进度等）转发给进度窗口，防止因窗口创建时序导致的
+/// pending 文件列表丢失。
+#[tauri::command]
+pub fn progress_window_ready(app_handle: tauri::AppHandle) {
+    app_handle.emit("progress-window:ready", ()).ok();
+}

@@ -196,6 +196,17 @@ onMounted(async () => {
     }
   })
 
+  // 进度窗口就绪时，转发当前操作状态（防止窗口创建时序导致的事件丢失）
+  listen('progress-window:ready', async () => {
+    const pw = await WebviewWindow.getByLabel('progress').catch(() => null)
+    if (!pw) return
+    pw.emit('progress-window:catchup', {
+      isOperationRunning: svnEventsStore.isOperationRunning,
+      fileLines: svnEventsStore.fileLines,
+      progress: svnEventsStore.progress,
+    }).catch(() => {})
+  })
+
   // 注册 8 组全局键盘快捷键
   const { register } = useKeyboardShortcuts()
   register([

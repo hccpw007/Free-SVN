@@ -157,6 +157,28 @@ onMounted(async () => {
     }),
   ])
   unlistenFns.push(...fns)
+
+  // 通知主窗口进度窗口已就绪，触发补发操作状态
+  invoke('progress_window_ready').catch(() => {})
+
+  // 接收主窗口补发的操作状态（解决窗口就绪前已错过的事件）
+  listen('progress-window:catchup', (e) => {
+    const data = e.payload as {
+      isOperationRunning: boolean
+      fileLines: OperationLine[]
+      progress: OperationProgress | null
+    }
+    if (data.isOperationRunning) {
+      isOperationRunning.value = true
+      if (data.fileLines?.length > 0) {
+        fileLines.value = data.fileLines
+        hasEnumeratedFiles.value = true
+      }
+      if (data.progress) {
+        progress.value = data.progress
+      }
+    }
+  }).then(fn => unlistenFns.push(fn))
 })
 
 onUnmounted(() => {

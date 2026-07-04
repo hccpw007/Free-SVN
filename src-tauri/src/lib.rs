@@ -281,6 +281,8 @@ pub fn run() {
             commands::tray::set_tray_badge,
             // 3G — 开机自启动命令
             commands::auto_start::set_auto_start,
+            // 3H — 进度窗口同步命令
+            commands::progress::progress_window_ready,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

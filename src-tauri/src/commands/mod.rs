@@ -20,3 +20,4 @@ pub mod auth;         // v5 新增：test_connection / save_credentials / clear_
 pub mod auth_account; // 账号管理：list_cached_credentials / delete_cached_credential / update_cached_credential_password
 pub mod tray;         // 系统托盘徽章命令
 pub mod auto_start;   // 开机自启动命令
+pub mod progress;     // 进度窗口同步命令
