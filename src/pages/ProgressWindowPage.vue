@@ -23,9 +23,6 @@ const isCancelling = ref(false)
 const hasEnumeratedFiles = ref(false)
 const isOperationCompleted = ref(false)
 
-// ── 关闭防重入（防止 close() 触发 onCloseRequested 循环） ──
-let closingProgrammatically = false
-
 // ── 计算属性 ──
 const titleText = computed(() => {
   const op = progress.value?.operation || t('progress.operationInProgress')
@@ -72,15 +69,13 @@ async function startDrag(e: MouseEvent) {
 
 // ── 关闭窗口 ──
 async function handleClose() {
-  if (closingProgrammatically) return
-  closingProgrammatically = true
   const appWindow = getCurrentWebviewWindow()
   // 如果操作仍在运行，先取消
   if (isOperationRunning.value) {
     await cancelOperation()
   }
-  await appWindow.close()
-  closingProgrammatically = false
+  // 使用 destroy 强制关闭，不触发 closeRequested 事件
+  await appWindow.destroy()
 }
 
 // ── 事件监听 ──
@@ -89,17 +84,14 @@ const unlistenFns: Array<() => void> = []
 onMounted(async () => {
   const appWindow = getCurrentWebviewWindow()
 
-  // 窗口关闭请求：如果操作还在运行则取消操作
-  // 使用 closingProgrammatically 防重入（close() 会再次触发此事件）
+  // 窗口关闭请求（原生 X 按钮）：先取消操作，再用 destroy 强制关闭
   appWindow.onCloseRequested(async (event) => {
-    if (closingProgrammatically) return
     event.preventDefault()
-    closingProgrammatically = true
     if (isOperationRunning.value) {
       await cancelOperation()
     }
-    await appWindow.close()
-    closingProgrammatically = false
+    // destroy 不触发 closeRequested，避免循环
+    await appWindow.destroy()
   })
 
   const fns = await Promise.all([
