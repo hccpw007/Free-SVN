@@ -86,7 +86,13 @@ export const useSvnEventsStore = defineStore('svnEvents', () => {
     function startInProgressTimer() {
       stopInProgressTimer()
       inProgressTimer = setInterval(() => {
-        // 找到第一个 pending 文件，标记为 in_progress
+        // 先将所有非 completed 文件重置为 pending
+        for (const line of fileLines.value) {
+          if (line.status !== 'completed') {
+            line.status = 'pending'
+          }
+        }
+        // 再标记第一个 pending 文件为 in_progress
         for (const line of fileLines.value) {
           if (line.status === 'pending') {
             line.status = 'in_progress'
@@ -100,11 +106,15 @@ export const useSvnEventsStore = defineStore('svnEvents', () => {
     function markCompletedFiles() {
       if (!hasEnumeratedFiles) return
       const count = progress.value?.completedCount ?? 0
-      // 将前 N 个文件标记为 completed
+      // 重置所有文件为 pending
+      for (let i = 0; i < fileLines.value.length; i++) {
+        fileLines.value[i].status = 'pending'
+      }
+      // 将前 N 个标记为 completed
       for (let i = 0; i < count && i < fileLines.value.length; i++) {
         fileLines.value[i].status = 'completed'
       }
-      // 标记下一个为 in_progress
+      // 下一个标记为 in_progress
       if (count < fileLines.value.length) {
         fileLines.value[count].status = 'in_progress'
       }
