@@ -208,6 +208,7 @@ pub async fn run_svn_with_progress(
         let mut file_count: u32 = 0;
         let mut completed_count: u32 = 0;
         let mut combined_stdout = String::new();
+        let mut combined_stderr = String::new();
         // 缓存上一次解析到的速度，心跳发射时保持该值不让前端闪烁消失
         let mut last_known_speed: Option<String> = None;
 
@@ -344,6 +345,8 @@ pub async fn run_svn_with_progress(
             if !stderr_done {
                 match rx_stderr.try_recv() {
                     Ok(line) => {
+                        combined_stderr.push_str(&line);
+                        combined_stderr.push('\n');
                         // 解析百分比
                         let percent = extract_percentage(&line);
 
@@ -442,6 +445,12 @@ pub async fn run_svn_with_progress(
         let _ = stdout_thread.join();
         let _ = stderr_thread.join();
 
+        // 清空 stderr 通道中剩余的未读行
+        while let Ok(line) = rx_stderr.try_recv() {
+            combined_stderr.push_str(&line);
+            combined_stderr.push('\n');
+        }
+
         // 取回子进程句柄并 wait
         let child = CURRENT_CHILD.lock().ok().and_then(|mut g| g.take());
         let output = if let Some(mut c) = child {
@@ -515,10 +524,21 @@ pub async fn run_svn_with_progress(
             let stderr = String::from_utf8_lossy(&output.stderr);
             log::warn!("svn_with_progress stderr: {}", stderr);
 
-            if is_auth_error(&stderr) {
-                (Err(AppError::SvnAuthFailed(stderr.to_string())), was_cancelled)
+            // 通知前端操作失败
+            let err_detail = if combined_stderr.is_empty() {
+                "SVN 操作失败，退出码: ".to_string() + &output.status.code().map(|c| c.to_string()).unwrap_or_else(|| "未知".to_string())
             } else {
-                (Err(AppError::SvnCommand(stderr.to_string())), was_cancelled)
+                combined_stderr.trim().to_string()
+            };
+            ah.emit("operation:error", serde_json::json!({
+                "errorCode": "SVN_COMMAND_FAILED",
+                "message": err_detail,
+            })).ok();
+
+            if is_auth_error(&combined_stderr) {
+                (Err(AppError::SvnAuthFailed(combined_stderr.to_string())), was_cancelled)
+            } else {
+                (Err(AppError::SvnCommand(combined_stderr.to_string())), was_cancelled)
             }
         }
     }).await;
