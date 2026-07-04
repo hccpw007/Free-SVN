@@ -81,7 +81,8 @@ async function handleCheckout() {
   authRetryVisible.value = false
   try {
     const actualDepth = emptyOnly.value ? 'empty' : depth.value
-    const result = await svnStore.checkoutRepo({
+    // 发起检出（不等待完成，弹窗立即关闭）
+    svnStore.checkoutRepo({
       url: repoUrl.value,
       targetPath: targetPath.value,
       depth: actualDepth,
@@ -91,11 +92,15 @@ async function handleCheckout() {
         password: authForm.password,
         saveToCache: authForm.saveToCache,
       } : undefined,
+    }).then(result => {
+      if (result) workspaceStore.switchWorkspace(targetPath.value)
+    }).catch((err: unknown) => {
+      console.error('[checkout dialog] Error in checkout:', err)
+      const msg = err instanceof Error ? err.message : String(err)
+      ElMessage.error(msg)
     })
-    if (result) {
-      await workspaceStore.switchWorkspace(targetPath.value)
-      emit('close')
-    }
+    // 弹窗立即关闭，进度由进度弹窗展示
+    emit('close')
   } catch (err: unknown) {
     console.error('[checkout dialog] Error in checkout:', err)
     const msg = err instanceof Error ? err.message : String(err)

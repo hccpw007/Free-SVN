@@ -4,7 +4,7 @@
  * 完全遵循设计文档 v4 4 布局，包含：可拖拽标题栏、<el-progress> 进度条、
  * 统计栏（四项横排——窄屏两行）、文件滚动区（<FileLineRow>）、底栏（自动关闭+取消）。
  */
-import { ref, computed, watch, watchEffect, onUnmounted } from 'vue'
+import { ref, computed, watch, watchEffect } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useProgressOverlay } from '@/composables/useProgressOverlay'
 import { formatNumber } from '@/utils/format'
@@ -43,19 +43,17 @@ const sortedFileLines = computed(() => {
 })
 
 // -- 本地 UI 状态 --
-const overlayVisible = ref(false)       // 弹窗显示控制（含 500ms 延迟关闭）
-let autoCloseTimer: ReturnType<typeof setTimeout> | null = null
+const overlayVisible = ref(false)       // 弹窗显示控制
+const isOperationCompleted = ref(false) // 操作已完成，弹窗保持打开等待手动关闭
 
-// -- 弹窗显示逻辑（含 500ms 延迟关闭） --
+// -- 弹窗显示逻辑（操作完成后保持打开，用户手动关闭） --
 watch(isVisible, (newVal) => {
   if (newVal) {
     overlayVisible.value = true
+    isOperationCompleted.value = false
   } else {
-    // 操作完成 -> 500ms 延迟关闭弹窗
-    if (autoCloseTimer !== null) clearTimeout(autoCloseTimer)
-    autoCloseTimer = setTimeout(() => {
-      overlayVisible.value = false
-    }, 500)
+    // 操作完成，弹窗保持打开不自动关闭
+    isOperationCompleted.value = true
   }
 })
 
@@ -64,16 +62,17 @@ async function handleCancel() {
   await cancelOperation()
 }
 
+// -- 手动关闭弹窗 --
+function handleClose() {
+  overlayVisible.value = false
+  isOperationCompleted.value = false
+}
+
 // -- 自动滚动 --
 watchEffect(() => {
   if (fileLines.value.length > 0) {
     autoScrollToBottom()
   }
-})
-
-// -- 清理 --
-onUnmounted(() => {
-  if (autoCloseTimer !== null) clearTimeout(autoCloseTimer)
 })
 </script>
 
@@ -167,8 +166,11 @@ onUnmounted(() => {
 
         <!-- 底栏 -->
         <div class="flex items-center justify-between px-4 py-3">
-          <span class="text-xs text-slate-500">{{ t('progress.autoClose') }}</span>
+          <span class="text-xs text-slate-500">
+            {{ isOperationCompleted ? t('progress.completed') : t('progress.autoClose') }}
+          </span>
           <button
+            v-if="!isOperationCompleted"
             class="px-4 py-1.5 rounded-md text-sm font-medium transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-offset-2 focus:ring-offset-slate-800"
             :class="isCancelling
               ? 'bg-slate-700 text-slate-400 cursor-not-allowed'
@@ -177,6 +179,13 @@ onUnmounted(() => {
             @click="handleCancel"
           >
             {{ isCancelling ? t('progress.cancelling') : t('common.cancel') }}
+          </button>
+          <button
+            v-else
+            class="px-4 py-1.5 rounded-md text-sm font-medium transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-offset-2 focus:ring-offset-slate-800 bg-green-800/40 text-green-400 hover:bg-green-800/60"
+            @click="handleClose"
+          >
+            {{ t('common.close') }}
           </button>
         </div>
       </div>
