@@ -42,7 +42,6 @@ const selectedCommitCount = computed(() =>
   fileListStore.files.filter(f => fileListStore.selectedPaths.has(f.path)).length
 )
 
-const showUpdateRevisionDialog = ref(false)
 const showSwitchDialog = ref(false)
 // 不完整检出横幅是否被手动关闭（路径保留供后续切换使用）
 const incompleteBannerDismissed = ref(false)
@@ -95,12 +94,6 @@ onMounted(async () => {
   }
 })
 
-// 监听 svnEventsStore.showUpdateRevisionDialog（由 App.vue handleShellCommand 触发）
-watch(() => svnEventsStore.showUpdateRevisionDialog, (val) => {
-  showUpdateRevisionDialog.value = val
-  if (val) svnEventsStore.showUpdateRevisionDialog = false // 消费后重置
-})
-
 // 切换工作副本后自动刷新 workspace 信息（isWorkingCopy 由 workspaceStore.switchWorkspace 负责检测）
 async function refreshWorkspaceInfo() {
   if (!workspaceStore.currentPath) return
@@ -140,7 +133,7 @@ async function handleWcCleanup() {
 
 <template>
   <!-- 更新到版本对话框（由右键菜单 --svn-cmd update-rev 触发） -->
-  <UpdateRevisionDialog v-if="showUpdateRevisionDialog" @close="showUpdateRevisionDialog = false" />
+  <UpdateRevisionDialog v-if="svnEventsStore.showUpdateRevisionDialog" @close="svnEventsStore.showUpdateRevisionDialog = false" />
   <!-- 切换分支对话框 -->
   <SwitchDialog v-if="showSwitchDialog" @close="showSwitchDialog = false" />
 
