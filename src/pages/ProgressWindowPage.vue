@@ -228,19 +228,23 @@ onMounted(async () => {
       fileLines: OperationLine[]
       progress: OperationProgress | null
     }
-    if (data.isOperationRunning) {
-      isOperationRunning.value = true
-      startElapsedTimer()
-      if (data.fileLines?.length > 0) {
-        fileLines.value = data.fileLines
-        // 仅当被补发的行包含 pending 状态（预枚举场景）时才标记 hasEnumeratedFiles，
-        // 否则 update/revert/switch 等非预枚举操作的后续 completed 行会被错误丢弃
-        if (data.fileLines.some(l => l.status === 'pending')) {
-          hasEnumeratedFiles.value = true
-        }
+    // 始终处理补发的文件行和进度数据（即使操作已结束，确保窗口能显示完整结果）
+    if (data.fileLines?.length > 0) {
+      fileLines.value = data.fileLines
+      // 仅当被补发的行包含 pending 状态（预枚举场景）时才标记 hasEnumeratedFiles，
+      // 否则 update/revert/switch 等非预枚举操作的后续 completed 行会被错误丢弃
+      if (data.fileLines.some(l => l.status === 'pending')) {
+        hasEnumeratedFiles.value = true
       }
-      if (data.progress) {
-        progress.value = data.progress
+    }
+    if (data.progress) {
+      progress.value = data.progress
+    }
+    // 仅根据 isOperationRunning 控制计时器
+    if (data.isOperationRunning) {
+      if (!isOperationRunning.value) {
+        isOperationRunning.value = true
+        startElapsedTimer()
       }
     }
   }).then(fn => unlistenFns.push(fn))
