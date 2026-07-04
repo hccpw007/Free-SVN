@@ -27,6 +27,8 @@ pub async fn get_status(params: StatusParams) -> Result<Vec<FileItem>, AppError>
     svn::executor::validate_path(&params.path)?;
     let xml = svn::executor::run_svn(&["status", "--xml", "--depth", "infinity"], &params.path, None).await?;
     let mut items = svn::parser::parse_status(&xml)?;
+    // 过滤掉表示目录自身的 "." 和 ".." 条目（不完整工作副本时 SVN 会输出当前目录的条目）
+    items.retain(|item| item.path != "." && item.path != "..");
     let base = std::path::Path::new(&params.path);
     // 检测工作副本是否被锁定（检出中断时 wc-locked="true"），
     // 锁定时跳过 expand_unversioned_dir 避免递归展开海量文件导致浏览器卡死
