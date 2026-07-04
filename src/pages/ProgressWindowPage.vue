@@ -97,6 +97,9 @@ onMounted(async () => {
       progress.value = e.payload
     }),
     listen('operation:started', () => {
+      // 忽略重复的 operation:started（checkout_repo 预枚举阶段和
+      // run_svn_with_progress 内部都会发送）
+      if (isOperationRunning.value) return
       isOperationRunning.value = true
       isOperationCompleted.value = false
       fileLines.value = []
