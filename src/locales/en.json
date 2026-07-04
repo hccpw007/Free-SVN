@@ -250,7 +250,6 @@
     "filesProcessed": "{count} files processed",
     "cancelling": "Cancelling...",
     "cancelConfirmed": "Operation cancelled",
-    "connecting": "Connecting to server...",
     "completed": "Operation completed",
     "error": "Operation failed",
     "autoClose": "Auto-closes on completion",

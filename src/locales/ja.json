@@ -105,7 +105,6 @@
     "filesProcessed": "{count} files processed",
     "cancelling": "Cancelling...",
     "cancelConfirmed": "操作がキャンセルされました",
-    "connecting": "サーバーに接続中...",
     "completed": "操作が完了しました",
     "error": "操作に失敗しました",
     "autoClose": "完了時に自動で閉じます",

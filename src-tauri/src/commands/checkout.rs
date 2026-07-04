@@ -3,6 +3,8 @@ use crate::models::error::AppError;
 use crate::svn;
 use tauri::AppHandle;
 use tauri::Emitter;
+use std::io::Write;
+use std::process::{Command, Stdio};
 
 /// 检出操作参数
 #[derive(Debug, Deserialize)]
@@ -20,6 +22,72 @@ pub struct CheckoutParams {
 pub(crate) fn is_valid_svn_url(url: &str) -> bool {
     let valid = ["svn://", "https://", "svn+ssh://", "http://"];
     valid.iter().any(|s| url.starts_with(s))
+}
+
+/// 执行 svn list --recursive 获取仓库的文件列表（过滤目录，仅返回文件路径）。
+fn get_file_list(
+    url: &str,
+    credentials: Option<&crate::svn::types::SvnCredentials>,
+) -> Result<Vec<String>, AppError> {
+    let svn_path = svn::executor::get_svn_path();
+    let svn_path_str = svn_path.to_string_lossy().to_string();
+
+    // 构造参数
+    let mut all_args: Vec<String> = Vec::new();
+    all_args.extend(svn::executor::BASE_SVN_ARGS.iter().map(|s| s.to_string()));
+    all_args.push("list".to_string());
+    all_args.push("--recursive".to_string());
+    if let Some(creds) = credentials {
+        all_args.push("--username".to_string());
+        all_args.push(creds.username.clone());
+        all_args.push("--password-from-stdin".to_string());
+    }
+    all_args.push(url.to_string());
+
+    let mut cmd = Command::new(&svn_path_str);
+    cmd.args(&all_args)
+        .envs(svn::executor::get_svn_env())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped());
+
+    // 有凭据：通过 stdin 传递密码
+    if credentials.is_some() {
+        cmd.stdin(Stdio::piped());
+    }
+
+    let mut child = cmd.spawn().map_err(|e| {
+        if e.kind() == std::io::ErrorKind::NotFound {
+            AppError::SvnNotFound
+        } else {
+            AppError::Io(e)
+        }
+    })?;
+
+    if let Some(creds) = credentials {
+        if let Some(mut stdin) = child.stdin.take() {
+            let _ = stdin.write_all(creds.password.as_bytes());
+            let _ = stdin.flush();
+        }
+    }
+
+    let output = child.wait_with_output().map_err(AppError::Io)?;
+
+    if !output.status.success() {
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        return Err(AppError::SvnCommand(stderr.to_string()));
+    }
+
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    let files: Vec<String> = stdout
+        .lines()
+        .filter(|line| {
+            let trimmed = line.trim();
+            !trimmed.is_empty() && !trimmed.ends_with('/')
+        })
+        .map(|line| line.to_string())
+        .collect();
+
+    Ok(files)
 }
 
 /// 从仓库检出（长操作，可取消，推送进度事件）
@@ -42,6 +110,45 @@ pub async fn checkout_repo(
     svn::executor::check_network(&params.url).await?;
     state.try_lock()?;
 
+    // ── 阶段 1：枚举文件列表 ──
+    // 在真正检出前，先 svn list --recursive 获取所有文件并展示在弹窗中
+    app_handle.emit("operation:started", serde_json::json!({
+        "operation": "checkout"
+    })).ok();
+
+    // 获取文件列表（忽略 svn:externals 等无法 list 的场景）
+    let file_list = match get_file_list(&params.url, params.credentials.as_ref()) {
+        Ok(list) => list,
+        Err(e) => {
+            log::warn!("get_file_list 失败，回退到无预先枚举模式: {}", e);
+            Vec::new()
+        }
+    };
+    let total_count = file_list.len() as u32;
+
+    // 发送所有 pending 文件行
+    for file_path in &file_list {
+        app_handle.emit("operation:line", serde_json::json!({
+            "operation": "checkout",
+            "filePath": file_path,
+            "status": "pending"
+        })).ok();
+    }
+
+    // 发送初始进度（0%，pendingCount = 全部文件数）
+    app_handle.emit("operation:progress", serde_json::json!({
+        "operation": "checkout",
+        "percent": 0,
+        "stage": "processing",
+        "fileCount": total_count,
+        "completedCount": 0,
+        "pendingCount": total_count,
+        "speed": null as Option<String>,
+        "elapsed": null as Option<String>,
+        "currentLines": []
+    })).ok();
+
+    // ── 阶段 2：实际检出 ──
     // 构造 SVN args
     let mut args = vec![
         "checkout".to_string(),

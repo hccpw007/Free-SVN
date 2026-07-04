@@ -27,55 +27,26 @@ const titleText = computed(() => {
   return `${op}${t('progress.inProgress')} (${pct}%)`
 })
 
-// -- 本地 UI 状态 --
-const overlayVisible = ref(false)       // 弹窗显示控制（含 500ms 延迟关闭）
-const showConnecting = ref(false)        // 10 秒无响应提示
-let autoCloseTimer: ReturnType<typeof setTimeout> | null = null
-let connectingTimer: ReturnType<typeof setTimeout> | null = null
-
-// -- 10 秒无响应定时器 --
-function clearConnectingTimer() {
-  if (connectingTimer !== null) {
-    clearTimeout(connectingTimer)
-    connectingTimer = null
-  }
-}
-
-function startConnectingTimer() {
-  clearConnectingTimer()
-  showConnecting.value = false
-  connectingTimer = setTimeout(() => {
-    showConnecting.value = true
-  }, 10000)
-}
-
-// 监听 progress 变化重置定时器
-watch(progress, () => {
-  if (overlayVisible.value) {
-    startConnectingTimer()
-  }
+// -- 待传输计数（预枚举文件总数 - 已完成数） --
+const effectivePendingCount = computed(() => {
+  const total = fileLines.value.length
+  const completed = progress.value?.completedCount ?? 0
+  return Math.max(0, total - completed)
 })
 
-// 监听 fileLines 变化重置定时器
-watch(fileLines, () => {
-  if (overlayVisible.value) {
-    startConnectingTimer()
-  }
-}, { deep: true })
+// -- 本地 UI 状态 --
+const overlayVisible = ref(false)       // 弹窗显示控制（含 500ms 延迟关闭）
+let autoCloseTimer: ReturnType<typeof setTimeout> | null = null
 
 // -- 弹窗显示逻辑（含 500ms 延迟关闭） --
 watch(isVisible, (newVal) => {
   if (newVal) {
     overlayVisible.value = true
-    showConnecting.value = false
-    startConnectingTimer()
   } else {
     // 操作完成 -> 500ms 延迟关闭弹窗
     if (autoCloseTimer !== null) clearTimeout(autoCloseTimer)
     autoCloseTimer = setTimeout(() => {
       overlayVisible.value = false
-      showConnecting.value = false
-      clearConnectingTimer()
     }, 500)
   }
 })
@@ -95,7 +66,6 @@ watchEffect(() => {
 // -- 清理 --
 onUnmounted(() => {
   if (autoCloseTimer !== null) clearTimeout(autoCloseTimer)
-  clearConnectingTimer()
 })
 </script>
 
@@ -151,7 +121,7 @@ onUnmounted(() => {
           <!-- 待传输估算 -->
           <div class="truncate">
             <span class="text-slate-500">{{ t('progress.pendingCount') }}:</span>
-            {{ t('progress.pendingEstimate', { count: formatNumber(progress?.pendingCount ?? 0) }) }}
+            {{ t('progress.pendingEstimate', { count: formatNumber(effectivePendingCount) }) }}
           </div>
           <!-- 已耗时间 -->
           <div class="truncate">
@@ -168,16 +138,9 @@ onUnmounted(() => {
           ref="fileListRef"
           class="overflow-y-auto max-h-[280px] px-2 py-1"
         >
-          <!-- 10 秒无响应连接中提示 -->
-          <div
-            v-if="fileLines.length === 0 && showConnecting"
-            class="flex items-center justify-center h-20 text-sm text-amber-400"
-          >
-            {{ t('progress.connecting') }}
-          </div>
           <!-- 空状态：当前阶段文字 -->
           <div
-            v-else-if="fileLines.length === 0"
+            v-if="fileLines.length === 0"
             class="flex items-center justify-center h-20 text-sm text-slate-500"
           >
             {{ progress?.stage || t('progress.processing') }}

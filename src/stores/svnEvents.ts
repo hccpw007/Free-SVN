@@ -69,26 +69,73 @@ export const useSvnEventsStore = defineStore('svnEvents', () => {
   function initEventListeners() {
     if (initialized) return
     initialized = true
+
+    // ── 预枚举文件模式标记（来自 checkout.rs 的 svn list） ──
+    let hasEnumeratedFiles = false
+
+    // ── 1 秒定时器：标记当前正在下载的文件 ──
+    let inProgressTimer: ReturnType<typeof setInterval> | null = null
+
+    function stopInProgressTimer() {
+      if (inProgressTimer !== null) {
+        clearInterval(inProgressTimer)
+        inProgressTimer = null
+      }
+    }
+
+    function startInProgressTimer() {
+      stopInProgressTimer()
+      inProgressTimer = setInterval(() => {
+        // 找到第一个 pending 文件，标记为 in_progress
+        for (const line of fileLines.value) {
+          if (line.status === 'pending') {
+            line.status = 'in_progress'
+            break
+          }
+        }
+      }, 1000)
+    }
+
+    /** 根据 operation:progress 的 completedCount 更新文件行状态 */
+    function markCompletedFiles() {
+      if (!hasEnumeratedFiles) return
+      const count = progress.value?.completedCount ?? 0
+      // 将前 N 个文件标记为 completed
+      for (let i = 0; i < count && i < fileLines.value.length; i++) {
+        fileLines.value[i].status = 'completed'
+      }
+      // 标记下一个为 in_progress
+      if (count < fileLines.value.length) {
+        fileLines.value[count].status = 'in_progress'
+      }
+    }
+
     Promise.all([
-      listen<OperationProgress>('operation:progress', e => { progress.value = e.payload }),
+      listen<OperationProgress>('operation:progress', e => {
+        progress.value = e.payload
+        markCompletedFiles()
+      }),
       listen('operation:started', () => {
+        // 忽略重复的 operation:started（checkout_repo 预枚举阶段和
+        // run_svn_with_progress 内部都会发送）
+        if (isOperationRunning.value) return
         isOperationRunning.value = true
         fileLines.value = []
+        hasEnumeratedFiles = false
+        stopInProgressTimer()
+        startInProgressTimer()
         useFileListStore().isOperationRunning = true
       }),
       listen<OperationLine>('operation:line', e => {
-        // v3 新增：operation:line 事件，携带单行文件信息
         const line = e.payload
-        // 待传输行计数优化：首行显示总计数，后续简化
         if (line.status === 'pending') {
-          const pendingCount = fileLines.value.filter(l => l.status === 'pending').length
-          if (pendingCount === 0 && progress.value?.pendingCount && progress.value.pendingCount > 0) {
-            line.filePath = `(等待中，${progress.value.pendingCount} 个文件)`
-          } else if (pendingCount > 0) {
-            line.filePath = '(等待中...)'
-          }
+          // 来自 checkout.rs 的 svn list 预枚举 → 追加到文件列表
+          hasEnumeratedFiles = true
+          fileLines.value.push(line)
+        } else if (line.status === 'completed' && !hasEnumeratedFiles) {
+          // 非 checkout 操作（update/commit/switch）：直接追加 completed 行
+          fileLines.value.push(line)
         }
-        fileLines.value.push(line)
         // 文件列表淘汰策略：超过 1000 行时淘汰最旧的 200 行已完成
         if (fileLines.value.length > 1000) {
           let evictCount = 200
@@ -100,16 +147,24 @@ export const useSvnEventsStore = defineStore('svnEvents', () => {
         }
       }),
       listen<CancelledPayload>('operation:cancelled', () => {
-        // v3 新增：operation:cancelled 事件，替代 operation:completed + result:"cancelled"
         isOperationRunning.value = false; progress.value = null
+        stopInProgressTimer()
         useFileListStore().isOperationRunning = false
       }),
       listen<OperationResult>('operation:completed', () => {
         isOperationRunning.value = false; progress.value = null
+        stopInProgressTimer()
+        // 操作完成时，将所有剩余文件标记为 completed
+        for (const line of fileLines.value) {
+          if (line.status !== 'completed') {
+            line.status = 'completed'
+          }
+        }
         useFileListStore().isOperationRunning = false
       }),
       listen('operation:error', () => {
         isOperationRunning.value = false; progress.value = null
+        stopInProgressTimer()
         fileLines.value = []
         useFileListStore().isOperationRunning = false
       }),
