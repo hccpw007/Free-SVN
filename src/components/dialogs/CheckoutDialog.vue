@@ -1,6 +1,6 @@
 <script setup lang="ts">
 /** 检出对话框——SVN 仓库检出参数配置，含认证区域。 */
-import { ref, reactive, computed, nextTick } from 'vue'
+import { ref, reactive, computed, nextTick, onMounted } from 'vue'
 import { useSvnStore } from '@/stores/svn'
 import { useWorkspaceStore } from '@/stores/workspace'
 import { useI18n } from 'vue-i18n'
@@ -17,6 +17,35 @@ const emit = defineEmits<{ close: [] }>()
 const props = withDefaults(defineProps<{
   initialPath?: string
 }>(), { initialPath: '' })
+
+// URL 历史记录（localStorage 持久化）
+const STORAGE_KEY_URLS = 'free-svn:recentUrls'
+const MAX_RECENT_URLS = 10
+const recentUrls = ref<string[]>([])
+
+onMounted(() => {
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY_URLS)
+    if (stored) recentUrls.value = JSON.parse(stored)
+  } catch { /* ignore */ }
+})
+
+function saveRecentUrl(url: string) {
+  const idx = recentUrls.value.indexOf(url)
+  if (idx >= 0) recentUrls.value.splice(idx, 1)
+  recentUrls.value.unshift(url)
+  if (recentUrls.value.length > MAX_RECENT_URLS) {
+    recentUrls.value = recentUrls.value.slice(0, MAX_RECENT_URLS)
+  }
+  localStorage.setItem(STORAGE_KEY_URLS, JSON.stringify(recentUrls.value))
+}
+
+function querySearch(queryString: string, cb: (results: { value: string }[]) => void) {
+  const results = queryString
+    ? recentUrls.value.filter(url => url.toLowerCase().includes(queryString.toLowerCase()))
+    : recentUrls.value
+  cb(results.map(value => ({ value })))
+}
 
 // 表单状态
 const repoUrl = ref('')
@@ -93,7 +122,10 @@ async function handleCheckout() {
         saveToCache: authForm.saveToCache,
       } : undefined,
     }).then(result => {
-      if (result) workspaceStore.switchWorkspace(targetPath.value)
+      if (result) {
+        workspaceStore.switchWorkspace(targetPath.value)
+        saveRecentUrl(repoUrl.value)
+      }
     }).catch((err: unknown) => {
       console.error('[checkout dialog] Error in checkout:', err)
       const msg = err instanceof Error ? err.message : String(err)
@@ -130,7 +162,15 @@ async function handleCheckout() {
       <!-- 仓库 URL -->
       <div>
         <label class="text-xs font-medium text-slate-700 dark:text-slate-300 mb-1 block">{{ t('dialog.repoUrl') }}</label>
-        <el-input v-model="repoUrl" size="small" :placeholder="t('dialog.repoUrlPlaceholder')" />
+        <el-autocomplete
+          v-model="repoUrl"
+          :fetch-suggestions="querySearch"
+          :trigger-on-focus="true"
+          size="small"
+          clearable
+          class="!w-full"
+          :placeholder="t('dialog.repoUrlPlaceholder')"
+        />
         <!-- URL 格式错误提示 -->
         <p v-if="urlError" class="text-xs text-red-500 mt-1">{{ urlError }}</p>
       </div>
