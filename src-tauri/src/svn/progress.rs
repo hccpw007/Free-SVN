@@ -182,6 +182,8 @@ pub async fn run_svn_with_progress(
         let mut file_count: u32 = 0;
         let mut completed_count: u32 = 0;
         let mut combined_stdout = String::new();
+        // 缓存上一次解析到的速度，心跳发射时保持该值不让前端闪烁消失
+        let mut last_known_speed: Option<String> = None;
 
         // ── 主循环开始前声明文件行判定函数 ──
         let is_file_line = |line: &str| -> Option<String> {
@@ -325,6 +327,9 @@ pub async fn run_svn_with_progress(
                             if last_progress_time.elapsed() >= Duration::from_millis(200) {
                                 last_progress_time = now;
                                 let (speed_str, elapsed_str) = extract_speed(&line);
+                                if speed_str.is_some() {
+                                    last_known_speed = speed_str.clone();
+                                }
                                 let progress = crate::svn::types::OperationProgress {
                                     operation: operation_owned.clone(),
                                     percent: pct,
@@ -369,7 +374,7 @@ pub async fn run_svn_with_progress(
                         file_count,
                         completed_count,
                         pending_count: 0,
-                        speed: None,
+                        speed: last_known_speed.clone(),
                         elapsed: elapsed_str,
                         current_lines: vec![],
                     };
