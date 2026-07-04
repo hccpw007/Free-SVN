@@ -34,6 +34,8 @@ pub fn parse_status(xml: &str) -> Result<Vec<FileItem>, AppError> {
         props: Option<String>,
         #[serde(rename = "@revision", default)]
         revision: Option<String>,
+        #[serde(rename = "@wc-locked", default)]
+        wc_locked: Option<bool>,
     }
     #[derive(Debug, serde::Deserialize)]
     struct CommitInfo {
@@ -83,6 +85,7 @@ pub fn parse_status(xml: &str) -> Result<Vec<FileItem>, AppError> {
                     created: l.created,
                     expires: l.expires,
                 }),
+                wc_locked: entry.wc_status.wc_locked,
             });
         }
     }

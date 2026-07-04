@@ -29,4 +29,6 @@ pub struct FileItem {
     pub size: Option<u64>,
     #[serde(default)]
     pub lock: Option<super::repo::LockInfo>,
+    #[serde(default)]
+    pub wc_locked: Option<bool>,
 }

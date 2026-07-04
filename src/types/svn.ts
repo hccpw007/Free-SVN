@@ -26,6 +26,8 @@ export interface FileItem {
   copiedFrom?: string
   size?: number
   lock?: LockInfo
+  /** 工作副本是否被锁定（检出中断时 wc-locked="true"） */
+  wcLocked?: boolean
 }
 
 interface LockInfo {

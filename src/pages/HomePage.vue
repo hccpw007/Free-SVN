@@ -8,7 +8,7 @@ import { useNetworkStatus } from '@/composables/useNetworkStatus'
 import { ref, computed, onMounted, watch, inject } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { ElMessage } from 'element-plus'
-import { AlertTriangle, RefreshCw, CheckCircle, Search, GitCommit, RotateCcw } from 'lucide-vue-next'
+import { AlertTriangle, RefreshCw, CheckCircle, Search, GitCommit, RotateCcw, Lock } from 'lucide-vue-next'
 import { exists } from '@tauri-apps/plugin-fs'
 import { getInfo as fetchInfo } from '@/services/svn'
 import { useSvnStore } from '@/stores/svn'
@@ -30,6 +30,8 @@ const openCommitDialog = inject<() => void>('openCommitDialog', () => {})
 const { checkNetwork } = useNetworkStatus()
 
 const isEmptyChanges = computed(() => !!workspaceStore.currentPath && fileListStore.files.length === 0)
+/** 工作副本是否被锁定（检出中断时 wc-locked="true"），需先执行 Cleanup */
+const isWcLocked = computed(() => fileListStore.files.some(f => f.wcLocked))
 const isSearchEmpty = computed(() => {
   return !!workspaceStore.currentPath
     && fileListStore.files.length > 0
@@ -125,6 +127,13 @@ async function handleResumeUpdate() {
 /** 忽略不完整检出提示 */
 function handleDismissIncomplete() {
   incompleteBannerDismissed.value = true
+}
+
+/** 对锁定的工作副本执行 Cleanup */
+async function handleWcCleanup() {
+  if (!workspaceStore.currentPath) return
+  await svnStore.cleanup(workspaceStore.currentPath)
+  await fileListStore.refresh()
 }
 </script>
 
@@ -232,8 +241,21 @@ function handleDismissIncomplete() {
       </button>
     </div>
 
+    <!-- 工作副本锁定提示（检出中断 wc-locked，需先 Cleanup） -->
+    <div v-if="isWcLocked" class="flex-1 flex items-center justify-center">
+      <div class="text-center max-w-md px-6">
+        <Lock class="w-10 h-10 mx-auto text-red-500" />
+        <p class="text-sm font-medium text-slate-700 dark:text-slate-300 mt-3">{{ t('workspace.wcLockedTitle') }}</p>
+        <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">{{ t('workspace.wcLockedDesc') }}</p>
+        <button
+          class="mt-4 px-4 py-2 text-sm font-medium rounded-md bg-red-600 text-white hover:bg-red-700 transition-colors focus:ring-2 focus:ring-red-400 focus:outline-none"
+          @click="handleWcCleanup"
+        >{{ t('workspace.runCleanup') }}</button>
+      </div>
+    </div>
+
     <!-- 空变更状态 -->
-    <div v-if="isEmptyChanges" class="flex-1 flex items-center justify-center">
+    <div v-else-if="isEmptyChanges" class="flex-1 flex items-center justify-center">
       <div class="text-center">
         <CheckCircle class="w-8 h-8 mx-auto text-green-500" />
         <p class="text-sm text-slate-500 dark:text-slate-400 mt-2">{{ t('workspace.noChanges') }}</p>

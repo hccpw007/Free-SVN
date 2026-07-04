@@ -28,6 +28,9 @@ pub async fn get_status(params: StatusParams) -> Result<Vec<FileItem>, AppError>
     let xml = svn::executor::run_svn(&["status", "--xml", "--depth", "infinity"], &params.path, None).await?;
     let mut items = svn::parser::parse_status(&xml)?;
     let base = std::path::Path::new(&params.path);
+    // 检测工作副本是否被锁定（检出中断时 wc-locked="true"），
+    // 锁定时跳过 expand_unversioned_dir 避免递归展开海量文件导致浏览器卡死
+    let wc_locked = items.iter().any(|item| item.wc_locked == Some(true));
     // svn status --xml 不包含文件大小，通过文件系统 stat 获取
     // 同时对标记为 unversioned 的目录递归展开内部文件
     let mut expanded = Vec::new();
@@ -39,7 +42,7 @@ pub async fn get_status(params: StatusParams) -> Result<Vec<FileItem>, AppError>
                 item.size = Some(meta.len());
             }
         }
-        if item.status == "unversioned" && full.is_dir() {
+        if !wc_locked && item.status == "unversioned" && full.is_dir() {
             expand_unversioned_dir(&full, base, &mut expanded);
         }
     }
