@@ -2,6 +2,7 @@ use serde::Deserialize;
 use crate::models::error::AppError;
 use crate::svn;
 use crate::svn::types::OperationResult;
+use tauri::AppHandle;
 
 /// 提交操作参数
 /// 提交参数（v5 新增 credentials）
@@ -14,9 +15,10 @@ pub struct CommitParams {
     pub credentials: Option<crate::svn::types::SvnCredentials>,
 }
 
-/// 提交变更（原子操作，不可取消）
+/// 提交变更——推送进度事件
 #[tauri::command]
 pub async fn create_commit(
+    app_handle: AppHandle,
     params: CommitParams,
     state: tauri::State<'_, crate::svn::queue::SvnQueue>,
 ) -> Result<OperationResult, AppError> {
@@ -33,17 +35,20 @@ pub async fn create_commit(
     }
     args.extend(params.paths.clone());
 
-    let result = svn::executor::run_svn(
+    let result = svn::progress::run_svn_with_progress(
         &args.iter().map(String::as_str).collect::<Vec<&str>>(),
         &get_working_copy_root(&params.paths[0]),
         params.credentials.as_ref(),
+        app_handle,
+        "commit",
+        None,
     ).await;
 
     state.unlock();
 
     match result {
-        Ok(xml) => {
-            let rev = extract_commit_revision(&xml);
+        Ok(stdout) => {
+            let rev = extract_commit_revision(&stdout);
             Ok(OperationResult {
                 result: "success".to_string(),
                 detail: Some(format!("Committed revision {}", rev)),
