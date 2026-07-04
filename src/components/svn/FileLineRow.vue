@@ -39,15 +39,15 @@ const statusLabel = computed(() => {
       'text-green-500': status === 'completed',
       'text-amber-600 dark:text-amber-400 bg-slate-100 dark:bg-slate-700': status === 'in_progress',
       'text-slate-100': status === 'pending',
-      'text-red-400': status === 'cancelled',
+      'text-slate-500': status === 'cancelled',
     }"
     :title="filePath"
     :aria-label="`${statusLabel}: ${filePath}`"
   >
     <!-- 已完成：绿色打钩 -->
     <Check v-if="status === 'completed'" class="shrink-0 w-4 h-4 text-green-500" aria-hidden="true" />
-    <!-- 已取消：红色 X -->
-    <XCircle v-else-if="status === 'cancelled'" class="shrink-0 w-4 h-4 text-red-400" aria-hidden="true" />
+    <!-- 已取消：灰色 X -->
+    <XCircle v-else-if="status === 'cancelled'" class="shrink-0 w-4 h-4 text-slate-500" aria-hidden="true" />
     <!-- 正在下载 / 待传输：转圈圈动画 -->
     <Loader v-else class="shrink-0 w-4 h-4 animate-spin" :class="status === 'in_progress' ? 'text-amber-600 dark:text-amber-400' : 'text-slate-400 dark:text-slate-500'" aria-hidden="true" />
     <!-- 文件路径 -->

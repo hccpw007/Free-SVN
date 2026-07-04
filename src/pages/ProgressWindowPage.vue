@@ -38,7 +38,7 @@ const effectivePendingCount = computed(() => {
 
 const sortedFileLines = computed(() => {
   return [...fileLines.value].sort((a, b) => {
-    const order = { completed: 0, in_progress: 1, pending: 2 }
+    const order = { completed: 0, in_progress: 1, pending: 2, cancelled: 3 }
     return (order[a.status] ?? 2) - (order[b.status] ?? 2)
   })
 })
