@@ -325,20 +325,15 @@ pub async fn run_svn_with_progress(
             if !stderr_done {
                 match rx_stderr.try_recv() {
                     Ok(line) => {
-                        // 调试：打印所有 stderr 行（含非进度行）
-                        log::info!("[progress_debug] stderr行: {:?}", line);
                         // 解析百分比
                         let percent = extract_percentage(&line);
 
                         if let Some(pct) = percent {
-                            // 调试：打印原始 stderr 行和解析结果
-                            log::info!("[progress_debug] stderr行: {:?} | 百分比: {} | 原始行长: {}", line.trim(), pct, line.len());
                             let now = Instant::now();
                             // throttle: 首条立即发送 + 200ms 窗口
                             if last_progress_time.elapsed() >= Duration::from_millis(200) {
                                 last_progress_time = now;
                                 let (speed_str, elapsed_str) = extract_speed(&line);
-                                log::info!("[progress_debug] 速度: {:?} | 已耗时: {:?}", speed_str, elapsed_str);
                                 if speed_str.is_some() {
                                     last_known_speed = speed_str.clone();
                                 }
@@ -376,9 +371,18 @@ pub async fn run_svn_with_progress(
                 if last_progress_time.elapsed() >= Duration::from_millis(500) {
                     last_progress_time = now;
                     let elapsed = now.duration_since(start);
+                    let elapsed_secs = elapsed.as_secs_f64();
                     let elapsed_str = Some(format!(
                         "{:02}:{:02}", elapsed.as_secs() / 60, elapsed.as_secs() % 60
                     ));
+                    // 速度：优先使用 stderr 解析值，无则根据文件完成率估算
+                    let display_speed = last_known_speed.clone().or_else(|| {
+                        if completed_count > 0 && elapsed_secs > 0.0 {
+                            Some(format!("{:.1} files/s", completed_count as f64 / elapsed_secs))
+                        } else {
+                            None
+                        }
+                    });
                     let progress = crate::svn::types::OperationProgress {
                         operation: operation_owned.clone(),
                         percent: 0,
@@ -386,7 +390,7 @@ pub async fn run_svn_with_progress(
                         file_count,
                         completed_count,
                         pending_count: 0,
-                        speed: last_known_speed.clone(),
+                        speed: display_speed,
                         elapsed: elapsed_str,
                         current_lines: vec![],
                     };
