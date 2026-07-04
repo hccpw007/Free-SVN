@@ -69,12 +69,13 @@ async function startDrag(e: MouseEvent) {
 
 // ── 关闭窗口 ──
 async function handleClose() {
+  // 如果操作仍在运行，只取消不关闭；操作完成了才关闭窗口
+  if (isOperationRunning.value) {
+    await cancelOperation()
+    return
+  }
   try {
-    // 如果操作仍在运行，先取消
-    if (isOperationRunning.value) {
-      await cancelOperation()
-    }
-    // 通过 Rust 端按 label 查找并销毁窗口，避免自销毁问题
+    // 操作已结束，关闭窗口
     await invoke('close_progress_window')
   } catch (e) {
     console.error('[ProgressWindow] 关闭失败:', e)
