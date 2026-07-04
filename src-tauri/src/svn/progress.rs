@@ -4,13 +4,13 @@ use crate::svn::executor::{
 };
 use log;
 use std::io::{BufRead, BufReader, Read, Write};
-use std::path::Path;
 use std::process::{Command, Stdio};
 use std::sync::mpsc;
 use std::thread;
 use std::time::{Duration, Instant};
 use tauri::Emitter;
 use tokio::task::spawn_blocking;
+use walkdir::WalkDir;
 
 /// 格式化字节速度为人类可读字符串
 fn format_speed(bytes_per_sec: f64) -> String {
@@ -210,8 +210,6 @@ pub async fn run_svn_with_progress(
         let mut combined_stdout = String::new();
         // 缓存上一次解析到的速度，心跳发射时保持该值不让前端闪烁消失
         let mut last_known_speed: Option<String> = None;
-        // 已完成文件的实际磁盘字节总数，用于计算精确传输速度
-        let mut total_bytes: u64 = 0;
 
         // ── 主循环开始前声明文件行判定函数 ──
         let is_file_line = |line: &str| -> Option<String> {
@@ -328,19 +326,6 @@ pub async fn run_svn_with_progress(
                         if let Some(file_path) = is_file_line(&line) {
                             file_count += 1;
                             completed_count += 1;
-                            // 跟踪实际磁盘大小用于字节传输速度
-                            if let Some(td) = target_dir {
-                                let full = Path::new(td).join(&file_path);
-                                match std::fs::metadata(&full) {
-                                    Ok(meta) => {
-                                        log::info!("[stat_debug] {} 大小={}", file_path, meta.len());
-                                        total_bytes += meta.len();
-                                    }
-                                    Err(e) => {
-                                        log::info!("[stat_debug] {} 失败: {}", full.display(), e);
-                                    }
-                                }
-                            }
                             ah.emit("operation:line", serde_json::json!({
                                 "operation": operation_owned,
                                 "filePath": file_path,
@@ -410,8 +395,20 @@ pub async fn run_svn_with_progress(
                         "{:02}:{:02}", elapsed.as_secs() / 60, elapsed.as_secs() % 60
                     ));
                     // 速度（优先级）：stderr 解析速度 > 字节传输速度 > 文件完成率
-                    let byte_speed = if total_bytes > 0 && elapsed_secs > 0.0 {
-                        Some(format_speed(total_bytes as f64 / elapsed_secs))
+                    let byte_speed = if elapsed_secs > 0.0 {
+                        target_dir.and_then(|td| {
+                            let size: u64 = WalkDir::new(td)
+                                .into_iter()
+                                .filter_map(|e| e.ok())
+                                .filter(|e| e.file_type().is_file())
+                                .map(|e| e.metadata().map(|m| m.len()).unwrap_or(0))
+                                .sum();
+                            if size > 0 {
+                                Some(format_speed(size as f64 / elapsed_secs))
+                            } else {
+                                None
+                            }
+                        })
                     } else {
                         None
                     };
