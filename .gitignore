@@ -26,6 +26,7 @@ dist/
 /build/
 /target/
 /out/
+finder-extension/build/
 *.class
 *.jar
 *.war
